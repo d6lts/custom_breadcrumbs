@@ -243,6 +243,11 @@ function _custom_breadcrumbs_replace_placeholders($node, $haystack) {
 function custom_breadcrumbs_substitutions($mode = 'help', $node = NULL) {
   global $user;
   if ($mode == 'data') {
+    $terms = taxonomy_node_get_terms($node->nid);
+    if (count($terms)) {
+      $top_term = $term[0]->tid;
+      $top_term_name = $term[0]->name;
+    }
     $replacements = array(
       '%author_id' => $node->uid,
       '%author_name' => $node->name,
@@ -251,6 +256,8 @@ function custom_breadcrumbs_substitutions($mode = 'help', $node = NULL) {
       '%node_id' => $node->nid,
       '%node_type' => $node->type,
       '%node_type_name' => node_get_types('name', $node->type),
+      '%top_term'  => $top_term,
+      '%top_term_name'  => $top_term_name,
       '%created_j' => date('j', $node->created),
       '%created_d' => date('d', $node->created),
       '%created_D' => date('D', $node->created),
@@ -272,6 +279,8 @@ function custom_breadcrumbs_substitutions($mode = 'help', $node = NULL) {
       '%node_id' => "The current node's id",
       '%node_type' => "The current node's type",
       '%node_type_name' => "The human-readable name of the current node's type",
+      '%top_term'  => "The ID of the node's highest weighted taxonomy term",
+      '%top_term_name'  => "The name of the node's highest weighted taxonomy term",
       '%created_j' => "Node creation date: Date as number",
       '%created_d' => "Node creation date: Date as zero-padded number",
       '%created_D' => "Node creation date: Day of week as three-letter abbreviation",
