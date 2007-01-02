@@ -49,8 +49,8 @@ function custom_breadcrumbs_nodeapi($node, $op, $teaser, $page) {
       $titles = explode("\n", $breadcrumb->titles);
       $paths = explode("\n", $breadcrumb->paths);
 
-      $titles = _custom_breadcrumbs_replace_placeholders($node, $titles);
-      $paths = _custom_breadcrumbs_replace_placeholders($node, $paths);
+      $titles = token_replace($titles, 'node', $node);
+      $paths = token_replace($paths, 'node', $node);
 
       $trail = array(l(t('Home'), ''));
       for ($i = 0; $i < count($titles); $i++) {
@@ -127,26 +127,21 @@ function custom_breadcrumbs_form() {
     '#default_value' => $bid ? $breadcrumb->paths : NULL
   );
 
-  $substitutions = custom_breadcrumbs_substitutions('help');
-  $header = array(t('Placeholder'), t('Replacement value'));
-  $rows = array();
-  foreach ($substitutions as $sub => $help) {
-    $row = array();
-    $row[] = $sub;
-    $row[] = $help;
-    $rows[] = $row;
-  }
-  $helptext = theme('table', $header, $rows, array('class' => 'description'), "The following placeholder values can be used in both paths and titles. When used in a path or title, they will be replaced with the appropriate values.");
-
   $form['help'] = array(
-    '#value' => $helptext,
+    '#type' => 'fieldset',
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#title' => t('Placeholder tokens'),
+    '#description' => t("The following placeholder tokens can be used in both paths and titles. When used in a path or title, they will be replaced with the appropriate values."),
+  );
+
+  $form['help']['tokens'] = array(
+    '#value' => theme('token_help', 'node'),
   );
 
   foreach (node_get_types('names') as $type => $name) {
     $options[$type] = $name;
   }
-
-
 
   $form['buttons']['submit'] = array(
     '#type' => 'submit',
@@ -228,71 +223,4 @@ function _custom_breadcrumbs_save_breadcrumb($breadcrumb = NULL) {
 function _custom_breadcrumbs_delete_breadcrumb($bid) {
   $sql = 'DELETE FROM {custom_breadcrumb} WHERE bid = %d';
   db_query($sql, $bid);
-}
-
-function _custom_breadcrumbs_replace_placeholders($node, $haystack) {
-  $replacements = custom_breadcrumbs_substitutions('data', $node);
-
-  $placeholders = array_keys($replacements);
-  $values = array_values($replacements);
-
-  $result = str_replace($placeholders, $values, $haystack);
-  return $result;
-}
-
-function custom_breadcrumbs_substitutions($mode = 'help', $node = NULL) {
-  global $user;
-  if ($mode == 'data') {
-    $terms = taxonomy_node_get_terms($node->nid);
-    if (count($terms)) {
-      $top_term = $term[0]->tid;
-      $top_term_name = $term[0]->name;
-    }
-    $replacements = array(
-      '%author_id' => $node->uid,
-      '%author_name' => $node->name,
-      '%user_id' => $user->uid,
-      '%user_name' => $user->name,
-      '%node_id' => $node->nid,
-      '%node_type' => $node->type,
-      '%node_type_name' => node_get_types('name', $node->type),
-      '%top_term'  => $top_term,
-      '%top_term_name'  => $top_term_name,
-      '%created_j' => date('j', $node->created),
-      '%created_d' => date('d', $node->created),
-      '%created_D' => date('D', $node->created),
-      '%created_l' => date('l', $node->created),
-      '%created_F' => date('F', $node->created),
-      '%created_m' => date('m', $node->created),
-      '%created_M' => date('M', $node->created),
-      '%created_n' => date('n', $node->created),
-      '%created_y' => date('y', $node->created),
-      '%created_Y' => date('Y', $node->created),
-    );
-  }
-  elseif ($mode == 'help') {
-    $replacements = array(
-      '%author_id' => "The node author's uid",
-      '%author_name' => "The node author's name",
-      '%user_id' => "The currently logged in user's uid",
-      '%user_name' => "The currenty logged in user's name",
-      '%node_id' => "The current node's id",
-      '%node_type' => "The current node's type",
-      '%node_type_name' => "The human-readable name of the current node's type",
-      '%top_term'  => "The ID of the node's highest weighted taxonomy term",
-      '%top_term_name'  => "The name of the node's highest weighted taxonomy term",
-      '%created_j' => "Node creation date: Date as number",
-      '%created_d' => "Node creation date: Date as zero-padded number",
-      '%created_D' => "Node creation date: Day of week as three-letter abbreviation",
-      '%created_l' => "Node creation date: Day of week as full word",
-      '%created_w' => "Node creation date: Day of week as number",
-      '%created_F' => "Node creation date: Month as full word",
-      '%created_n' => "Node creation date: Month as number",
-      '%created_m' => "Node creation date: Month as zero-padded number",
-      '%created_M' => "Node creation date: Month as three-letter abbreviation",
-      '%created_Y' => "Node creation date: Year as four-digit number",
-      '%created_y' => "Node creation date: Year as two-digit number",
-    );
-   }
-   return $replacements;
 }
