@@ -1,5 +1,4 @@
 ; $Id$
 name = Custom Breadcrumbs
 description = Allows administrators to define custom breadcrumb trails on a per-node-type basis.
-dependencies = token
-version = 1.2
+version = 1.3

@@ -49,8 +49,8 @@ function custom_breadcrumbs_nodeapi($node, $op, $teaser, $page) {
       $titles = explode("\n", $breadcrumb->titles);
       $paths = explode("\n", $breadcrumb->paths);
 
-      $titles = token_replace($titles, 'node', $node);
-      $paths = token_replace($paths, 'node', $node);
+      $titles = module_exists('token') ? token_replace($titles, 'node', $node) : $titles;
+      $paths = module_exists('token') ? token_replace($paths, 'node', $node) : $paths;
 
       $trail = array(l(t('Home'), ''));
       for ($i = 0; $i < count($titles); $i++) {
@@ -135,12 +135,15 @@ function custom_breadcrumbs_form() {
     '#description' => t("The following placeholder tokens can be used in both paths and titles. When used in a path or title, they will be replaced with the appropriate values."),
   );
 
-  $form['help']['tokens'] = array(
-    '#value' => theme('token_help', 'node'),
-  );
-
-  foreach (node_get_types('names') as $type => $name) {
-    $options[$type] = $name;
+  if (module_exists('token')) {
+    $form['help']['tokens'] = array(
+      '#value' => theme('token_help', 'node'),
+    );
+  }
+  else {
+    $form['help']['#description'] = t("To use dynamic placeholder tokens in your breadcrumb trails (the ID or title of the current node, for example), download and install the <a href='@token'>Token module</a> from Drupal.org.", array('@token' => 'http://www.drupal.org/project/token'));
+    $form['help']['#collapsible'] = FALSE;
+    $form['help']['#collapsed'] = FALSE;
   }
 
   $form['buttons']['submit'] = array(
