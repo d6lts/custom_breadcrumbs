@@ -54,7 +54,10 @@ function custom_breadcrumbs_nodeapi($node, $op, $teaser, $page) {
 
       $trail = array(l(t('Home'), ''));
       for ($i = 0; $i < count($titles); $i++) {
-        $trail[] = l(trim($titles[$i]), trim($paths[$i]));
+        // skip empty titles
+        if ($title = trim($titles[$i])) {
+          $trail[] = l($title, trim($paths[$i]));
+        }
       }
       drupal_set_breadcrumb($trail);
     }
