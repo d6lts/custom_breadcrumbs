@@ -8,8 +8,8 @@ function custom_breadcrumbs_menu() {
   $items = array();
 
   $items['admin/build/custom_breadcrumbs'] = array(
-    'title' => t('Custom breadcrumbs'),
-    'description' => t('Add custom breadcrumb trails for content types.'),
+    'title' => 'Custom breadcrumbs',
+    'description' => 'Add custom breadcrumb trails for content types.',
     'page callback' => 'custom_breadcrumbs_page',
     'access callback' => 'user_access',
     'access arguments' => array('administer custom breadcrumbs'),
@@ -17,7 +17,7 @@ function custom_breadcrumbs_menu() {
   );
 
   $items['admin/build/custom_breadcrumbs/add'] = array(
-    'title' => t('Add custom breadcrumb'),
+    'title' => 'Add custom breadcrumb',
     'type' => MENU_CALLBACK,
     'page callback' => 'drupal_get_form',
     'page arguments' => array('custom_breadcrumbs_form'),
@@ -27,7 +27,7 @@ function custom_breadcrumbs_menu() {
   );
 
   $items['admin/build/custom_breadcrumbs/edit'] = array(
-    'title' => t('Edit custom breadcrumb'),
+    'title' => 'Edit custom breadcrumb',
     'type' => MENU_CALLBACK,
     'page callback' => 'drupal_get_form',
     'page arguments' => array('custom_breadcrumbs_form'),
@@ -105,7 +105,7 @@ function _custom_breadcrumbs_load_all_breadcrumbs($refresh = FALSE) {
     $result = db_query($sql);
 
     $breadcrumbs = array();
-    while($breadcrumb = db_fetch_object($result)) {
+    while ($breadcrumb = db_fetch_object($result)) {
       $breadcrumbs[] = $breadcrumb;
     }
   }

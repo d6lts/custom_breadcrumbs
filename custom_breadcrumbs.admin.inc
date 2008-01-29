@@ -11,7 +11,7 @@ function custom_breadcrumbs_page() {
   foreach ($breadcrumbs as $breadcrumb) {
     $row = array();
     $row[] = $breadcrumb->node_type . (!empty($breadcrumb->visibility_php) ? t(' with PHP snippet') : '');
-    $row[] =  l(t('edit'), 'admin/build/custom_breadcrumbs/edit/' . $breadcrumb->bid);
+    $row[] =  l(t('edit'), 'admin/build/custom_breadcrumbs/edit/'. $breadcrumb->bid);
     $rows[] = $row;
   }
   if (count($rows) == 0) {
