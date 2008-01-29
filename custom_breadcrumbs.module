@@ -105,7 +105,7 @@ function _custom_breadcrumbs_load_all_breadcrumbs($refresh = FALSE) {
     $result = db_query($sql);
 
     $breadcrumbs = array();
-    while($breadcrumb = db_fetch_object($result)) {
+    while ($breadcrumb = db_fetch_object($result)) {
       $breadcrumbs[] = $breadcrumb;
     }
   }
