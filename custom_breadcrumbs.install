@@ -115,7 +115,7 @@ function custom_breadcrumbs_update_2() {
 // Add the menu flag
 function custom_breadcrumbs_update_6001() {
   $ret = array();
-  db_add_column($ret, 'custom_breadcrumbs', 'set_active_menu', 'int', array('default' => 1, 'NOT NULL' => TRUE));
+  db_add_column($ret, 'custom_breadcrumb', 'set_active_menu', 'int', array('default' => 1, 'NOT NULL' => TRUE));
   return $ret;
 }
 
