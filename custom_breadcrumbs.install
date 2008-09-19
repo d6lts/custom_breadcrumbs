@@ -45,6 +45,12 @@ function custom_breadcrumbs_schema() {
         'default' => 'AND',
         'description' => t("Node types the {custom_breadcrumb} should apply to."),
       ),
+      'set_active_menu' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 1,
+        'description' => t("Whether this {custom_breadcrumb} should override the node's default menu location."),
+      ),
     ),
     'primary key' => array('bid'),
   );
@@ -103,6 +109,13 @@ function custom_breadcrumbs_update_2() {
       db_add_column($ret, 'custom_breadcrumb', 'visibility_php', 'text', array('default' => ''));
       break;
   }
+  return $ret;
+}
+
+// Add the menu flag
+function custom_breadcrumbs_update_6001() {
+  $ret = array();
+  db_add_column($ret, 'custom_breadcrumbs', 'set_active_menu', 'int', array('default' => 1, 'NOT NULL' => TRUE));
   return $ret;
 }
 

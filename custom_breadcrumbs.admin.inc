@@ -91,6 +91,15 @@ function custom_breadcrumbs_form() {
     $form['help']['#collapsible'] = FALSE;
     $form['help']['#collapsed'] = FALSE;
   }
+  
+  $form['set_active_menu'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Override menu path'),
+    '#description' => t("If checked, the node's default location in the menu hierarchy will be forced to match the breadcrumb trail. This does not automatically add an entry for the node to existing menus, but will cause those menus to be displayed as 'active' when the node in question is viewed."),
+    '#return_value' => TRUE,
+    '#default_value' => $bid ? $breadcrumb->set_active_menu : FALSE
+  );
+  
 
   $form['buttons']['submit'] = array(
     '#type' => 'submit',

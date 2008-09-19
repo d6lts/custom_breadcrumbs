@@ -44,7 +44,7 @@ function custom_breadcrumbs_perm() {
 }
 
 function custom_breadcrumbs_nodeapi($node, $op, $teaser, $page) {
-  if ($op == 'view' && !$teaser && $page) {
+  if ($op == 'alter' && !$teaser && $page) {
     if ($breadcrumb = _custom_breadcrumbs_load_for_type($node)) {
       $titles = explode("\n", $breadcrumb->titles);
       $paths = explode("\n", $breadcrumb->paths);
@@ -67,6 +67,9 @@ function custom_breadcrumbs_nodeapi($node, $op, $teaser, $page) {
         }
       }
       drupal_set_breadcrumb($trail);
+      if ($breadcrumb->set_active_menu) {
+        menu_set_active_trail($trail);
+      }
     }
   }
 
