@@ -52,7 +52,7 @@ function custom_breadcrumbs_nodeapi($node, $op, $teaser, $page) {
       $titles = module_exists('token') ? token_replace($titles, 'node', $node) : $titles;
       $paths = module_exists('token') ? token_replace($paths, 'node', $node) : $paths;
 
-      $trail = array(l(t('Home'), ''));
+      $trail = array(l(t('Home'), '<front>'));
       $location = array();
       for ($i = 0; $i < count($titles); $i++) {
         // Skip empty titles
@@ -61,7 +61,7 @@ function custom_breadcrumbs_nodeapi($node, $op, $teaser, $page) {
           $path = trim($paths[$i]);
           if (strlen($path) > 0 && $path != '<none>') {
             $trail[] = l($title, trim($paths[$i]));
-            $location[$i] = drupal_get_normal_path($paths[$i]);          }
+            $location[$i] = menu_get_item(drupal_get_normal_path($paths[$i]));          }
           else {
             $trail[] = check_plain($title);
           }
@@ -69,7 +69,8 @@ function custom_breadcrumbs_nodeapi($node, $op, $teaser, $page) {
       }
       drupal_set_breadcrumb($trail);
       if ($breadcrumb->set_active_menu) {
-        menu_set_active_item($location[count($location) - 1]);
+        $location[] = menu_get_item();
+        menu_set_active_trail($location);
       }
     }
   }
