@@ -35,7 +35,6 @@ function custom_breadcrumbs_schema() {
         'type' => 'text',
         'not null' => TRUE,
         'size' => 'medium',
-        'default' => '',
         'description' => t('An optional PHP snippet to control the {custom_breadcrumb} visibility.'),
       ),
       'node_type' => array(

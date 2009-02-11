@@ -52,7 +52,7 @@ function custom_breadcrumbs_form() {
   $form['visibility_php'] = array(
     '#type' => 'textarea',
     '#title' => t('Breadcrumb visibility'),
-    '#access' => user_access('use php in custom pagers'),
+    '#access' => user_access('use php in custom breadcrumbs'),
     '#description' => t('Determine whether this breadcrumb should be displayed by using a snippet of PHP to return TRUE or FALSE. Note that this code has access to the $node variable, and can check its type or any other property.'),
     '#default_value' => $bid ? $breadcrumb->visibility_php : '',
   );
@@ -73,6 +73,21 @@ function custom_breadcrumbs_form() {
     '#default_value' => $bid ? $breadcrumb->paths : NULL
   );
 
+  $form['set_active_menu'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Override menu path'),
+    '#description' => t("If checked, the node's default location in the menu hierarchy will be forced to match the breadcrumb trail. This does not automatically add an entry for the node to existing menus, but will cause those menus to be displayed as 'active' when the node in question is viewed."),
+    '#return_value' => TRUE,
+    '#default_value' => $bid ? $breadcrumb->set_active_menu : FALSE
+  );
+  
+  $form['help2'] = array(
+    '#type' => 'fieldset',
+    '#collapsible' => FALSE,
+    '#title' => t('Special identifiers'),
+    '#description' => t("The following identifiers can be used to achieve a special behavior:<br />" . check_plain('<pathauto>') . " will clean any path using the current pathauto module settings, if that module is installed.<br />" . check_plain('<none>') . " can be used as a path to have a breadcrumb element that is not hyperlinked.<br />&nbsp<br />Identifiers should be added to the paths area in the following format:  identifier|path.<br />For example: " . check_plain('<pathauto>') . "|[ogname-raw]"),
+  );
+  
   $form['help'] = array(
     '#type' => 'fieldset',
     '#collapsible' => TRUE,
@@ -92,14 +107,10 @@ function custom_breadcrumbs_form() {
     $form['help']['#collapsed'] = FALSE;
   }
   
-  $form['set_active_menu'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Override menu path'),
-    '#description' => t("If checked, the node's default location in the menu hierarchy will be forced to match the breadcrumb trail. This does not automatically add an entry for the node to existing menus, but will cause those menus to be displayed as 'active' when the node in question is viewed."),
-    '#return_value' => TRUE,
-    '#default_value' => $bid ? $breadcrumb->set_active_menu : FALSE
+  $form['help2']['tokens'] = array(
+    '#value' => theme('custom_breadcrumbs_help_identifiers'),
   );
-  
+
 
   $form['buttons']['submit'] = array(
     '#type' => 'submit',
@@ -117,10 +128,11 @@ function custom_breadcrumbs_form() {
 }
 
 function custom_breadcrumbs_form_validate($form, &$form_state) {
-  $path_count = count(explode("\n", $form_state['values']['paths']));
-  $title_count = count(explode("\n", $form_state['values']['titles']));
+  $path_count = count(explode("\n", trim($form_state['values']['paths'])));
+  $title_count = count(explode("\n", trim($form_state['values']['titles'])));
   if ($title_count != $path_count) {
-    form_set_error(t('Every link path must have a matching title. There are !paths paths, and !titles titles.', array('!paths' => $path_count, '!titles' => $title_count)));
+    $error_field = ($title_count < $path_count) ? 'titles' : 'paths';
+    form_set_error($error_field, t('Every link path must have a matching title. There are !paths paths, and !titles titles.', array('!paths' => $path_count, '!titles' => $title_count)));
   }
 }
 
