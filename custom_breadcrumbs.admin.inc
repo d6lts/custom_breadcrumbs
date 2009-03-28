@@ -3,52 +3,103 @@
 
 // Lists all current custom breadcrumbs, and provides a link to the edit page.
 function custom_breadcrumbs_page() {
-  $breadcrumbs = _custom_breadcrumbs_load_all_breadcrumbs(TRUE);
-
-  $header = array(t('Node type'), '');
+  $header = array();
+  $multilingual = _custom_breadcrumbs_multilingual();
+  $header[] = t('Name');
+  $header[] = t('Page type');
+  if ($multilingual) {
+    $header[] = t('Language');
+  }
+  $header[] = t('Operations');
 
   $rows = array();
+  $breadcrumbs = _custom_breadcrumbs_load_all_breadcrumbs(TRUE);
+
   foreach ($breadcrumbs as $breadcrumb) {
     $row = array();
-    $row[] = $breadcrumb->node_type . (!empty($breadcrumb->visibility_php) ? t(' with PHP snippet') : '');
-    $row[] =  l(t('edit'), 'admin/build/custom_breadcrumbs/edit/'. $breadcrumb->bid);
+    $name = $breadcrumb->name;
+    $type = $breadcrumb->breadcrumb_type;
+    $row[] = $name . (!empty($breadcrumb->visibility_php) ? ' '. t('with PHP snippet') : '');
+    $row[] = $type;
+    if ($multilingual) {
+      $row[] = module_invoke('locale', 'language_name', $breadcrumb->language);
+    }
+    $row[] =  l(t('edit'), 'admin/build/custom_breadcrumbs/'. $breadcrumb->breadcrumb_type .'/edit/'. $breadcrumb->bid);
     $rows[] = $row;
   }
   if (count($rows) == 0) {
-    $rows[] = array(array('data' => t('No custom breadcrumbs have been defined.'), 'colspan' => 2));
+    $rows[] = array(array('data' => t('No custom breadcrumbs have been defined.'), 'colspan' => 2 + (int)$multilingual));
   }
-
-  $rows[] = array(array('data' => l(t('Add a new custom breadcrumb'), 'admin/build/custom_breadcrumbs/add'), 'colspan' => 2));
-
   return theme('table', $header, $rows);
 }
 
-
 // Displays an edit form for a custom breadcrumb record.
-function custom_breadcrumbs_form() {
-  $bid = arg(4);
-  if (isset($bid)) {
-    $breadcrumb = _custom_breadcrumbs_load_breadcrumb($bid);
-    $form['bid'] = array(
-      '#type' => 'hidden',
-      '#value' => $bid,
-    );
-  }
 
+function custom_breadcrumbs_form(&$form_state, $type) {
+  $form = array();
+  $current_nodes = array(); // list of nodes that have custom breadcrumbs
+  $current_crumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs');
+  $breadcrumb = NULL;
+  $bid = arg(5);
+  if (isset($bid)) {
+    drupal_set_title('Edit Custom Breadcrumb for Node');
+    foreach($current_crumbs as $crumb) {
+      if ($crumb->bid == $bid) {
+        $breadcrumb = $crumb;
+      }
+      else {
+        $current_nodes[$crumb->name] = $crumb->name;
+      }
+    }
+  }
+  else {
+    drupal_set_title('Add Custom Breadcrumb for Node');
+    foreach($current_crumbs as $crumb) {
+      $current_nodes[$crumb->name] = $crumb->name;
+    }
+  }
   $options = array();
   foreach (node_get_types('names') as $type => $name) {
-    $options[$type] = $name;
+    if (!in_array($type, $current_nodes)) {  // can't select a node with an existing crumb, must delete existing first
+      $options[$type] = $name;
+    }
   }
+  if (empty($options)) {
+    $form['notice'] = array('#value' => t('Cannot add a custom breadcrumb for a node because all node types already implement custom breadcrumbs. You can edit existing crumbs displayed on the list.'));
+  }
+  else {
+    $form['node_type'] = array(
+      '#type' => 'select',
+      '#title' => t('Node type'),
+      '#required' => TRUE,
+      '#options' => $options,
+      '#description' => t('The node type this custom breadcrumb trail will apply to.'),
+      '#default_value' => $bid ? $breadcrumb->node_type : NULL,
+      '#weight' => -10,
+    );
+    // store information needed to save this breadcrumb
+    $form['#table'] = 'custom_breadcrumb';
+    $form += custom_breadcrumbs_common_form_elements($bid, $breadcrumb);
+  }
+  return $form;
+}
 
-  $form['node_type'] = array(
-    '#type' => 'select',
-    '#title' => t('Node type'),
-    '#required' => TRUE,
-    '#options' => $options,
-    '#description' => t('The node type this custom breadcrumb trail will apply to.'),
-    '#default_value' => $bid ? $breadcrumb->node_type : NULL,
-  );
-
+function custom_breadcrumbs_common_form_elements($bid, $breadcrumb) {
+  $form = array();
+  $form['bid'] = array('#type' => 'hidden', '#value' => $bid, );
+  $multilingual = _custom_breadcrumbs_multilingual();
+  if ($multilingual) {
+    $form['language'] = array(
+      '#type' => 'select',
+      '#title' => t('Language'),
+      '#options' => array('' => t('All languages')) + locale_language_list('name'),
+      '#default_value' => $bid ? $breadcrumb->language : NULL,
+      '#description' => t('A breadcrumb set for a specific language will always be used when displaying a node in that language, and takes precedence over breadcrumbs set for <em>All languages</em>.'),
+    );
+  }
+  else {
+    $form['language'] = array('#type' => 'value', '#value' => '', );
+  }
   $form['visibility_php'] = array(
     '#type' => 'textarea',
     '#title' => t('Breadcrumb visibility'),
@@ -56,13 +107,12 @@ function custom_breadcrumbs_form() {
     '#description' => t('Determine whether this breadcrumb should be displayed by using a snippet of PHP to return TRUE or FALSE. Note that this code has access to the $node variable, and can check its type or any other property.'),
     '#default_value' => $bid ? $breadcrumb->visibility_php : '',
   );
-
   $form['titles'] = array(
     '#type' => 'textarea',
     '#title' => t('Titles'),
     '#required' => TRUE,
     '#description' => t('A list of titles for the breadcrumb links, one on each line.'),
-    '#default_value' => $bid ? $breadcrumb->titles : NULL
+    '#default_value' => $bid ? $breadcrumb->titles : NULL,
   );
 
   $form['paths'] = array(
@@ -70,24 +120,9 @@ function custom_breadcrumbs_form() {
     '#title' => t('Paths'),
     '#required' => TRUE,
     '#description' => t('A list of Drupal paths for the breadcrumb links, one on each line.'),
-    '#default_value' => $bid ? $breadcrumb->paths : NULL
+    '#default_value' => $bid ? $breadcrumb->paths : NULL,
   );
 
-  $form['set_active_menu'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Override menu path'),
-    '#description' => t("If checked, the node's default location in the menu hierarchy will be forced to match the breadcrumb trail. This does not automatically add an entry for the node to existing menus, but will cause those menus to be displayed as 'active' when the node in question is viewed."),
-    '#return_value' => TRUE,
-    '#default_value' => $bid ? $breadcrumb->set_active_menu : FALSE
-  );
-  
-  $form['help2'] = array(
-    '#type' => 'fieldset',
-    '#collapsible' => FALSE,
-    '#title' => t('Special identifiers'),
-    '#description' => t("The following identifiers can be used to achieve a special behavior:<br />" . check_plain('<pathauto>') . " will clean any path using the current pathauto module settings, if that module is installed.<br />" . check_plain('<none>') . " can be used as a path to have a breadcrumb element that is not hyperlinked.<br />&nbsp<br />Identifiers should be added to the paths area in the following format:  identifier|path.<br />For example: " . check_plain('<pathauto>') . "|[ogname-raw]"),
-  );
-  
   $form['help'] = array(
     '#type' => 'fieldset',
     '#collapsible' => TRUE,
@@ -97,24 +132,33 @@ function custom_breadcrumbs_form() {
   );
 
   if (module_exists('token')) {
-    $form['help']['tokens'] = array(
-      '#value' => theme('token_help', 'node'),
-    );
+    $form['help']['tokens'] = array('#value' => theme('token_help', array('node','user')), );
   }
   else {
     $form['help']['#description'] = t("To use dynamic placeholder tokens in your breadcrumb trails (the ID or title of the current node, for example), download and install the <a href='@token'>Token module</a> from Drupal.org.", array('@token' => 'http://www.drupal.org/project/token'));
     $form['help']['#collapsible'] = FALSE;
     $form['help']['#collapsed'] = FALSE;
   }
-  
-  $form['help2']['tokens'] = array(
-    '#value' => theme('custom_breadcrumbs_help_identifiers'),
+  $form['help2'] = array(
+    '#type' => 'fieldset',
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#title' => t('Special identifiers'),
+    '#description' => t("The following special identifiers can be used to achieve a special behavior. Identifiers should be added to the paths area in the following format:  identifier|path. <br />Example: ". check_plain('<pathauto>') ."|[ogname-raw]"),
   );
 
+  $form['help2']['tokens'] = array('#value' => theme('custom_breadcrumbs_help_identifiers'), );
+  $form['set_active_menu'] = array(
+     '#type' => 'checkbox',
+     '#title' => t('Override menu path'),
+     '#description' => t("If checked, the node's default location in the menu hierarchy will be forced to match the breadcrumb trail. This does not automatically add an entry for the node to existing menus, but will cause those menus to be displayed as 'active' when the node in question is viewed."),
+     '#return_value' => TRUE,
+     '#default_value' => $bid ? $breadcrumb->set_active_menu : FALSE
+  );
 
   $form['buttons']['submit'] = array(
     '#type' => 'submit',
-    '#value' => t('Submit'),
+    '#value' => t('Save'),
   );
   if ($bid) {
     $form['buttons']['delete'] = array(
@@ -123,7 +167,11 @@ function custom_breadcrumbs_form() {
       '#submit' => array('custom_breadcrumbs_form_delete'),
     );
   }
-
+  $form['buttons']['cancel'] = array(
+    '#type' => 'submit',
+    '#value' => t('Cancel'),
+    '#submit' => array('custom_breadcrumbs_form_cancel'),
+  );
   return $form;
 }
 
@@ -138,11 +186,22 @@ function custom_breadcrumbs_form_validate($form, &$form_state) {
 
 function custom_breadcrumbs_form_submit($form, &$form_state) {
   $breadcrumb = (object)$form_state['values'];
-  custom_breadcrumbs_save_breadcrumb($breadcrumb);
+  _custom_breadcrumbs_save_breadcrumb($form['#table'], $breadcrumb, $form['#save_func']);
   $form_state['redirect'] = 'admin/build/custom_breadcrumbs';
 }
 
 function custom_breadcrumbs_form_delete($form, &$form_state) {
-  _custom_breadcrumbs_delete_breadcrumb($form_state['values']['bid']);
+  _custom_breadcrumbs_delete_breadcrumb($form['#table'], $form_state['values']['bid'], $form['#delete_func']);
   $form_state['redirect'] = 'admin/build/custom_breadcrumbs';
+}
+
+function custom_breadcrumbs_form_cancel($form, &$form_state) {
+  $form_state['redirect'] = 'admin/build/custom_breadcrumbs';
+}
+
+/**
+ * Check whether the administration interface should show multilingual features.
+ */
+function _custom_breadcrumbs_multilingual() {
+  return module_exists('locale'); // || db_result(db_query("SELECT COUNT(*) FROM {custom_breadcrumb} WHERE language != ''"));
 }

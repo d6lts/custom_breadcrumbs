@@ -35,6 +35,7 @@ function custom_breadcrumbs_schema() {
         'type' => 'text',
         'not null' => TRUE,
         'size' => 'medium',
+        'default' => '',
         'description' => t('An optional PHP snippet to control the {custom_breadcrumb} visibility.'),
       ),
       'node_type' => array(
@@ -50,12 +51,18 @@ function custom_breadcrumbs_schema() {
         'default' => 1,
         'description' => t("Whether this {custom_breadcrumb} should override the node's default menu location."),
       ),
+      'language' => array(
+        'type' => 'varchar',
+        'length' => 12,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => t('The language this breadcrumb is for; if blank, the breadcrumb will be used for unknown languages.'),
+      ),
     ),
     'primary key' => array('bid'),
   );
   return $schema;
 }
-
 
 // Update old-style tokens from early versions of token.module.
 // Most users aren't using them, but we might as well handle them
@@ -111,10 +118,25 @@ function custom_breadcrumbs_update_2() {
   return $ret;
 }
 
+// Ensure this module's weight is larger than other modules, like views, so custom breadcrumbs page callback is used.
+function custom_breadcrumbs_update_3() {
+  $ret[] = update_sql("UPDATE {system} SET weight = 12 WHERE name = 'custom_breadcrumbs'");
+  return $ret;
+}
+
 // Add the menu flag
 function custom_breadcrumbs_update_6001() {
   $ret = array();
-  db_add_column($ret, 'custom_breadcrumb', 'set_active_menu', 'int', array('default' => 1, 'NOT NULL' => TRUE));
+  db_add_field($ret, 'custom_breadcrumb', 'set_active_menu', 'int', array('default' => 1, 'NOT NULL' => TRUE));
+  return $ret;
+}
+
+/**
+ * Add language support to breadcrumbs.
+ */
+function custom_breadcrumbs_update_6002() {
+  $ret = array();
+  db_add_field($ret, 'custom_breadcrumb', 'language', array('type' => 'varchar', 'length' => 12, 'not null' => TRUE, 'default' => ''));
   return $ret;
 }
 

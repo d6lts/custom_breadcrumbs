@@ -2,133 +2,191 @@
 // $Id$
 
 /**
+ * Implementation of hook_cb_breadcrumb_info().
+ *   @return an array with elements 
+ *     'table' indicating the db_table to load the breadcrumb from,
+ *     'field' a unique field of the database table used to identify the breadcrumb
+ *     'type' a string used for indicating the breadcrumb type on the admin list
+ */
+function custom_breadcrumbs_cb_breadcrumb_info() {
+  return array('table' => 'custom_breadcrumb', 'field' => 'node_type', 'type' => 'node');
+}
+
+/**
  * Implementation of hook_menu().
  */
 function custom_breadcrumbs_menu() {
   $items = array();
-
   $items['admin/build/custom_breadcrumbs'] = array(
-    'title' => 'Custom breadcrumbs',
-    'description' => 'Add custom breadcrumb trails for content types.',
-    'page callback' => 'custom_breadcrumbs_page',
-    'access callback' => 'user_access',
+    'title'            => 'Custom Breadcrumbs',
+    'description'      => 'Custom breadcrumbs',
+    'page callback'    => 'custom_breadcrumbs_page',
     'access arguments' => array('administer custom breadcrumbs'),
-    'file' => 'custom_breadcrumbs.admin.inc',
+    'file'             => 'custom_breadcrumbs.admin.inc',
+  );
+  $items['admin/build/custom_breadcrumbs/list'] = array(
+    'title'            => 'List',
+    'page callback'    => 'custom_breadcrumbs_page',
+    'access arguments' => array('administer custom breadcrumbs'),
+    'file'             => 'custom_breadcrumbs.admin.inc',
+    'type'             => MENU_DEFAULT_LOCAL_TASK,
+    'weight'           => 0,
   );
 
-  $items['admin/build/custom_breadcrumbs/add'] = array(
-    'title' => 'Add custom breadcrumb',
-    'type' => MENU_CALLBACK,
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('custom_breadcrumbs_form'),
-    'access callback' => 'user_access',
+  $items['admin/build/custom_breadcrumbs/node/add'] = array(
+    'title'            => 'Node Types',
+    'page callback'    => 'drupal_get_form',
+    'page arguments'   => array('custom_breadcrumbs_form', 'node'),
     'access arguments' => array('administer custom breadcrumbs'),
-    'file' => 'custom_breadcrumbs.admin.inc',
+    'file'             => 'custom_breadcrumbs.admin.inc',
+    'type'             => MENU_LOCAL_TASK,
+    'weight'           => 1,
   );
 
-  $items['admin/build/custom_breadcrumbs/edit'] = array(
-    'title' => 'Edit custom breadcrumb',
-    'type' => MENU_CALLBACK,
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('custom_breadcrumbs_form'),
-    'access callback' => 'user_access',
+  $items['admin/build/custom_breadcrumbs/node/edit'] = array(
+    'title'            => 'Edit custom breadcrumb for nodes',
+    'page callback'    => 'drupal_get_form',
+    'page arguments'   => array('custom_breadcrumbs_form', 'node'),
     'access arguments' => array('administer custom breadcrumbs'),
-    'file' => 'custom_breadcrumbs.admin.inc',
+    'file'             => 'custom_breadcrumbs.admin.inc',
+    'type'             => MENU_CALLBACK,
   );
-
   return $items;
 }
 
+/**
+ *  Implementation of hook_perm().
+ */
 function custom_breadcrumbs_perm() {
   return array('administer custom breadcrumbs', 'use php in custom breadcrumbs');
 }
 
+/**
+ *  Implementation of hook_nodeapi().
+ */
+
 function custom_breadcrumbs_nodeapi($node, $op, $teaser, $page) {
-  if ($op == 'alter' && !$teaser && $page) {
-    if ($breadcrumb = _custom_breadcrumbs_load_for_type($node)) {
-      $titles = preg_split("/[\n]+/", $breadcrumb->titles);
-      $paths = preg_split("/[\n]+/", $breadcrumb->paths);
+  if ($op == 'alter' && empty($teaser) && !empty($page)) {
+    // check for breadcrumb for this node type
+    $breadcrumb = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs', array('node_type' => $node->type)); 
+    if ($breadcrumb && custom_breadcrumbs_is_visible($breadcrumb, $node)) {
+      custom_breadcrumbs_set_breadcrumb($breadcrumb, $node);
+    }
+  }
+}
 
-      $titles = module_exists('token') ? token_replace($titles, 'node', $node) : $titles;
-      $paths = module_exists('token') ? token_replace($paths, 'node', $node) : $paths;
+/**
+ * Set custom breadcrumb. This can be used by submodules, but they could also provide their own function.
+ * @param $breadcrumb
+ *   The breadcrumb object
+ * @param $node
+ *   The node object (if available) for building token substituions
+ */
+function custom_breadcrumbs_set_breadcrumb($breadcrumb, $node = NULL) {
+  if ($breadcrumb) {
+    $titles = preg_split("/[\n]+/", $breadcrumb->titles);
+    $paths = preg_split("/[\n]+/", $breadcrumb->paths);
+    if (module_exists('token')) {  // Do token replacement
+      global $user;
+      if ($user->uid) {
+        $user = user_load(array('uid'=>$user->uid));  // make sure to assign the returned value.
+      }   
+      $types = array();
+      if ($node) {
+        $types['node'] = $node;
+      }
+      $types['user'] = $user;
+      $types['global'] = NULL;
+      $titles = token_replace_multiple($titles, $types);
+      $paths = token_replace_multiple($paths, $types);
+    }
+    $location = array();
+    $trail = array(l(t('Home'), '<front>'));
+    $location[] = array('title' => t('Home'), 'href' => '<front>', 'localized_options' => array());
+    for ($i = 0; $i < count($titles); $i++) {
+      if ($title = trim($titles[$i])) { // create breadcrumb
+        $trail[] = _custom_breadcrumbs_create_crumb($title, trim($paths[$i]));
+        $location[] = array('title' => $title, 'href' => drupal_get_normal_path($paths[$i]));
+      }
+    }
+    if ($breadcrumb->set_active_menu) {
+      menu_set_active_trail($location);
+    }
+    drupal_set_breadcrumb($trail);
+  }
+}
 
-      $trail = array(l(t('Home'), '<front>'));
-      $location = array();
-      for ($i = 0; $i < count($titles); $i++) {
-        if ($title = trim($titles[$i])) { // create breadcrumb
-          $location[$i] = menu_get_item(drupal_get_normal_path($paths[$i]));
-          $trail[] = _custom_breadcrumbs_create_crumb($title, trim($paths[$i]));
+function custom_breadcrumbs_build_active_trail($book_link) {
+  static $trail;
+
+  if (!isset($trail)) {
+    $trail = array();
+    $trail[] = array('title' => t('Home'), 'href' => '<front>', 'localized_options' => array());
+
+    $tree = menu_tree_all_data($book_link['menu_name'], $book_link);
+    $curr = array_shift($tree);
+
+    while ($curr) {
+      if ($curr['link']['href'] == $book_link['href']) {
+        $trail[] = $curr['link'];
+        $curr = FALSE;
+      }
+      else {
+        if ($curr['below'] && $curr['link']['in_active_trail']) {
+          $trail[] = $curr['link'];
+          $tree = $curr['below'];
         }
-      }
-      drupal_set_breadcrumb($trail);
-      if ($breadcrumb->set_active_menu) {
-        $location[] = menu_get_item();
-        menu_set_active_trail($location);
+        $curr = array_shift($tree);
       }
     }
   }
+  return $trail;
 }
 
-function _custom_breadcrumbs_load_breadcrumb($bid) {
-  $sql = 'SELECT * FROM {custom_breadcrumb} WHERE bid = %d';
-  $result = db_query($sql, $bid);
-  $breadcrumb = db_fetch_object($result);
-  return $breadcrumb;
-}
-
-function _custom_breadcrumbs_load_for_type($node) {
-  $sql = "SELECT * FROM {custom_breadcrumb} WHERE node_type = '%s'";
-  $result = db_query($sql, $node->type);
-  while ($breadcrumb = db_fetch_object($result)) {
-    if (!empty($breadcrumb->visibility_php)) {
-      // Use PHP code to check the visibility.
-      ob_start();
-      $visibility = eval(trim($breadcrumb->visibility_php));
-      ob_end_clean();
-      if ($visibility == TRUE) {
-        return $breadcrumb;
-      }
-    }
-    else {
-      return $breadcrumb;
-    }
-  }
-}
-
-function _custom_breadcrumbs_load_all_breadcrumbs($refresh = FALSE) {
-  static $breadcrumbs;
-  if ($refresh || !isset($breadcrumbs)) {
-    $sql = 'SELECT * FROM {custom_breadcrumb}';
-    $result = db_query($sql);
-
-    $breadcrumbs = array();
-    while ($breadcrumb = db_fetch_object($result)) {
-      $breadcrumbs[] = $breadcrumb;
-    }
-  }
-  return $breadcrumbs;
-}
-
-function custom_breadcrumbs_save_breadcrumb($breadcrumb = NULL) {
+/*
+ * Private function to save breadcrumb to database using submodules save function.
+ *
+ * @param $table
+ *   The table to save the breadcrumb to.
+ * @param $breadcrumb
+ *   The breadcrumb to save.
+ * @param $func
+ *   Any additional submodule function to call after breadcrumb has been saved.
+ */
+function _custom_breadcrumbs_save_breadcrumb($table, $breadcrumb, $func = NULL) {
   if (is_array($breadcrumb->paths)) {
     $breadcrumb->paths = implode("\n", $breadcrumb->paths);
   }
   if (is_array($breadcrumb->titles)) {
     $breadcrumb->titles = implode("\n", $breadcrumb->titles);
   }
-
-  if (isset($breadcrumb->bid)) {
-    drupal_write_record('custom_breadcrumb', $breadcrumb, 'bid');
+  if (isset($table)) {
+    if (isset($breadcrumb->bid)) {
+      drupal_write_record($table, $breadcrumb, 'bid');
+    }
+    else {
+      drupal_write_record($table, $breadcrumb);
+    }
   }
-  else {
-    drupal_write_record('custom_breadcrumb', $breadcrumb);
+  // call submodule function to save the breadrumb
+  if (function_exists($func)) {
+    $func($breadcrumb);
   }
 }
 
-function _custom_breadcrumbs_delete_breadcrumb($bid) {
-  $sql = 'DELETE FROM {custom_breadcrumb} WHERE bid = %d';
-  db_query($sql, $bid);
+/*
+ * Private function to delete breadcrumb from database.
+ * @param $bid
+ *   The unique breadcrumb id to be deleted.
+ */
+function _custom_breadcrumbs_delete_breadcrumb($table, $bid, $func = NULL) {
+  db_query('DELETE FROM {'. $table .'} WHERE bid = %d', $bid);
+  // call submodule function to save the breadrumb
+  if (function_exists($func)) {
+    $func($bid);
+  }
 }
+
 /**
  * Private function for custom breadcrumb to create a crumb item
  *
@@ -137,53 +195,131 @@ function _custom_breadcrumbs_delete_breadcrumb($bid) {
  * @param $original_path
  *   The desired URI and/or special identifier
  */
-function _custom_breadcrumbs_create_crumb($title, $original_path)
-{
+function _custom_breadcrumbs_create_crumb($title, $original_path) {
   list($identifier, $path) = explode("|", $original_path, 2);
-  
-  if ($path) {
+  // decode title to properly handle special characters
+  // Suggested by aangle http://drupal.org/node/318272
+  $title = ($title == '<none>') ? ' ' : decode_entities($title);
+  if (isset($path) && $path !== '') {
     switch ($identifier) {
       case '<pathauto>':
-        if (module_exists('pathauto'))
-          $crumb = l($title, pathauto_cleanstring($path, FALSE));
+        if (module_exists('pathauto')) {
+          $crumb = l(t($title), pathauto_cleanstring($path, FALSE));
+        }
         break;
       default:
-        $crumb = l($title, $original_path);
-    }
-  } else { // This may be just be a single identifier
-    switch($identifier) {
-      case '<none>':
-        $crumb = $title;
-        break;
-      default:
-        $crumb = l($title, $original_path);
+        $crumb = l(t($title), $original_path);
     }
   }
-
+  else { // This may be just be a single identifier
+    switch ($identifier) {
+      case '<none>':
+        $crumb = check_plain(t($title));
+        break;
+      default:
+        $crumb = l(t($title), $original_path);
+    }
+  }
   return $crumb;
 }
 
 /**
  * Builds a table of identifiers and their behaviors
  */
-function theme_custom_breadcrumbs_help_identifiers()
-{
+function theme_custom_breadcrumbs_help_identifiers()  {
   $headers = array(t('Identifier'), t('Behaviour'));
   $rows = array();
-  
-  // <none> identifier
   $row = array();
-  $row[] = check_plain('<none>');
-  $row[] = 'This will result in a plain text crumb. This identifier should not be used with the pipe (|) symbol.';
+  $row[] = check_plain('<none>');   // <none> identifier
+  $row[] = t('This will result in a plain text crumb. This identifier should not be used with the pipe (|) symbol.');
   $rows[] = $row;
-  
+
   // <pathauto> identifier
   if (module_exists('pathauto')) {
     $row = array();
     $row[] = check_plain('<pathauto>');
-    $row[] = 'Cleans the given path using your pathauto replacement rules.';
+    $row[] = t('Cleans the given path using your pathauto replacement rules.');
     $rows[] = $row;
   }
-  
   return theme('table', $headers, $rows, array('class' => 'description'));
- }
+}
+
+/**
+ * Load custom breadcrumb from submodule table
+ *  @param $module is the name of the custom breadcrumbs submodule managing the requested breadcrumb
+ *  @param $param is an array of the form 'field' => $value used in the SQL WHERE clause.
+ *  @return
+ *    if $param is empty, all breadcrumbs from the table will be return as an array
+ *    otherwise a single breadcrumb object is be returned
+ */
+function custom_breadcrumbs_load_breadcrumbs($module, $param = array() ) {
+  $breadcrumbs = array();
+  $info = module_invoke($module, 'cb_breadcrumb_info');
+  if (isset($info['table'])) {
+    global $language;
+    $args = array();
+    $cond = array(); 
+    $sql = "SELECT * FROM {". $info['table'] ."} WHERE ";
+    foreach ($param as $key => $value) {
+      $cond[] = db_escape_string($key) ." = '%s'";
+      $args[] = $value;
+    }
+    $cond = implode(' AND ', $cond);
+    if ($cond != '') {
+      $sql .= $cond .' AND ';
+    }
+    $sql .= " language IN ('%s', '') ORDER BY language DESC";
+    $args[] = $language->language;
+    $result = db_query($sql, $args);
+    while ($breadcrumb = db_fetch_object($result)) {
+      if ($breadcrumb) {
+        $breadcrumb->name = $breadcrumb->$info['field'];
+        $breadcrumb->breadcrumb_type = $info['type'];
+        $breadcrumbs[] = $breadcrumb;
+      }
+    }
+  }
+  return (count($breadcrumbs) > 1) ? $breadcrumbs : array_pop($breadcrumbs);
+}
+
+/**
+ *  Use PHP code to determine the breadcrumb visibility. 
+ *  @param $breadcrumb
+ *    the breadcrumb object  
+ *  @param $node
+ *    the node object (if available it can be used in the php code)
+ */
+function custom_breadcrumbs_is_visible($breadcrumb, $node = NULL) {  // could this be done with arg?
+  $visibility = TRUE;
+  if (!empty($breadcrumb->visibility_php)) {
+    ob_start();
+    $visibility = eval(trim($breadcrumb->visibility_php));
+    ob_end_clean();
+  }
+  return $visibility;
+}
+
+/**
+ * Load all breadcrumbs from all submodules.
+ * current breadcrumbs are held as static variable
+ *
+ * @param $refresh
+ *   If set to TRUE, reload breadcrumbs from database.
+ */
+function _custom_breadcrumbs_load_all_breadcrumbs($refresh = FALSE) {
+  static $breadcrumbs;
+  if ($refresh || !isset($breadcrumbs)) {
+    $breadcrumbs = array();
+    foreach (module_implements('cb_breadcrumb_info') as $module) {
+      $more = custom_breadcrumbs_load_breadcrumbs($module);
+      if (is_array($more) && !empty($more)) {
+        $breadcrumbs = array_merge($more, $breadcrumbs);
+      }
+      elseif (isset($more)) {
+        $breadcrumbs[] = $more;
+      }
+    }
+    //$breadcrumbs[] = module_invoke_all('cb_load_all_breadcrumbs'); // module can handle bc load itself if desired
+  }
+  return $breadcrumbs;
+}
