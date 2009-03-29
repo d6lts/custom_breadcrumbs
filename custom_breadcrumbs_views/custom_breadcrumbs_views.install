@@ -58,7 +58,6 @@ function custom_breadcrumbs_views_schema() {
         'type' => 'text',
         'not null' => TRUE,
         'size' => 'medium',
-        'default' => '',
         'description' => t('An optional PHP snippet to control the {custom_breadcrumbs_views} visibility.'),
       ),
       'views_path' => array(
