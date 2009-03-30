@@ -76,7 +76,7 @@ function custom_breadcrumbs_views_menu_alter(&$callbacks) {
           $newcb = '_custom_breadcrumbs_views_menu_redirect';
           if ($oldcb != $newcb) {
             $callbacks[$path]['page callback'] = $newcb;
-            array_unshift($callbacks[$path]['page arguments'], $item['bid'], $oldcb);
+            array_unshift($callbacks[$path]['page arguments'], $item['path'], $oldcb);
           }
         }
         unset($candidates[$path]);  // no longer a candidate
@@ -95,14 +95,17 @@ function _custom_breadcrumbs_views_menu_redirect() {
   for ($i = 0; $i < func_num_args(); ++$i) {
     $params[] = func_get_arg($i);
   }
-  $bid = $params[0]; // the first param is the id...need this to retrieve breadcrumb
+  $views_path = $params[0]; // the first param is the views_path...need this to retrieve breadcrumb
   $original_callback = $params[1]; // the second param is the original callback function
   $callback_params = array_slice($params, 2); // pass the remaining params to the original callback function
   if (function_exists($original_callback)) {
     $output = call_user_func_array($original_callback, $callback_params);
-    $breadcrumb = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs_views', array('bid' => $bid));
-    if ($breadcrumb && custom_breadcrumbs_is_visible($breadcrumb)) {
-      custom_breadcrumbs_set_breadcrumb($breadcrumb);
+    $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs_views', array('views_path' => $views_path));
+    while ($breadcrumb = array_pop($breadcrumbs)) {
+      if (custom_breadcrumbs_is_visible($breadcrumb)) {
+        custom_breadcrumbs_set_breadcrumb($breadcrumb);
+        return $output;  // don't check any others once a visible breadcrumb is found...
+      }
     }
     return $output;
   }
@@ -111,32 +114,23 @@ function _custom_breadcrumbs_views_menu_redirect() {
 // Displays an edit form for a custom breadcrumb record.
 function custom_breadcrumbs_views_form(&$form_state, $type) {
   $form = array();
-  $current_crumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs_views');
-  $current_views = array();
-  foreach($current_crumbs as $crumb) {
-    $current_views[$crumb->name] = $crumb->name;
-  }
+  $breadcrumb = NULL;
   $bid = arg(5);
   if (isset($bid)) {
-    $breadcrumb = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs_views', array('bid' => $bid));
     drupal_set_title('Edit Custom Breadcrumb for View');
-    unset($current_views[$breadcrumb->name]); // this must be allowed
+    $breadcrumb = array_pop(custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs_views', array('bid' => $bid)));
   }
   else {
     drupal_set_title('Add Custom Breadcrumb for View');
   }
-
   $options = array();
   $views =  views_get_all_views();
   foreach ($views as $view) {
     if (!$view->disabled) {
       foreach ($view->display as $display) {
         if ($display->display_plugin == 'page') {
-          $path = $display->display_options['path'];
-          if (!in_array($path, $current_views)) {  // can't select a view with an existing crumb, must delete existing first
-            $name = $display->display_options['path'];
-            $options[$name] = $name;
-          }
+          $name = $display->display_options['path'];
+          $options[$name] = $name;
         }
       }
     }

@@ -68,9 +68,12 @@ function custom_breadcrumbs_perm() {
 function custom_breadcrumbs_nodeapi($node, $op, $teaser, $page) {
   if ($op == 'alter' && empty($teaser) && !empty($page)) {
     // check for breadcrumb for this node type
-    $breadcrumb = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs', array('node_type' => $node->type)); 
-    if ($breadcrumb && custom_breadcrumbs_is_visible($breadcrumb, $node)) {
-      custom_breadcrumbs_set_breadcrumb($breadcrumb, $node);
+    $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs', array('node_type' => $node->type)); 
+    while ($breadcrumb = array_pop($breadcrumbs)) {
+      if (custom_breadcrumbs_is_visible($breadcrumb, $node)) {
+        custom_breadcrumbs_set_breadcrumb($breadcrumb, $node);
+        return;  // don't check any others once a visible breadcrumb is found...
+      }
     }
   }
 }
@@ -279,7 +282,7 @@ function custom_breadcrumbs_load_breadcrumbs($module, $param = array() ) {
       }
     }
   }
-  return (count($breadcrumbs) > 1) ? $breadcrumbs : array_pop($breadcrumbs);
+  return $breadcrumbs;
 }
 
 /**
@@ -312,11 +315,8 @@ function _custom_breadcrumbs_load_all_breadcrumbs($refresh = FALSE) {
     $breadcrumbs = array();
     foreach (module_implements('cb_breadcrumb_info') as $module) {
       $more = custom_breadcrumbs_load_breadcrumbs($module);
-      if (is_array($more) && !empty($more)) {
+      if (!empty($more)) {
         $breadcrumbs = array_merge($more, $breadcrumbs);
-      }
-      elseif (isset($more)) {
-        $breadcrumbs[] = $more;
       }
     }
     //$breadcrumbs[] = module_invoke_all('cb_load_all_breadcrumbs'); // module can handle bc load itself if desired

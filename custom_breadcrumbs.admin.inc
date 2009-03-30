@@ -37,50 +37,32 @@ function custom_breadcrumbs_page() {
 
 function custom_breadcrumbs_form(&$form_state, $type) {
   $form = array();
-  $current_nodes = array(); // list of nodes that have custom breadcrumbs
-  $current_crumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs');
   $breadcrumb = NULL;
   $bid = arg(5);
   if (isset($bid)) {
     drupal_set_title('Edit Custom Breadcrumb for Node');
-    foreach($current_crumbs as $crumb) {
-      if ($crumb->bid == $bid) {
-        $breadcrumb = $crumb;
-      }
-      else {
-        $current_nodes[$crumb->name] = $crumb->name;
-      }
-    }
+    $breadcrumb = array_pop(custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs', array('bid' => $bid)));
   }
   else {
     drupal_set_title('Add Custom Breadcrumb for Node');
-    foreach($current_crumbs as $crumb) {
-      $current_nodes[$crumb->name] = $crumb->name;
-    }
   }
   $options = array();
   foreach (node_get_types('names') as $type => $name) {
-    if (!in_array($type, $current_nodes)) {  // can't select a node with an existing crumb, must delete existing first
-      $options[$type] = $name;
-    }
+    $options[$type] = $name;
   }
-  if (empty($options)) {
-    $form['notice'] = array('#value' => t('Cannot add a custom breadcrumb for a node because all node types already implement custom breadcrumbs. You can edit existing crumbs displayed on the list.'));
-  }
-  else {
-    $form['node_type'] = array(
-      '#type' => 'select',
-      '#title' => t('Node type'),
-      '#required' => TRUE,
-      '#options' => $options,
-      '#description' => t('The node type this custom breadcrumb trail will apply to.'),
-      '#default_value' => $bid ? $breadcrumb->node_type : NULL,
-      '#weight' => -10,
-    );
-    // store information needed to save this breadcrumb
-    $form['#table'] = 'custom_breadcrumb';
-    $form += custom_breadcrumbs_common_form_elements($bid, $breadcrumb);
-  }
+  $form['node_type'] = array(
+    '#type' => 'select',
+    '#title' => t('Node type'),
+    '#required' => TRUE,
+    '#options' => $options,
+    '#description' => t('The node type this custom breadcrumb trail will apply to.'),
+    '#default_value' => $bid ? $breadcrumb->node_type : NULL,
+    '#weight' => -10,
+  );
+  // store information needed to save this breadcrumb
+  $form['#table'] = 'custom_breadcrumb';
+  $form += custom_breadcrumbs_common_form_elements($bid, $breadcrumb);
+  
   return $form;
 }
 
@@ -114,7 +96,6 @@ function custom_breadcrumbs_common_form_elements($bid, $breadcrumb) {
     '#description' => t('A list of titles for the breadcrumb links, one on each line.'),
     '#default_value' => $bid ? $breadcrumb->titles : NULL,
   );
-
   $form['paths'] = array(
     '#type' => 'textarea',
     '#title' => t('Paths'),
@@ -122,7 +103,6 @@ function custom_breadcrumbs_common_form_elements($bid, $breadcrumb) {
     '#description' => t('A list of Drupal paths for the breadcrumb links, one on each line.'),
     '#default_value' => $bid ? $breadcrumb->paths : NULL,
   );
-
   $form['help'] = array(
     '#type' => 'fieldset',
     '#collapsible' => TRUE,
@@ -130,7 +110,6 @@ function custom_breadcrumbs_common_form_elements($bid, $breadcrumb) {
     '#title' => t('Placeholder tokens'),
     '#description' => t("The following placeholder tokens can be used in both paths and titles. When used in a path or title, they will be replaced with the appropriate values."),
   );
-
   if (module_exists('token')) {
     $form['help']['tokens'] = array('#value' => theme('token_help', array('node','user')), );
   }
@@ -146,7 +125,6 @@ function custom_breadcrumbs_common_form_elements($bid, $breadcrumb) {
     '#title' => t('Special identifiers'),
     '#description' => t("The following special identifiers can be used to achieve a special behavior. Identifiers should be added to the paths area in the following format:  identifier|path. <br />Example: ". check_plain('<pathauto>') ."|[ogname-raw]"),
   );
-
   $form['help2']['tokens'] = array('#value' => theme('custom_breadcrumbs_help_identifiers'), );
   $form['set_active_menu'] = array(
      '#type' => 'checkbox',
@@ -155,7 +133,6 @@ function custom_breadcrumbs_common_form_elements($bid, $breadcrumb) {
      '#return_value' => TRUE,
      '#default_value' => $bid ? $breadcrumb->set_active_menu : FALSE
   );
-
   $form['buttons']['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Save'),
