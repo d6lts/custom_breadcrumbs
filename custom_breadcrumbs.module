@@ -64,7 +64,6 @@ function custom_breadcrumbs_perm() {
 /**
  *  Implementation of hook_nodeapi().
  */
-
 function custom_breadcrumbs_nodeapi($node, $op, $teaser, $page) {
   if ($op == 'alter' && empty($teaser) && !empty($page)) {
     // check for breadcrumb for this node type
@@ -117,33 +116,6 @@ function custom_breadcrumbs_set_breadcrumb($breadcrumb, $node = NULL) {
     }
     drupal_set_breadcrumb($trail);
   }
-}
-
-function custom_breadcrumbs_build_active_trail($book_link) {
-  static $trail;
-
-  if (!isset($trail)) {
-    $trail = array();
-    $trail[] = array('title' => t('Home'), 'href' => '<front>', 'localized_options' => array());
-
-    $tree = menu_tree_all_data($book_link['menu_name'], $book_link);
-    $curr = array_shift($tree);
-
-    while ($curr) {
-      if ($curr['link']['href'] == $book_link['href']) {
-        $trail[] = $curr['link'];
-        $curr = FALSE;
-      }
-      else {
-        if ($curr['below'] && $curr['link']['in_active_trail']) {
-          $trail[] = $curr['link'];
-          $tree = $curr['below'];
-        }
-        $curr = array_shift($tree);
-      }
-    }
-  }
-  return $trail;
 }
 
 /*
@@ -294,9 +266,9 @@ function custom_breadcrumbs_load_breadcrumbs($module, $param = array() ) {
  */
 function custom_breadcrumbs_is_visible($breadcrumb, $node = NULL) {  // could this be done with arg?
   $visibility = TRUE;
-  if (!empty($breadcrumb->visibility_php)) {
+  if ($trimmed = trim($breadcrumb->visibility_php) != '' ) { // guard against hidden spaces
     ob_start();
-    $visibility = eval(trim($breadcrumb->visibility_php));
+    $visibility = eval($trimmed);
     ob_end_clean();
   }
   return $visibility;
@@ -322,4 +294,82 @@ function _custom_breadcrumbs_load_all_breadcrumbs($refresh = FALSE) {
     //$breadcrumbs[] = module_invoke_all('cb_load_all_breadcrumbs'); // module can handle bc load itself if desired
   }
   return $breadcrumbs;
+}
+
+/**
+ *  Implementation of hook_theme_registry_alter
+ */
+function custom_breadcrumbs_theme_registry_alter(&$theme_registry) {
+  if (!empty($theme_registry['links'])) {
+    $theme_registry['links']['function'] = 'custom_breadcrumbs_override_links';
+  }
+}
+
+function custom_breadcrumbs_in_active_trail($link) {
+  if (!isset($link) || !isset($link['href'])) {
+    return FALSE;
+  }
+  $trail = menu_get_active_trail();
+  if (!isset($trail)) {
+    return FALSE;
+  }
+  foreach ($trail as $step) {
+    if ($step['href'] == $link['href']) {
+      return TRUE;
+    }
+  }
+
+  return FALSE;
+}
+
+function custom_breadcrumbs_override_links($links, $attributes = array('class' => 'links')) {
+  $output = '';
+  if (count($links) > 0) {
+    $output = '<ul'. drupal_attributes($attributes) .'>';
+
+    $num_links = count($links);
+    $i = 1;
+
+    foreach ($links as $key => $link) {
+      $class = $key;
+
+      // Add first, last and active classes to the list of links to help out themers.
+      if ($i == 1) {
+        $class .= ' first';
+      }
+      if ($i == $num_links) {
+        $class .= ' last';
+      }
+      if (isset($link['href']) && ($link['href'] == $_GET['q'] || ($link['href'] == '<front>' && drupal_is_front_page()))) {
+        $class .= ' active';
+      }
+      if (custom_breadcrumbs_in_active_trail($link) && ($link['href'] != '<front>')) {
+        $class .= ' active-trail';
+      }
+      $output .= '<li'. drupal_attributes(array('class' => $class)) .'>';
+
+      if (isset($link['href'])) {
+        // Pass in $link as $options, they share the same keys.
+        $output .= l($link['title'], $link['href'], $link);
+      }
+      else if (!empty($link['title'])) {
+        // Some links are actually not links, but we wrap these in <span> for adding title and class attributes
+        if (empty($link['html'])) {
+          $link['title'] = check_plain($link['title']);
+        }
+        $span_attributes = '';
+        if (isset($link['attributes'])) {
+          $span_attributes = drupal_attributes($link['attributes']);
+        }
+        $output .= '<span'. $span_attributes .'>'. $link['title'] .'</span>';
+      }
+
+      $i++;
+      $output .= "</li>\n";
+    }
+
+    $output .= '</ul>';
+  }
+
+  return $output;
 }
