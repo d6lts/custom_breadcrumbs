@@ -37,7 +37,7 @@ function custom_breadcrumbs_menu() {
     'title'            => 'Node Types',
     'page callback'    => 'drupal_get_form',
     'page arguments'   => array('custom_breadcrumbs_form', 'node'),
-    'access arguments' => array('administer custom breadcrumbs'),
+    'access arguments' => array('administer custom breadcrumbs'), 
     'file'             => 'custom_breadcrumbs.admin.inc',
     'type'             => MENU_LOCAL_TASK,
     'weight'           => 1,
@@ -50,6 +50,15 @@ function custom_breadcrumbs_menu() {
     'access arguments' => array('administer custom breadcrumbs'),
     'file'             => 'custom_breadcrumbs.admin.inc',
     'type'             => MENU_CALLBACK,
+  );
+
+  $items['admin/settings/custom-breadcrumbs'] = array(
+    'title'            => 'Custom Breadcrumb Settings',
+    'page callback'    => 'drupal_get_form',
+    'page arguments'   => array('custom_breadcrumbs_admin_settings'),
+    'access arguments' => array('administer custom breadcrumbs'),
+    'file'             => 'custom_breadcrumbs.admin.inc',
+    'type'             => MENU_NORMAL_ITEM,
   );
   return $items;
 }
@@ -103,15 +112,21 @@ function custom_breadcrumbs_set_breadcrumb($breadcrumb, $node = NULL) {
       $paths = token_replace_multiple($paths, $types);
     }
     $location = array();
-    $trail = array(l(t('Home'), '<front>'));
-    $location[] = array('title' => t('Home'), 'href' => '<front>', 'localized_options' => array());
+    $hometext = variable_get('custom_breadcrumb_home', '');
+    if ($hometext != '') {
+      $trail = array(l(check_plain($hometext), '<front>'));
+      $location[] = array('title' => check_plain($hometext), 'href' => '<front>', 'localized_options' => array());
+    } 
+    else {
+      $trail = array();
+    }
     for ($i = 0; $i < count($titles); $i++) {
       if ($title = trim($titles[$i])) { // create breadcrumb
         $trail[] = _custom_breadcrumbs_create_crumb($title, trim($paths[$i]));
-        $location[] = array('title' => $title, 'href' => drupal_get_normal_path($paths[$i]));
+        $location[] = array('title' => $title, 'href' => drupal_get_normal_path(trim($paths[$i])));
       }
     }
-    if ($breadcrumb->set_active_menu) {
+    if (variable_get('custom_breadcrumbs_force_active_trail', FALSE)) {
       menu_set_active_trail($location);
     }
     drupal_set_breadcrumb($trail);
@@ -264,8 +279,10 @@ function custom_breadcrumbs_load_breadcrumbs($module, $param = array() ) {
  *  @param $node
  *    the node object (if available it can be used in the php code)
  */
-function custom_breadcrumbs_is_visible($breadcrumb, $node = NULL) {  // could this be done with arg?
+function custom_breadcrumbs_is_visible($breadcrumb, $obj = NULL) {
   $visibility = TRUE;
+  $node = isset($obj->nid) ? $obj : NULL;  // if object is a node, let users access it via $node
+  $view = !empty($obj->current_display) ? $obj : NULL;  // if a views object, let users access it via $view
   if ($trimmed = trim($breadcrumb->visibility_php) != '' ) { // guard against hidden spaces
     ob_start();
     $visibility = eval($trimmed);
@@ -300,8 +317,10 @@ function _custom_breadcrumbs_load_all_breadcrumbs($refresh = FALSE) {
  *  Implementation of hook_theme_registry_alter
  */
 function custom_breadcrumbs_theme_registry_alter(&$theme_registry) {
-  if (!empty($theme_registry['links'])) {
+  if (variable_get('custom_breadcrumbs_force_active_trail', FALSE) && !empty($theme_registry['links'])) {
     $theme_registry['links']['function'] = 'custom_breadcrumbs_override_links';
+    $theme_registry['menu_item_link']['function'] = 'custom_breadcrumbs_theme_menu_item_link';
+    $theme_registry['menu_item']['function'] = 'custom_breadcrumbs_theme_menu_item';
   }
 }
 
@@ -314,13 +333,14 @@ function custom_breadcrumbs_in_active_trail($link) {
     return FALSE;
   }
   foreach ($trail as $step) {
-    if ($step['href'] == $link['href']) {
+    if ($step['href'] == $link['href'] || $step['href'] == drupal_get_path_alias($link['href'])) {
       return TRUE;
     }
   }
 
   return FALSE;
 }
+
 
 function custom_breadcrumbs_override_links($links, $attributes = array('class' => 'links')) {
   $output = '';
@@ -370,6 +390,171 @@ function custom_breadcrumbs_override_links($links, $attributes = array('class' =
 
     $output .= '</ul>';
   }
-
   return $output;
+}
+
+/* code cribbed from dhtml - modified to suit custom breadcrumbs */
+
+/**
+ * Preprocessor for menu_item_link.
+ * Adds an ID attribute to menu links and helps the module
+ * follow the recursion of menu_tree_output().
+ */
+function custom_breadcrumbs_theme_menu_item_link($link) {
+
+  $link['localized_options']['attributes']['id'] = 'custom_breadcrumbs_menu-' . _custom_breadcrumbs_menu_unique_id($link['mlid']);
+ 
+  // Each link in series is another level of recursion. Add it to the stack.
+  _custom_breadcrumbs_menu_stack($link);
+  if (custom_breadcrumbs_in_active_trail($link)) {  
+    $link['localized_options']['attributes']['class'] = 'active';
+  }
+  // Pass the altered variables to the normal menu themer.
+  return theme_menu_item_link($link);
+}
+
+function custom_breadcrumbs_theme_menu_item($link, $has_children, $menu = '', $in_active_trail = FALSE, $extra_class = NULL) {
+  /* When theme('menu_item') is called, the menu tree below it has been
+   * rendered already. Since we are done on this recursion level,
+   * one element must be popped off the stack.
+   */
+  $stack = _custom_breadcrumbs_menu_stack();
+
+  // Move to the last element in the stack (the current item).
+  end($stack);
+  
+  // If there are children, but they were not loaded...
+  if ($has_children && !$menu) {
+    // Load the tree below the current position.
+    $tree = _custom_breadcrumbs_menu_subtree($stack);
+    $force_active_trail = FALSE;
+    foreach ($tree as $sub => $data) {
+      if (custom_breadcrumbs_in_active_trail($data['link'])) {
+        $force_active_trail = TRUE;
+      } 
+      else {
+        $belows = (array)$data['below'];
+        foreach ($belows as $id => $below) { //descend
+          if (custom_breadcrumbs_in_active_trail($below['link'])) {
+            $force_active_trail = TRUE;
+          } 
+          else {
+            unset($tree[$sub]['below'][$id]);
+          }
+        }
+      }
+    }
+
+    if ($force_active_trail) {
+      // Render it...
+      $menu = menu_tree_output($tree);
+      $in_active_trail = TRUE;
+    }
+
+    if (!$menu) {
+      $has_children = FALSE; // Sanitize tree. If we found no children, the item has none.
+    }
+  }
+  
+  // If the current item can expand, and is neither saved as open nor in the active trail, close it.
+  if ($menu && !$in_active_trail) {
+    $extra_class .= ' collapsed start-collapsed ';
+  }
+
+  return theme_menu_item($link, $has_children, $menu, $in_active_trail, $extra_class);
+}
+
+/**
+ * Traverses the menu tree and returns the sub-tree of the item
+ * indicated by the parameter.
+ *
+ * @param $stack
+ *   An array of menu item links that are nested in each other in the tree.
+ *
+ * @return
+ *   The items below the lowest item in the stack.
+ */
+function _custom_breadcrumbs_menu_subtree($stack) {
+  static $index = array();
+  static $indexed = array();
+
+  reset($stack);
+  $start = current($stack);
+
+  // This looks expensive, but menu_tree_all_data uses static caching.
+  $tree = menu_tree_all_data($start['menu_name']);
+
+  if (!isset($indexed[$start['menu_name']])) {
+    $index += _custom_breadcrumbs_menu_index($tree);
+    $indexed[$start['menu_name']] = TRUE;
+  }
+
+  // Traverse the tree.
+  foreach ($stack as $item) {
+    $key = $index[$item['mlid']];
+    if (!isset($tree[$key])) {
+      $tree = $tree[key($tree)]['below'];
+      if (!isset($tree[$key])) return array();
+    }
+    $tree = $tree[$key]['below'];
+  }
+  return $tree;
+}
+
+/**
+ * Indexes the menu tree by mlid. This is needed to identify the items
+ * without relying on titles. This function is recursive.
+ *
+ * @param $tree
+ *   A tree of menu items such as the return value of menu_tree_all_data()
+ *
+ * @return
+ *   An array associating mlid values with the internal keys of the menu tree.
+ */
+function _custom_breadcrumbs_menu_index($tree) {
+  $index = array();
+  foreach ($tree as $key => $item) {
+    $index[$item['link']['mlid']] = $key;
+    if (!empty($item['below'])) {
+      $index += _custom_breadcrumbs_menu_index($item['below']);
+    }
+  }
+  return $index;
+}
+
+
+/**
+ * Keeps track of ID attributes and adds a suffix to make it unique-when necessary.
+ */
+function _custom_breadcrumbs_menu_unique_id($id) {
+  static $ids = array();
+  if (!isset($ids[$id])) {
+    $ids[$id] = 1;
+    return $id;
+  }
+  else {
+    return $id . '-' . $ids[$id]++;
+  }
+}
+
+/**
+ * Helper function for storing recursion levels.
+ *
+ * @param $link
+ *   If a menu item link is passed, it will be appended to the stack.
+ *   If none is given, the stack will be returned and popped by one.
+ *
+ * @return
+ *   The stack, if no parameter is given.
+ */
+function _custom_breadcrumbs_menu_stack($link = FALSE) {
+  static $stack = array();
+  if ($link) {
+    $stack[$link['localized_options']['attributes']['id']] = $link;
+  }
+  else {
+    $copy = $stack;
+    array_pop($stack);
+    return $copy;
+  }
 }

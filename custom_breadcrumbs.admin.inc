@@ -66,6 +66,47 @@ function custom_breadcrumbs_form(&$form_state, $type) {
   return $form;
 }
 
+function custom_breadcrumbs_admin_settings() {
+  $form = array();
+  drupal_set_title(t('Custom Breadcrumbs Configuration'));
+
+  $form['settings'] = array(
+    '#type'           => 'fieldset',
+    '#title'          => t('Basic Settings'),
+    '#collapsible'    => TRUE,
+  );
+
+  $form['settings']['custom_breadcrumb_home'] = array(
+    '#type'           => 'textfield',
+    '#title'          => t('Home breadcrumb text'),
+    '#default_value'  => variable_get('custom_breadcrumb_home', t('Home')),
+    '#description'    => t('Text to display at top of breadcrumb trail.  Typically home or your site name.  Leave blank to have no home breadcrumb.'),
+  );
+
+  $form['adv_settings'] = array(
+    '#type'           => 'fieldset',
+    '#title'          => t('Advanced Settings'),
+    '#collapsible'    => TRUE,
+  );
+
+  $form['adv_settings']['custom_breadcrumbs_force_active_trail'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Force the active trail'),
+    '#description' => t('This options sets the active trail to match the custom breadcrumb trail and overrides the normal theme_links() implementation to add the active-trail class to links. This is experimental and may not work as expected. If this is of interest to you, please test and report back to the custom breadcrumbs issue queue.'),
+    '#default_value' => variable_get('custom_breadcrumbs_force_active_trail', FALSE),
+    '#weight' => -10,
+  );
+
+  $form['#submit'][] = 'custom_breadcrumbs_admin_settings_submit';
+  
+  return system_settings_form($form);
+}
+
+function custom_breadcrumbs_admin_settings_submit($form, &$form_state) {
+  drupal_rebuild_theme_registry();  // rebuild the theme registry
+  drupal_set_message('The theme registry has been rebuilt');
+}
+
 function custom_breadcrumbs_common_form_elements($bid, $breadcrumb) {
   $form = array();
   $form['bid'] = array('#type' => 'hidden', '#value' => $bid, );
@@ -126,6 +167,7 @@ function custom_breadcrumbs_common_form_elements($bid, $breadcrumb) {
     '#description' => t("The following special identifiers can be used to achieve a special behavior. Identifiers should be added to the paths area in the following format:  identifier|path. <br />Example: ". check_plain('<pathauto>') ."|[ogname-raw]"),
   );
   $form['help2']['tokens'] = array('#value' => theme('custom_breadcrumbs_help_identifiers'), );
+/*
   $form['set_active_menu'] = array(
      '#type' => 'checkbox',
      '#title' => t('Override menu path'),
@@ -133,6 +175,7 @@ function custom_breadcrumbs_common_form_elements($bid, $breadcrumb) {
      '#return_value' => TRUE,
      '#default_value' => $bid ? $breadcrumb->set_active_menu : FALSE
   );
+*/
   $form['buttons']['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Save'),

@@ -66,7 +66,7 @@ function custom_breadcrumbs_views_pre_view($this, $display_id, $args) {
   // check for breadcrumb for this path
   $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs_paths', array('specific_path' => $curpath));
   while ($breadcrumb = array_pop($breadcrumbs)) {
-    if (custom_breadcrumbs_is_visible($breadcrumb)) {
+    if (custom_breadcrumbs_is_visible($breadcrumb, $this)) {
       custom_breadcrumbs_set_breadcrumb($breadcrumb);
       return;  // don't check any others once a visible breadcrumb is found...
     }
