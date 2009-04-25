@@ -41,7 +41,7 @@ function custom_breadcrumbs_form(&$form_state, $type) {
   $bid = arg(5);
   if (isset($bid)) {
     drupal_set_title('Edit Custom Breadcrumb for Node');
-    $breadcrumb = array_pop(custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs', array('bid' => $bid)));
+    $breadcrumb = array_pop(custom_breadcrumbs_load_breadcrumbs_bid('custom_breadcrumbs', $bid));
   }
   else {
     drupal_set_title('Add Custom Breadcrumb for Node');
@@ -62,7 +62,7 @@ function custom_breadcrumbs_form(&$form_state, $type) {
   // store information needed to save this breadcrumb
   $form['#table'] = 'custom_breadcrumb';
   $form += custom_breadcrumbs_common_form_elements($bid, $breadcrumb);
-  
+
   return $form;
 }
 
@@ -98,7 +98,7 @@ function custom_breadcrumbs_admin_settings() {
   );
 
   $form['#submit'][] = 'custom_breadcrumbs_admin_settings_submit';
-  
+
   return system_settings_form($form);
 }
 
@@ -152,7 +152,7 @@ function custom_breadcrumbs_common_form_elements($bid, $breadcrumb) {
     '#description' => t("The following placeholder tokens can be used in both paths and titles. When used in a path or title, they will be replaced with the appropriate values."),
   );
   if (module_exists('token')) {
-    $form['help']['tokens'] = array('#value' => theme('token_help', array('node','user')), );
+    $form['help']['tokens'] = array('#value' => theme('token_help', array('node', 'user')), );
   }
   else {
     $form['help']['#description'] = t("To use dynamic placeholder tokens in your breadcrumb trails (the ID or title of the current node, for example), download and install the <a href='@token'>Token module</a> from Drupal.org.", array('@token' => 'http://www.drupal.org/project/token'));
@@ -167,15 +167,7 @@ function custom_breadcrumbs_common_form_elements($bid, $breadcrumb) {
     '#description' => t("The following special identifiers can be used to achieve a special behavior. Identifiers should be added to the paths area in the following format:  identifier|path. <br />Example: ". check_plain('<pathauto>') ."|[ogname-raw]"),
   );
   $form['help2']['tokens'] = array('#value' => theme('custom_breadcrumbs_help_identifiers'), );
-/*
-  $form['set_active_menu'] = array(
-     '#type' => 'checkbox',
-     '#title' => t('Override menu path'),
-     '#description' => t("If checked, the node's default location in the menu hierarchy will be forced to match the breadcrumb trail. This does not automatically add an entry for the node to existing menus, but will cause those menus to be displayed as 'active' when the node in question is viewed."),
-     '#return_value' => TRUE,
-     '#default_value' => $bid ? $breadcrumb->set_active_menu : FALSE
-  );
-*/
+
   $form['buttons']['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Save'),
