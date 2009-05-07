@@ -112,7 +112,7 @@ function custom_breadcrumbs_set_breadcrumb($breadcrumb, $node = NULL) {
       $paths = token_replace_multiple($paths, $types);
     }
     $location = array();
-    $hometext = variable_get('custom_breadcrumb_home', '');
+    $hometext = variable_get('custom_breadcrumb_home', t('Home'));
     if ($hometext != '') {
       $trail = array(l($hometext, '<front>'));
       $location[] = array('title' => check_plain($hometext), 'href' => '<front>', 'localized_options' => array());
@@ -302,9 +302,12 @@ function custom_breadcrumbs_load_breadcrumbs_bid($module, $bid = NULL) {
  */
 function custom_breadcrumbs_is_visible($breadcrumb, $obj = NULL) {
   $visibility = TRUE;
-  $node = isset($obj->nid) ? $obj : NULL;  // if object is a node, let users access it via $node
-  $view = !empty($obj->current_display) ? $obj : NULL;  // if a views object, let users access it via $view
-  if ($trimmed = trim($breadcrumb->visibility_php) != '' ) { // guard against hidden spaces
+  // If object is a node, let users access it via $node.
+  $node = isset($obj->nid) ? $obj : NULL;
+  // If a views object, let users access it via $view.
+  $view = !empty($obj->current_display) ? $obj : NULL;
+  // Guard against hidden spaces.
+  if (($trimmed = trim($breadcrumb->visibility_php)) != '' ) {
     ob_start();
     $visibility = eval($trimmed);
     ob_end_clean();

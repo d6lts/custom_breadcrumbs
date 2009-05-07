@@ -152,7 +152,10 @@ function custom_breadcrumbs_common_form_elements($bid, $breadcrumb) {
     '#description' => t("The following placeholder tokens can be used in both paths and titles. When used in a path or title, they will be replaced with the appropriate values."),
   );
   if (module_exists('token')) {
-    $form['help']['tokens'] = array('#value' => theme('token_help', array('node', 'user')), );
+    // This code depends on a patch still under review at http://drupal.org/node/127072.
+    // $form['help']['tokens'] = array('#value' => theme('token_help', array('global', 'node', 'user')), );
+    // This is overkill, but is necessary until this patch is committed.
+    $form['help']['tokens'] = array('#value' => theme('token_help', 'all'), );
   }
   else {
     $form['help']['#description'] = t("To use dynamic placeholder tokens in your breadcrumb trails (the ID or title of the current node, for example), download and install the <a href='@token'>Token module</a> from Drupal.org.", array('@token' => 'http://www.drupal.org/project/token'));
