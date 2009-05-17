@@ -2,6 +2,12 @@
 // $Id$
 
 /**
+ * @file
+ * Provide custom breadcrumbs for node-type pages and base functionality
+ * for submodules to add custom breadcrumbs for other types of pages. 
+ */
+
+/**
  * Implementation of hook_cb_breadcrumb_info().
  *   @return an array with elements
  *     'table' indicating the db_table to load the breadcrumb from,
@@ -10,6 +16,16 @@
  */
 function custom_breadcrumbs_cb_breadcrumb_info() {
   return array('table' => 'custom_breadcrumb', 'field' => 'node_type', 'type' => 'node');
+}
+
+/**
+ * Implementation of hook_theme().
+ */
+function custom_breadcrumbs_theme() {
+  return array(
+    'custom_breadcrumbs_filter_form' => array('arguments' => array('form' => NULL), 'file' => 'custom_breadcrumbs.admin.inc', ),
+    'custom_breadcrumbs_filters' => array('arguments' => array('form' => NULL), 'file' => 'custom_breadcrumbs.admin.inc', ),
+  );
 }
 
 /**
@@ -275,15 +291,27 @@ function custom_breadcrumbs_load_breadcrumbs($module, $param = array() ) {
  *  @param $module is the name of the custom breadcrumbs submodule managing the requested breadcrumb
  *  @param $bid is the unique breadcrumb id
  *    If $bid is NULL, then all breadcrumbs will be loaded from the table
+ *    If $bid is NULL and $languages is specified, the breadcrumbs will be filtered according 
+ *      to the languages in the array.
+ *    If $bid is specified, $languages are ignored
  *  @return
  *    An array of breadcrumb objects
  */
-function custom_breadcrumbs_load_breadcrumbs_bid($module, $bid = NULL) {
+function custom_breadcrumbs_load_breadcrumbs_bid($module, $bid = NULL, $languages = array()) {
   $breadcrumbs = array();
   $info = module_invoke($module, 'cb_breadcrumb_info');
   if (isset($info['table'])) {
+    $result = NULL;
     $sql = "SELECT * FROM {". $info['table'] ."} ";
-    $result = is_null($bid) ? db_query($sql ."ORDER BY language DESC") : db_query($sql ."WHERE bid = %d", $bid);
+    if (!is_null($bid)) {
+      $result = db_query($sql ."WHERE bid = %d", $bid);
+    }
+    else {
+      if (!empty($languages)) {
+        $sql .= "WHERE language IN (".  db_placeholders($languages, 'text') .") ORDER BY language DESC";
+      }
+      $result = db_query($sql, $languages);
+    } 
     while ($breadcrumb = db_fetch_object($result)) {
       $breadcrumb->name = $breadcrumb->$info['field'];
       $breadcrumb->breadcrumb_type = $info['type'];
@@ -364,7 +392,6 @@ function custom_breadcrumbs_in_active_trail($link) {
 
   return FALSE;
 }
-
 
 function custom_breadcrumbs_override_links($links, $attributes = array('class' => 'links')) {
   $output = '';
