@@ -102,10 +102,10 @@ function custom_breadcrumbs_update_2() {
   switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
-      $ret[] = update_sql("ALTER TABLE {custom_breadcrumb} ADD visibility_php text");
+      $ret[] = update_sql("ALTER TABLE {custom_breadcrumb} ADD visibility_php text NOT NULL default ''");
       break;
     case 'pgsql':
-      db_add_column($ret, 'custom_breadcrumb', 'visibility_php', 'text', array('default' => ''));
+      db_add_column($ret, 'custom_breadcrumb', 'visibility_php', 'text', array('not null' => TRUE, 'default' => "''"));
       break;
   }
   return $ret;
