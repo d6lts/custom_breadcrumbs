@@ -97,6 +97,8 @@ function _custom_breadcrumbs_sort_cmp($bc1, $bc2) {
   $first = $custom_breadcrumbs_sort['column'];
   $key = array_pop(array_keys($options, $first));
   unset($options[$key]);
+  // Reindex the array.
+  $options = array_values($options);
   $sortdir = array();
   foreach ($custom_breadcrumbs_sort['direction'] as $key => $sort) {
     $sortdir[$key] = ($sort == 'asc') ? 1 : -1;

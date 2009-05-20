@@ -103,6 +103,18 @@ function custom_breadcrumbs_nodeapi($node, $op, $teaser, $page) {
 }
 
 /**
+ * Implementation of hook_form_alter().
+ */
+function custom_breadcrumbs_form_alter(&$form, $form_state, $form_id) {
+  // Provide custom breadcrumbs for comment forms associated with nodes.
+  if ($form_id == 'comment_form' && isset($form['nid']['#value'])) {
+    $node = node_load($form['nid']['#value']);
+    // Call custom_breadcrumbs_nodeapi to provide a custom_breadcrumb for this comment.
+    custom_breadcrumbs_nodeapi($node, 'alter', array(), array(1));
+  }
+}
+
+/**
  * Set custom breadcrumb. This can be used by submodules, but they could also provide their own function.
  * @param $breadcrumb
  *   The breadcrumb object
