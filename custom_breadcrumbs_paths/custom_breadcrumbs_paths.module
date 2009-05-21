@@ -54,7 +54,7 @@ function custom_breadcrumbs_paths_nodeapi($node, $op, $teaser, $page) {
     while ($breadcrumb = array_pop($breadcrumbs)) {
       $page_match = FALSE;
       if ($matchpath) {
-        $page_match = _custom_breadcrumbs_paths_page_match($REQUEST['q'], $breadcrumb->specific_path);
+        $page_match = _custom_breadcrumbs_paths_page_match($_REQUEST['q'], $breadcrumb->specific_path);
       }
       if ((!$matchpath) || ($matchpath && $page_match)) {
         if (custom_breadcrumbs_is_visible($breadcrumb, $node)) {
