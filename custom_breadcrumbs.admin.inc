@@ -339,7 +339,7 @@ function custom_breadcrumbs_filters() {
     }
   }
   $filters['type'] = array(
-    'title' => t('Breadcrumb type'),
+    'title' => t('Type'),
     'options' => $options, 
   );
   if (_custom_breadcrumbs_multilingual()) {
