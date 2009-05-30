@@ -1,5 +1,9 @@
 <?php
 // $Id$
+/**
+ * @file
+ * Install file for the custom_breadcrumbs_views module.
+ */
 
 /**
  * Implementation of hook_install().
@@ -9,7 +13,7 @@ function custom_breadcrumbs_views_install() {
   $weight = (int) db_result(db_query("SELECT weight FROM {system} WHERE name = 'views'"));
   db_query("UPDATE {system} SET weight = %d WHERE name = 'custom_breadcrumbs_views'", $weight + 1);
 
-// search for Views breadcrumbs in existing {custom_breadcrumb} and move to new table
+  // Search for Views breadcrumbs in existing {custom_breadcrumb} and move to new table.
   drupal_set_message('Looking for views breadcrumbs to copy from {custom_breadcrumb}...');
   $result = db_query("SELECT * FROM {custom_breadcrumb} WHERE node_type = '%s'", 'Views Page');
   $found = 0;
@@ -80,13 +84,25 @@ function custom_breadcrumbs_views_schema() {
         'description' => t('The language this breadcrumb is for; if blank, the breadcrumb will be used for unknown languages.'),
       ),
     ),
+    'indexes' => array(
+      'language' => array('language'),
+      'vpath_language' => array('views_path', 'language'),
+    ),
     'primary key' => array('bid'),
   );
   return $schema;
 }
 
+/**
+ * Add indices to custom_breadcrumb table to improve performance.
+ */
+function custom_breadcrumbs_views_update_6000() {
+  $ret = array();
+  db_add_index($ret, 'custom_breadcrumbs_views', 'language', array('language'));
+  db_add_index($ret, 'custom_breadcrumbs_views', 'vpath_language', array('views_path', 'language'));
+  return $ret;
+}
+
 function custom_breadcrumbs_views_uninstall() {
   drupal_uninstall_schema('custom_breadcrumbs_views');
 }
-
-

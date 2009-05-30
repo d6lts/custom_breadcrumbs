@@ -1,0 +1,7 @@
+; $Id$
+name = Custom Breadcrumbs for Taxonomy
+description = "Enables taxonomy based breadcrumbs and allows for node assosciations with taxonomy terms."
+package = Custom Breadcrumbs
+dependencies[] = custom_breadcrumbs
+dependencies[] = taxonomy
+core = 6.x

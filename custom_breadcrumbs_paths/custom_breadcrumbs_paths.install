@@ -6,11 +6,11 @@
  */
 function custom_breadcrumbs_paths_install() {
   drupal_install_schema('custom_breadcrumbs_paths');
-// increase the weight so its greater than custom_breadcrumbs
+  // Increase the weight so its greater than custom_breadcrumbs
   $weight = (int) db_result(db_query("SELECT weight FROM {system} WHERE name = 'custom_breadcrumbs'"));
   db_query("UPDATE {system} SET weight = %d WHERE name = 'custom_breadcrumbs_paths'", $weight + 1);
 
-// search for Paths breadcrumbs in existing {custom_breadcrumb} and copy to new table
+  // Search for Paths breadcrumbs in existing {custom_breadcrumb} and copy to new table
   drupal_set_message('Looking for Specify Path breadcrumbs to copy from {custom_breadcrumb}...');
   $result = db_query("SELECT * FROM {custom_breadcrumb} WHERE node_type = '%s'", 'Specify Path');
   $found = 0;
@@ -81,9 +81,23 @@ function custom_breadcrumbs_paths_schema() {
         'description' => t('The language this breadcrumb is for; if blank, the breadcrumb will be used for unknown languages.'),
       ),
     ),
+    'indexes' => array(
+      'language' => array('language'),
+      'path_language' => array('specific_path', 'language'),
+    ),
     'primary key' => array('bid'),
   );
   return $schema;
+}
+
+/**
+ * Add indices to custom_breadcrumb table to improve performance.
+ */
+function custom_breadcrumbs_paths_update_6000() {
+  $ret = array();
+  db_add_index($ret, 'custom_breadcrumbs_paths', 'language', array('language'));
+  db_add_index($ret, 'custom_breadcrumbs_paths', 'path_language', array('specific_path', 'language'));
+  return $ret;
 }
 
 function custom_breadcrumbs_paths_uninstall() {

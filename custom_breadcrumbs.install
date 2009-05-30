@@ -2,6 +2,11 @@
 // $Id$
 
 /**
+ * @file
+ * Install file for the custom_breadcrumbs module.
+ */
+
+/**
  * Implementation of hook_install().
  */
 function custom_breadcrumbs_install() {
@@ -57,6 +62,10 @@ function custom_breadcrumbs_schema() {
         'default' => '',
         'description' => t('The language this breadcrumb is for; if blank, the breadcrumb will be used for unknown languages.'),
       ),
+    ),
+    'indexes' => array(
+      'language' => array('language'),
+      'node_language' => array('node_type', 'language'),
     ),
     'primary key' => array('bid'),
   );
@@ -136,6 +145,16 @@ function custom_breadcrumbs_update_6001() {
 function custom_breadcrumbs_update_6002() {
   $ret = array();
   db_add_field($ret, 'custom_breadcrumb', 'language', array('type' => 'varchar', 'length' => 12, 'not null' => TRUE, 'default' => ''));
+  return $ret;
+}
+
+/**
+ * Add indices to custom_breadcrumb table to improve performance.
+ */
+function custom_breadcrumbs_update_6003() {
+  $ret = array();
+  db_add_index($ret, 'custom_breadcrumb', 'language', array('language'));
+  db_add_index($ret, 'custom_breadcrumb', 'node_language', array('node_type', 'language'));
   return $ret;
 }
 

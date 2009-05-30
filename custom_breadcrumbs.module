@@ -4,18 +4,21 @@
 /**
  * @file
  * Provide custom breadcrumbs for node-type pages and base functionality
- * for submodules to add custom breadcrumbs for other types of pages. 
+ * for submodules to add custom breadcrumbs for other types of pages.
  */
 
 /**
  * Implementation of hook_cb_breadcrumb_info().
- *   @return an array with elements
- *     'table' indicating the db_table to load the breadcrumb from,
- *     'field' a unique field of the database table used to identify the breadcrumb
- *     'type' a string used for indicating the breadcrumb type on the admin list
+ *   @return an array of arrays describing the breadcrumbs provided by the module.
+ *     Provide one array for each type of breadcrumb. Each array should have elements
+ *       'table' indicating the db_table to load the breadcrumb from,
+ *       'field' a unique field of the database table used to identify the breadcrumb,
+ *       'type' a string used for indicating the breadcrumb type on the admin list.
  */
 function custom_breadcrumbs_cb_breadcrumb_info() {
-  return array('table' => 'custom_breadcrumb', 'field' => 'node_type', 'type' => 'node');
+  $breadcrumb_type_info = array();
+  $breadcrumb_type_info[] = array('table' => 'custom_breadcrumb', 'field' => 'node_type', 'type' => 'node');
+  return $breadcrumb_type_info;
 }
 
 /**
@@ -50,7 +53,7 @@ function custom_breadcrumbs_menu() {
   );
 
   $items['admin/build/custom_breadcrumbs/node/add'] = array(
-    'title'            => 'Node Types',
+    'title'            => 'Node',
     'page callback'    => 'drupal_get_form',
     'page arguments'   => array('custom_breadcrumbs_form', 'node'),
     'access arguments' => array('administer custom breadcrumbs'),
@@ -87,17 +90,43 @@ function custom_breadcrumbs_perm() {
 }
 
 /**
+ * Implementation of hook_help().
+ */
+function custom_breadcrumbs_help($path, $arg) {
+  switch ($path) {
+    case 'admin/help#custom_breadcrumbs':
+     $output = t("<p>Custom Breadcrumbs allows you to create and modify your own breadcrumbs based on node type. After enabling the module, click on Administer > Site building > Custom breadcrumbs. Select <em>Node Type</em> at the top of the page to create breadcrumbs according to node type. Other types (such as views, paths, and taxonomy) may also be present, depending on what
+modules have been installed.</p>");
+      $output .= t('<p>On the <em>Node Type</em> page, select the node type the breadcrumb will apply to. There are two text fields below-- "Titles" and "Paths." When creating  a breadcrumb, you are simply creating a link. In the custom breadcrumbs interface "Titles" describes the text of the breadcrumb while "Paths" describes the Drupal path the breadcrumb links to. Each Title must have a corresponding Path.</p>');
+      $output .= t('<p>To give a very simple example of how to use this module, let\'s say I have a blog on my web site called "Deep Thoughts." To create this, I use the Views module to create a page at /blog that displays all the node types "blog post." Whenever a user views a blog post I want the breadcrumb to show Home > Deep Thoughts instead of simply Home. To do this I would simply type "Deep Thoughts" in the "Titles" field and and "blog" in the "Paths" field and save my breadcrumb.</p>');
+      $output .= t('<p>Using the Tokens module, the Custom breadcrumbs module becomes much more flexible because breadcrumbs can become dynamic. You can create a breadcrumb like Home > Deep Thoughts > [Month of Blog Post] [Year of Blog Post], where "Deep Thoughts" links to my main blog page and "[Month of Blog Post] [Year of Blog Post]" links to a view that shows only blog posts from the month and year the blog post was created (e.g. June 2007). For this, you would do the following:</p>');
+      $output .= t('<p>Node Type:<br />Blog Post<br /><br />Titles:<br />Deep Thoughts<br />[month] [yyyy]<br /><br />Paths:<br />blog<br />blog/[mm]_[yyyy]<br />(where of course, blog/[mm]_[yyyy] is the path to the view of blog posts from that month 
+and year). So if you created a blog pos on June 13, 2007 your breadcrumb would show Home > Deep Thoughts > June 2007 and "June 2007" links to "blog/06_2007" which is a view of all blog posts from June 2007.</p>');
+      $output .= t('<p>Also, note that Custom Breadcrumbs doesn\'t actually check to be sure that a particular path 
+exists, so you\'ll have to check yourself to avoid 404 errors.</p>');
+      $output .= t("<p>Only users with 'administer custom breadcrumbs' permission will be allowed to create or modify custom breadcrumbs.</p>");
+      $output .= t("<h2>Breadcrumb Visibility</h2><p>Users given 'use php in custom breadcrumbs' permission can include php code snippet that returns TRUE or FALSE to control whether or not the breadcrumb is displayed. Note that this code has access to the $node variable, and can check its type or any other property.</p>");
+      $output .= t('<h2>Special Identifiers</h2><p>The following identifiers can be used to achieve a special behavior:
+<ul><li><pathauto> - will clean any path using the current pathauto module settings, if that module is installed.</li>
+<li><none> - can be used as a path to have a breadcrumb element that is not hyperlinked.</li><p>Identifiers should be added to the paths area in the following format: identifier|path. To be recognized, the idenfier must be enclosed in angular brackets, and proceed any part of the path. For example: %example</p>', array('%example' => '<pathauto>|[ogname-raw]'));
+      return $output;
+    case 'admin/build/custom_breadcrumbs':
+      $output = t('To create a custom breadcrumb, choose one of the breadcrumbs types listed above. The following table lists all of the custom breadcrumbs that have been defined. The list can be filtered by breadcrumb type or language, or sorted by clicking on one of the column headings.');
+      return $output;
+  } 
+}
+
+/**
  * Implementation of hook_nodeapi().
  */
 function custom_breadcrumbs_nodeapi($node, $op, $teaser, $page) {
   if ($op == 'alter' && empty($teaser) && !empty($page)) {
-    // check for breadcrumb for this node type
-    $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs', array('node_type' => $node->type));
-    while ($breadcrumb = array_pop($breadcrumbs)) {
-      if (custom_breadcrumbs_is_visible($breadcrumb, $node)) {
-        custom_breadcrumbs_set_breadcrumb($breadcrumb, $node);
-        return;  // don't check any others once a visible breadcrumb is found...
-      }
+    // Check for breadcrumb for this node type.
+    global $language;
+    $languages = array('language' => $language->language, 'all' => '');
+    $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs', NULL, array('node_type' => $node->type), $languages);
+    if ($breadcrumb = custom_breadcrumbs_select_breadcrumb($breadcrumbs, $node)) {
+      custom_breadcrumbs_set_breadcrumb($breadcrumb, $node);
     }
   }
 }
@@ -111,6 +140,50 @@ function custom_breadcrumbs_form_alter(&$form, $form_state, $form_id) {
     $node = node_load($form['nid']['#value']);
     // Call custom_breadcrumbs_nodeapi to provide a custom_breadcrumb for this comment.
     custom_breadcrumbs_nodeapi($node, 'alter', array(), array(1));
+  } 
+  elseif (user_access('administer custom breadcrumbs') && isset($form['type']) && isset($form['#node']) && $form['type']['#value'] .'_node_form' == $form_id) {
+    // Provide a custom breadcrumbs fieldset for node edit forms.
+    $node = $form['#node'];
+    // Load all custom breadcrumbs for this node type.
+    $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs', 'custom_breadcrumb', array('node_type' => $form['type']['#value']));
+    foreach (module_implements('cb_node_form_table') as $module) {
+      $func = $module .'_cb_node_form_table'; 
+      $more = $func($node);
+      if (!empty($more)) {
+        $breadcrumbs = array_merge($breadcrumbs, $more);
+      }
+    }
+
+    $output = NULL;
+    if (count($breadcrumbs) > 0) {
+      $output = '<p>'. t('Custom breadcrumbs have been created for this %type page. Use the !link to add additional breadcrumbs. Or follow the links in the table below to edit or delete existing custom breadcrumbs.', array('%type' => $form['type']['#value'], '!link' => l('Custom Breadcrumbs Administration Page', 'admin/build/custom_breadcrumbs'))) .'</p>';
+    }
+    // Show a table of custom breadcrumbs with links to the edit form.
+    // $form['custom_breadcrumbs_table']['#value] = 
+    $output .= custom_breadcrumbs_simple_breadcrumb_table($breadcrumbs);
+    $form['custom_breadcrumbs'] = array(
+      '#type'           => 'fieldset',
+      '#title'          => t('Custom Breadcrumbs'),
+      '#access'         => user_access('administer custom breadcrumbs'),
+      '#collapsible'    => TRUE,
+      '#collapsed'      => TRUE,
+      '#weight'         => -50,
+    );
+    $form['custom_breadcrumbs']['breadcrumb_table'] = array('#value' => $output, );
+  }
+}
+
+/**
+ * Select a breadcrumb from an array of breadcrumbs.
+ * @param $breadcrumbs is the array of breadcrumb objects
+ * @param $obj is an optional object (node, view, ...) to aid in the selection process
+ * @return $breadcrumb is the selected breadcrumb object
+ */
+function custom_breadcrumbs_select_breadcrumb($breadcrumbs, $obj = NULL) {
+  while ($breadcrumb = array_pop($breadcrumbs)) {
+    if (custom_breadcrumbs_is_visible($breadcrumb, $obj)) {
+      return $breadcrumb;
+    }
   }
 }
 
@@ -118,21 +191,22 @@ function custom_breadcrumbs_form_alter(&$form, $form_state, $form_id) {
  * Set custom breadcrumb. This can be used by submodules, but they could also provide their own function.
  * @param $breadcrumb
  *   The breadcrumb object
- * @param $node
- *   The node object (if available) for building token substituions
+ * @param $obj
+ *   A node object (if available) for building token substituions.
  */
-function custom_breadcrumbs_set_breadcrumb($breadcrumb, $node = NULL) {
+function custom_breadcrumbs_set_breadcrumb($breadcrumb, $obj = NULL) {
   if ($breadcrumb) {
     $titles = preg_split("/[\n]+/", $breadcrumb->titles);
     $paths = preg_split("/[\n]+/", $breadcrumb->paths);
-    if (module_exists('token')) {  // Do token replacement
+    if (module_exists('token')) {
+      // Do token replacement.
       global $user;
       if ($user->uid) {
-        $user = user_load(array('uid' => $user->uid));  // make sure to assign the returned value.
+        $user = user_load(array('uid' => $user->uid));
       }
       $types = array();
-      if ($node) {
-        $types['node'] = $node;
+      if (isset($obj->nid)) {
+        $types['node'] = $obj;
       }
       $types['user'] = $user;
       $types['global'] = NULL;
@@ -149,7 +223,8 @@ function custom_breadcrumbs_set_breadcrumb($breadcrumb, $node = NULL) {
       $trail = array();
     }
     for ($i = 0; $i < count($titles); $i++) {
-      if ($title = trim($titles[$i])) { // create breadcrumb
+      if ($title = trim($titles[$i])) {
+        // Create breadcrumb.
         $trail[] = _custom_breadcrumbs_create_crumb($title, trim($paths[$i]));
         $location[] = array('title' => $title, 'href' => drupal_get_normal_path(trim($paths[$i])));
       }
@@ -265,69 +340,43 @@ function theme_custom_breadcrumbs_help_identifiers()  {
 /**
  * Load custom breadcrumb from submodule table
  *  @param $module is the name of the custom breadcrumbs submodule managing the requested breadcrumb
+ *  @param $table is the name of the table to limit the search to. This only needs to be provided if
+ *    the submodule provides breadcrumbs from more than one table.
  *  @param $param is an array of the form 'field' => $value used in the SQL WHERE clause.
  *  @return
  *    if $param is empty, all breadcrumbs from the table will be return as an array
  *    otherwise a single breadcrumb object is be returned
  */
-function custom_breadcrumbs_load_breadcrumbs($module, $param = array() ) {
+function custom_breadcrumbs_load_breadcrumbs($module, $table = NULL,  $param = array(), $languages = array()) {
   $breadcrumbs = array();
-  $info = module_invoke($module, 'cb_breadcrumb_info');
-  if (isset($info['table'])) {
-    global $language;
-    $args = array();
-    $cond = array();
-    $sql = "SELECT * FROM {". $info['table'] ."} WHERE ";
-    foreach ($param as $key => $value) {
-      $cond[] = db_escape_string($key) ." = '%s'";
-      $args[] = $value;
-    }
-    $cond = implode(' AND ', $cond);
-    if ($cond != '') {
-      $sql .= $cond .' AND ';
-    }
-    $sql .= " language IN ('%s', '') ORDER BY language DESC";
-    $args[] = $language->language;
-    $result = db_query($sql, $args);
-    while ($breadcrumb = db_fetch_object($result)) {
-      $breadcrumb->name = $breadcrumb->$info['field'];
-      $breadcrumb->breadcrumb_type = $info['type'];
-      $breadcrumbs[] = $breadcrumb;
-    }
-  }
-  return $breadcrumbs;
-}
-
-/**
- * Load custom breadcrumbs from submodule table by unique breadcrumb id
- *  @param $module is the name of the custom breadcrumbs submodule managing the requested breadcrumb
- *  @param $bid is the unique breadcrumb id
- *    If $bid is NULL, then all breadcrumbs will be loaded from the table
- *    If $bid is NULL and $languages is specified, the breadcrumbs will be filtered according 
- *      to the languages in the array.
- *    If $bid is specified, $languages are ignored
- *  @return
- *    An array of breadcrumb objects
- */
-function custom_breadcrumbs_load_breadcrumbs_bid($module, $bid = NULL, $languages = array()) {
-  $breadcrumbs = array();
-  $info = module_invoke($module, 'cb_breadcrumb_info');
-  if (isset($info['table'])) {
-    $result = NULL;
-    $sql = "SELECT * FROM {". $info['table'] ."} ";
-    if (!is_null($bid)) {
-      $result = db_query($sql ."WHERE bid = %d", $bid);
-    }
-    else {
-      if (!empty($languages)) {
-        $sql .= "WHERE language IN (".  db_placeholders($languages, 'text') .") ORDER BY language DESC";
+  $bc_info = module_invoke($module, 'cb_breadcrumb_info');
+  foreach ($bc_info as $info) {
+    if (!isset($table) || ($info['table'] == $table)) {
+      $args = array();
+      $cond = array();
+      $sql = "SELECT * FROM {". $info['table'] ."}";
+      if ($p = !empty($param)) {
+        $sql .= " WHERE ";
+        foreach ($param as $key => $value) {
+          $cond[] = db_escape_string($key) ." = '%s'";
+          $args[] = $value;
+        }
+        $cond = implode(' AND ', $cond);
+        if ($cond != '') {
+          $sql .= $cond;
+        }
       }
-      $result = db_query($sql, $languages);
-    } 
-    while ($breadcrumb = db_fetch_object($result)) {
-      $breadcrumb->name = $breadcrumb->$info['field'];
-      $breadcrumb->breadcrumb_type = $info['type'];
-      $breadcrumbs[] = $breadcrumb;
+      if (!empty($languages)) {
+        $sql .= ($p) ? " AND " : " WHERE ";
+        $sql .= "language IN (".  db_placeholders($languages, 'text') .") ORDER BY language ASC";
+        $args = array_merge($args, $languages);
+      }
+      $result = db_query($sql, $args);
+      while ($breadcrumb = db_fetch_object($result)) {
+        $breadcrumb->name = (isset($info['name_constructor'])) ? $info['name_constructor']($breadcrumb) : $breadcrumb->$info['field'];
+        $breadcrumb->breadcrumb_type = $info['type'];
+        $breadcrumbs[] = $breadcrumb;
+      }
     }
   }
   return $breadcrumbs;
@@ -367,7 +416,7 @@ function _custom_breadcrumbs_load_all_breadcrumbs($refresh = FALSE) {
   if ($refresh || !isset($breadcrumbs)) {
     $breadcrumbs = array();
     foreach (module_implements('cb_breadcrumb_info') as $module) {
-      $more = custom_breadcrumbs_load_breadcrumbs_bid($module);
+      $more = custom_breadcrumbs_load_breadcrumbs($module);
       if (!empty($more)) {
         $breadcrumbs = array_merge($more, $breadcrumbs);
       }

@@ -1,6 +1,5 @@
 <?php
 // $Id$
-
 /**
  * @file
  * Admin page callback file for the custom_breadcrumbs module.
@@ -15,17 +14,21 @@ function custom_breadcrumbs_page() {
     'column' => 'name'));
   $sort = $custom_breadcrumbs_sort['direction']; 
   $multilingual = _custom_breadcrumbs_multilingual();
-  // read session variable to load breadcrumbs of type and language selected by user
   $breadcrumbs = array();
+  // Read session variable to load breadcrumbs of type and language selected by user.
   if (empty($_SESSION['custom_breadcrumbs_overview_filter'])) {
     $breadcrumbs = _custom_breadcrumbs_load_all_breadcrumbs(TRUE);
-  } 
+  }
   else {
+    // Determine a list of selected languages, and a list of modules to load them from.
     $modules = array();
+    $tables = array();
     $languages = array();
     foreach ($_SESSION['custom_breadcrumbs_overview_filter'] as $filter) {
       if ($filter[0] == 'type') {
-        $modules[] = $filter[1];
+        list($module, $table) = explode('-', $filter[1]);
+        $modules[] = $module;
+        $tables[] = $table;
       }
       elseif ($filter[0] == 'language') {
         $languages[] = $filter[1];
@@ -34,58 +37,67 @@ function custom_breadcrumbs_page() {
     if (empty($modules)) {
       $modules =  module_implements('cb_breadcrumb_info');   
     }
-    foreach ($modules as $module) {
-      $more = custom_breadcrumbs_load_breadcrumbs_bid($module, NULL, $languages);
+    foreach ($modules as $key => $module) {
+      $more = custom_breadcrumbs_load_breadcrumbs($module, $tables[$key], NULL, $languages);
       if (!empty($more)) {
-        $breadcrumbs = array_merge($more, $breadcrumbs);
+        $breadcrumbs = array_merge($breadcrumbs, $more);
       }
     }
   }
-
   // Sort the breadcrumbs according to $sort and $order.
-
-  $order = in_array($_GET['order'], array('name', 'breadcrumb_type', 'language')) ? $_GET['order'] : 'name';
+  $columns = array('name' => 'Name', 'breadcrumb_type' => 'Breadcrumb Type');
+  if ($multilingual) {
+    $columns['language'] = 'Language';
+  }
+  $order = in_array($_GET['order'], array_keys($columns)) ? $_GET['order'] : 'name';
   $sort[$order] = (isset($_GET['sort']) && ($_GET['sort'] == 'desc')) ? 'desc' : 'asc';
-
   variable_set('custom_breadcrumbs_sort', array('direction' => $sort, 'column' => $order));
   usort($breadcrumbs, '_custom_breadcrumbs_sort_cmp');
 
+  // Make the breadcrumb list table sortable by name, type and language.
+  $path = 'admin/build/custom_breadcrumbs';
+  $sort[$order] = ($sort[$order] == 'asc') ? 'desc' : 'asc';
+
+  // Add an arrow indicating sort direction.
+  $image = array($order => theme('tablesort_indicator', $sort[$order]));
+
+  $header = array(); 
+  foreach ($columns as $key => $title) {
+    $options = array('attributes' => array('title' => t('sort by @s', array('@s' => $title))));
+    $options['query'] = 'order='. $key .'&sort='. $sort[$key];
+    if (isset($image[$key])) {
+      $options['html'] = TRUE;
+      $title .= $image[$key];
+    }
+    $header[$key] = array('data' => l($title, $path, $options));
+  }
+  $header[$order]['class'] = 'active';
+  $header['operations'] = t('Operations');
   $rows = array();
   foreach ($breadcrumbs as $breadcrumb) {
     $row = array();
     $name = $breadcrumb->name;
     $type = $breadcrumb->breadcrumb_type;
-    $row[] = $name . (!empty($breadcrumb->visibility_php) ? ' '. t('with PHP snippet') : '');
-    $row[] = $type;
+    $row['name'] = array('data' => $name . (!empty($breadcrumb->visibility_php) ? ' '. t('with PHP snippet') : ''));
+    $row['breadcrumb_type'] = array('data' => $type);
     if ($multilingual) {
-      $row[] = module_invoke('locale', 'language_name', $breadcrumb->language);
+      $row['language'] = array('data' => module_invoke('locale', 'language_name', $breadcrumb->language));
     }
-    $row[] =  l(t('edit'), 'admin/build/custom_breadcrumbs/'. $breadcrumb->breadcrumb_type .'/edit/'. $breadcrumb->bid);
+    $row['edit'] =  l(t('edit'), $path .'/'. $breadcrumb->breadcrumb_type .'/edit/'. $breadcrumb->bid);
+    $row[$order]['class'] = 'active';
     $rows[] = $row;
   }
   if (count($rows) == 0) {
     $rows[] = array(array('data' => t('No custom breadcrumbs have been defined.'), 'colspan' => 2 + (int)$multilingual));
   }
 
-  // Make the breadcrumb list table sortable by name, type and language.
-
-  $path = 'admin/build/custom_breadcrumbs';
-  $sort[$order] = ($sort[$order] == 'asc') ? 'desc' : 'asc';
-  $header = array(); 
-  $header[] = l('Name', $path, array('attributes' => array('title' => t('sort by Name')), 'query' => 'order=name&sort='. $sort['name']));
-  $header[] = l('Page type', $path, array('attributes' => array('title' => t('sort by Page Type')), 'query' => 'order=breadcrumb_type&sort='. $sort['breadcrumb_type']));
-  if ($multilingual) {
-    $header[] = l('Language', $path,  array('attributes' => array('title' => t('sort by Language')), 'query' => 'order=language&sort='. $sort['language']));
-  }
-  $header[] = t('Operations');
-  $output =  drupal_get_form('custom_breadcrumbs_filter_form');
+  $output =  drupal_get_form('custom_breadcrumbs_filter_form'); 
   $output .= theme('table', $header, $rows);
-
   return $output;
 }
 
 /**
- * Helper function for usort to sort two breadcrumb objects by name, type, or language.
+ * Helper function for usort to sort two custom_breadcrumbs objects by name, type, or language.
  * Each column can be independently sorted as asc or desc.
  */
 function _custom_breadcrumbs_sort_cmp($bc1, $bc2) {
@@ -124,7 +136,7 @@ function custom_breadcrumbs_form(&$form_state, $type) {
   $bid = arg(5);
   if (isset($bid)) {
     drupal_set_title('Edit Custom Breadcrumb for Node');
-    $breadcrumb = array_pop(custom_breadcrumbs_load_breadcrumbs_bid('custom_breadcrumbs', $bid));
+    $breadcrumb = array_pop(custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs', NULL, array('bid' => $bid)));
   }
   else {
     drupal_set_title('Add Custom Breadcrumb for Node');
@@ -155,7 +167,6 @@ function custom_breadcrumbs_form(&$form_state, $type) {
  * @ingroup forms
  * @see system_settings_form()
  */
-
 function custom_breadcrumbs_admin_settings() {
   $form = array();
   drupal_set_title(t('Custom Breadcrumbs Configuration'));
@@ -312,7 +323,7 @@ function custom_breadcrumbs_form_cancel($form, &$form_state) {
  * Check whether the administration interface should show multilingual features.
  */
 function _custom_breadcrumbs_multilingual() {
-  return module_exists('locale'); // || db_result(db_query("SELECT COUNT(*) FROM {custom_breadcrumb} WHERE language != ''"));
+  return module_exists('locale');
 }
 
 /**
@@ -322,11 +333,13 @@ function custom_breadcrumbs_filters() {
   $filters = array();
   $options = array();
   foreach (module_implements('cb_breadcrumb_info') as $module) {
-    $info = module_invoke($module, 'cb_breadcrumb_info');  
-    $options[$module] = $info['type'];
+    $bc_info = module_invoke($module, 'cb_breadcrumb_info');  
+    foreach ($bc_info as $info) {
+      $options[$module .'-'. $info['table']] = $info['type'];
+    }
   }
   $filters['type'] = array(
-    'title' => t('Page type'),
+    'title' => t('Breadcrumb type'),
     'options' => $options, 
   );
   if (_custom_breadcrumbs_multilingual()) {
@@ -481,4 +494,30 @@ function theme_custom_breadcrumbs_filters($form) {
   $output .= '</li></ul>';
 
   return $output;
+}
+
+function custom_breadcrumbs_simple_breadcrumb_table($breadcrumbs) {
+  $header = array(t('Name'), t('Type'), t('Titles'), t('Paths'));
+  $multilingual = _custom_breadcrumbs_multilingual();
+  if ($multilingual) {
+    $header[] = t('Language');
+  }
+  $header[] = t('Operations');
+  $rows = array();
+  foreach ($breadcrumbs as $breadcrumb) {
+    $row = array();
+    $row[] = array('data' => $breadcrumb->name . (!empty($breadcrumb->visibility_php) ? ' '. t('with PHP snippet') : ''));
+    $row[] = array('data' => $breadcrumb->breadcrumb_type);
+    $row[] = array('data' => check_plain($breadcrumb->titles));
+    $row[] = array('data' => check_plain($breadcrumb->paths));
+    if ($multilingual) {
+      $row[] = array('data' => module_invoke('locale', 'language_name', $breadcrumb->language));
+    }
+    $row[] =  l(t('edit'), 'admin/build/custom_breadcrumbs/'. $breadcrumb->breadcrumb_type .'/edit/'. $breadcrumb->bid);
+    $rows[] = $row;
+  }
+  if (count($rows) == 0) {
+    $rows[] = array(array('data' => t('You can define custom breadcrumbs at !link.', array('!link' => l('Custom Breadcrumbs Administration Page', 'admin/build/custom_breadcrumbs'))), 'colspan' => 5 + (int)$multilingual));
+  }
+  return theme('table', $header, $rows);
 }
