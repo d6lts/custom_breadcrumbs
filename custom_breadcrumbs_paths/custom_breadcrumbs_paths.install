@@ -10,8 +10,8 @@ function custom_breadcrumbs_paths_install() {
   $weight = (int) db_result(db_query("SELECT weight FROM {system} WHERE name = 'custom_breadcrumbs'"));
   db_query("UPDATE {system} SET weight = %d WHERE name = 'custom_breadcrumbs_paths'", $weight + 1);
 
-  // Search for Paths breadcrumbs in existing {custom_breadcrumb} and copy to new table
-  drupal_set_message('Looking for Specify Path breadcrumbs to copy from {custom_breadcrumb}...');
+  // Search for Paths breadcrumbs in existing {custom_breadcrumb} and copy to new table.
+  drupal_set_message(t('Looking for Specify Path breadcrumbs to copy from {custom_breadcrumb}...'));
   $result = db_query("SELECT * FROM {custom_breadcrumb} WHERE node_type = '%s'", 'Specify Path');
   $found = 0;
   while ($breadcrumb = db_fetch_object($result)) {
@@ -34,51 +34,51 @@ function custom_breadcrumbs_paths_install() {
 
 function custom_breadcrumbs_paths_schema() {
   $schema['custom_breadcrumbs_paths'] = array(
-    'description' => t('Stores custom breadcrumb trails for specific paths.'),
+    'description' => 'Stores custom breadcrumb trails for specific paths.',
     'fields' => array(
       'bid' => array(
         'type' => 'serial',
         'unsigned' => TRUE,
         'not null' => TRUE,
-        'description' => t('Unique identifier for the {custom_breadcrumbs_views}.'),
+        'description' => 'Unique identifier for the {custom_breadcrumbs_views}.',
       ),
       'titles' => array(
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
         'default' => '',
-        'description' => t("A return-delimited list of titles for the breadcrumb links.")
+        'description' => 'A return-delimited list of titles for the breadcrumb links.',
       ),
       'paths' => array(
         'type' => 'varchar',
         'length' => 255,
         'not null' => FALSE,
-        'description' => t("A return-delimited list of url paths for the breadcrumb links."),
+        'description' => 'A return-delimited list of url paths for the breadcrumb links.',
       ),
       'visibility_php' => array(
         'type' => 'text',
         'not null' => TRUE,
         'size' => 'medium',
-        'description' => t('An optional PHP snippet to control the {custom_breadcrumbs_views} visibility.'),
+        'description' => 'An optional PHP snippet to control the {custom_breadcrumbs_views} visibility.',
       ),
       'specific_path' => array(
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
-        'description' => t("Path to the view for this custom breadcrumb."),
+        'description' => 'Path to the view for this custom breadcrumb.',
       ),
       'set_active_menu' => array(
         'type' => 'int',
         'not null' => TRUE,
         'default' => 1,
-        'description' => t("Whether this {custom_breadcrumbs_views} should override the node's default menu location."),
+        'description' => "Whether this {custom_breadcrumbs_views} should override the node's default menu location.",
       ),
       'language' => array(
         'type' => 'varchar',
         'length' => 12,
         'not null' => TRUE,
         'default' => '',
-        'description' => t('The language this breadcrumb is for; if blank, the breadcrumb will be used for unknown languages.'),
+        'description' => 'The language this breadcrumb is for; if blank, the breadcrumb will be used for unknown languages.',
       ),
     ),
     'indexes' => array(

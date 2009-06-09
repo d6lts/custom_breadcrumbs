@@ -151,7 +151,7 @@ function custom_breadcrumbs_taxonomy_nodeapi($node, $op, $teaser, $page) {
       if (variable_get('custom_breadcrumbs_taxonomy_use_hierarchy', TRUE)) {
         // Extract lightest term from lightest vocabulary assosciated with node.
         $term = _custom_breadcrumbs_taxonomy_node_get_lightest_term($node->nid);
-        $breadcrumb = _custom_breadcrumbs_taxonomy_generate_breadcrumb($term->tid, FALSE, $node);
+        $breadcrumb = custom_breadcrumbs_taxonomy_generate_breadcrumb($term->tid, FALSE, $node);
      if (variable_get('custom_breadcrumbs_taxonomy_include_node_title', FALSE)) {
           $breadcrumb[] = $node->title;
         }
@@ -187,12 +187,17 @@ function custom_breadcrumbs_taxonomy_nodeapi($node, $op, $teaser, $page) {
  * Implementation of hook_menu_alter().
  */
 function custom_breadcrumbs_taxonomy_menu_alter(&$callbacks) {
-  // Defined by taxonomy, but might be modified by another module.
-  $existing_callback = $callbacks['taxonomy/term/%'];
-  variable_set('custom_breadcrumbs_taxonomy_override_callback', $existing_callback);
-  $callbacks['taxonomy/term/%']['page callback'] = '_custom_breadcrumbs_taxonomy_term_page';
-  $callbacks['taxonomy/term/%']['file'] = 'custom_breadcrumbs_taxonomy.inc';
-  $callbacks['taxonomy/term/%']['file path'] = drupal_get_path('module', 'custom_breadcrumbs_taxonomy');
+  $term_callback = &$callbacks['taxonomy/term/%'];
+
+  $callback = $term_callback['page callback'];
+  $arguments = $term_callback['page arguments'];
+  $file = $term_callback['file'];
+  $filepath = isset($term_callback['file path']) ? $term_callback['file path'] : drupal_get_path('module', $term_callback['module']);
+
+  $term_callback['page callback'] = 'custom_breadcrumbs_taxonomy_term_page';
+  $term_callback['page arguments'] = array_merge(array($callback, $file, $filepath, 2), $arguments);
+  $term_callback['file'] = 'custom_breadcrumbs_taxonomy.inc';
+  $term_callback['file path'] = drupal_get_path('module', 'custom_breadcrumbs_taxonomy');
 }
 
 /**

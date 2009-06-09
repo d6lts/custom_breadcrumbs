@@ -192,7 +192,7 @@ function custom_breadcrumbs_paths_form(&$form_state, $type) {
   }
   $description = t('The drupal path that this custom breadcrumb trail will apply to. ');
   if (variable_get('custom_breadcrumbs_paths_allow_wildcards', FALSE)) {
-    $description .= t("The '*' character can be used as a wildcard to set a custom breadcrumb for all matching paths. For example, foo/bar/* could be used to match every page with a path beginning with foo/bar. Do not include language prefixes in the path. This will be handled automatically according to the selected language.");
+    $description .= t("The '*' character can be used as a wildcard to set a custom breadcrumb for all matching paths. For example, foo/bar* could be used to match every page with a path beginning with foo/bar. Do not include language prefixes in the path. This will be handled automatically according to the selected language.");
   }
   $form['specific_path'] = array(
     '#type' => 'textfield',

@@ -37,51 +37,51 @@ function custom_breadcrumbs_views_install() {
 
 function custom_breadcrumbs_views_schema() {
   $schema['custom_breadcrumbs_views'] = array(
-    'description' => t('Stores custom breadcrumb trail overrides for views pages.'),
+    'description' => 'Stores custom breadcrumb trail overrides for views pages.',
     'fields' => array(
       'bid' => array(
         'type' => 'serial',
         'unsigned' => TRUE,
         'not null' => TRUE,
-        'description' => t('Unique identifier for the {custom_breadcrumbs_views}.'),
+        'description' => 'Unique identifier for the {custom_breadcrumbs_views}.',
       ),
       'titles' => array(
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
         'default' => '',
-        'description' => t("A return-delimited list of titles for the breadcrumb links.")
+        'description' => 'A return-delimited list of titles for the breadcrumb links.',
       ),
       'paths' => array(
         'type' => 'varchar',
         'length' => 255,
         'not null' => FALSE,
-        'description' => t("A return-delimited list of url paths for the breadcrumb links."),
+        'description' => 'A return-delimited list of url paths for the breadcrumb links.',
       ),
       'visibility_php' => array(
         'type' => 'text',
         'not null' => TRUE,
         'size' => 'medium',
-        'description' => t('An optional PHP snippet to control the {custom_breadcrumbs_views} visibility.'),
+        'description' => 'An optional PHP snippet to control the {custom_breadcrumbs_views} visibility.',
       ),
       'views_path' => array(
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
-        'description' => t("Path to the view for this custom breadcrumb."),
+        'description' => 'Path to the view for this custom breadcrumb.',
       ),
       'set_active_menu' => array(
         'type' => 'int',
         'not null' => TRUE,
         'default' => 1,
-        'description' => t("Whether this {custom_breadcrumbs_views} should override the node's default menu location."),
+        'description' => "Whether this {custom_breadcrumbs_views} should override the node's default menu location.",
       ),
       'language' => array(
         'type' => 'varchar',
         'length' => 12,
         'not null' => TRUE,
         'default' => '',
-        'description' => t('The language this breadcrumb is for; if blank, the breadcrumb will be used for unknown languages.'),
+        'description' => 'The language this breadcrumb is for; if blank, the breadcrumb will be used for unknown languages.',
       ),
     ),
     'indexes' => array(

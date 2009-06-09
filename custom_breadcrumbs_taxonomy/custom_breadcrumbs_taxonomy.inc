@@ -7,40 +7,42 @@
  */
 
 /**
- * This function overrides the core taxonomy_term_page.  First, call the core
- * taxonomy_term_page.  Then, alter the breadcrumb trail.  
+ * Set a Taxonomy breadcrumb and call the original taxonomy/term/% callback.
+ *
+ * @param $callback
+ *   A callback function as defined in hook_menu().
+ * @param $file
+ *   A callback file as defined in hook_menu().
+ * @param $filepath
+ *   A callback file path as defined in hook_menu().
+ * @param $str_tids
+ *   A term selector string, e.g. "1,3,8" or "4+9".
+ * @param ...
+ *   Additional arguments to pass on to the callback.
+ *
+ * @ return
+ *   The return value of the original callback function.
  */
-function _custom_breadcrumbs_taxonomy_term_page($str_tids = '', $depth = 0, $op = 'page') {
-  static $callback = array();
-  if (empty($callback)) {
-    $callback = variable_get('custom_breadcrumbs_taxonomy_override_callback', array() );
-    if (!empty($callback)) {
-      $require_path = isset($callback['file path']) ? $callback['file path'] : drupal_get_path('module', $callback['module']);
-      require_once($require_path .'/'. $callback['file']);
-    }
-    else {
-      // Default to core taxonomy_term_page callback.
-      // Include the .inc file with all helper functions.
-      require_once(drupal_get_path('module', 'taxonomy') .'/taxonomy.pages.inc');
-    }
-  }
-  if (isset($callback['page callback'])) {
-    $func = $callback['page callback'];
-    // Assume that any function overriding the core taxonomy function would have the same parameters.
-    $output = $func($str_tids, $depth, $op);
-  }
-  else {
-    // Call the core taxonomy_term_page function.
-    $output = taxonomy_term_page($str_tids, $depth, $op);
-  }
+function custom_breadcrumbs_taxonomy_term_page() {
+  $args = func_get_args();
+  $callback = array_shift($args);
+  $file = array_shift($args);
+  $filepath = array_shift($args);
+  $str_tids = array_shift($args);
 
   // Use first term to generate breadcrumb trail.
   $terms = taxonomy_terms_parse_string($str_tids);
-  $breadcrumb = _custom_breadcrumbs_taxonomy_generate_breadcrumb($terms['tids'][0], TRUE);
+  $breadcrumb = custom_breadcrumbs_taxonomy_generate_breadcrumb($terms['tids'][0], TRUE);
+
+  require_once($filepath .'/'. $file);
+  $output = call_user_func_array($callback, $args);
+
   if (custom_breadcrumbs_is_visible($breadcrumb)) {
     drupal_set_breadcrumb($breadcrumb);
   }
+
   return $output;
+
 }
 
 /**
@@ -48,14 +50,12 @@ function _custom_breadcrumbs_taxonomy_term_page($str_tids = '', $depth = 0, $op 
  * Similar to taxonomy_node_get_terms, but only return the lightest term in the
  * lightest vocab for the node.
  */
-function _custom_breadcrumbs_taxonomy_node_get_lightest_term($nid) {
+function custom_breadcrumbs_taxonomy_node_get_lightest_term($nid) {
 
   /* We only want the first row of the result--this is the lightest term of the
    * lightest vocab.
    */
-//  $result = db_query(db_rewrite_sql('SELECT t.* FROM {term_node} r INNER JOIN {term_data} t ON r.tid = t.tid INNER JOIN {term_hierarchy} h ON t.tid = h.tid INNER JOIN {vocabulary} v ON t.vid = v.vid WHERE r.nid = %d ORDER BY v.weight, h.parent DESC, t.weight, t.name', 't', 'tid'), $nid);
-$result = db_query(db_rewrite_sql('SELECT t.* FROM {term_node} r INNER JOIN {term_data} t ON r.tid = t.tid INNER JOIN {vocabulary} v ON t.vid = v.vid WHERE r.nid = %d ORDER BY v.weight, t.weight, t.name', 't', 'tid'), $nid);
-
+  $result = db_query(db_rewrite_sql('SELECT t.* FROM {term_node} r INNER JOIN {term_data} t ON r.tid = t.tid INNER JOIN {term_hierarchy} h ON t.tid = h.tid INNER JOIN {vocabulary} v ON t.vid = v.vid WHERE r.nid = %d ORDER BY v.weight, h.parent DESC, t.weight, t.name', 't', 'tid'), $nid);
 
   // Extract the first row of query.
   $term = db_fetch_object($result);
@@ -67,7 +67,7 @@ $result = db_query(db_rewrite_sql('SELECT t.* FROM {term_node} r INNER JOIN {ter
  * breadcrumb, and will only be used on the taxonomy term page and on nodes if
  * custom_breadcrumbs_taxonomy_use_hierarchy has been enabled. 
  */
-function _custom_breadcrumbs_taxonomy_generate_breadcrumb($tid, $is_term_page = FALSE, $node = NULL) {
+function custom_breadcrumbs_taxonomy_generate_breadcrumb($tid, $is_term_page = FALSE, $node = NULL) {
   $term = taxonomy_get_term($tid);
 
   // Prepare for token replacements.

@@ -9,11 +9,13 @@
 
 /**
  * Implementation of hook_cb_breadcrumb_info().
- *   @return an array of arrays describing the breadcrumbs provided by the module.
- *     Provide one array for each type of breadcrumb. Each array should have elements
- *       'table' indicating the db_table to load the breadcrumb from,
- *       'field' a unique field of the database table used to identify the breadcrumb,
- *       'type' a string used for indicating the breadcrumb type on the admin list.
+ *
+ * @return 
+ *   An array of arrays describing the breadcrumbs provided by the module.
+ *   Provide one array for each type of breadcrumb. Each array should have elements:
+ *     'table' indicating the db_table to load the breadcrumb from,
+ *     'field' a unique field of the database table used to identify the breadcrumb,
+ *     'type' a string used for indicating the breadcrumb type on the admin list.
  */
 function custom_breadcrumbs_cb_breadcrumb_info() {
   $breadcrumb_type_info = array();
@@ -159,7 +161,8 @@ function custom_breadcrumbs_form_alter(&$form, $form_state, $form_id) {
       $output = '<p>'. t('Custom breadcrumbs have been created for this %type page. Use the !link to add additional breadcrumbs. Or follow the links in the table below to edit or delete existing custom breadcrumbs.', array('%type' => $form['type']['#value'], '!link' => l('Custom Breadcrumbs Administration Page', 'admin/build/custom_breadcrumbs'))) .'</p>';
     }
     // Show a table of custom breadcrumbs with links to the edit form.
-    // $form['custom_breadcrumbs_table']['#value] = 
+    require_once(drupal_get_path('module', 'custom_breadcrumbs') .'/custom_breadcrumbs.admin.inc');
+
     $output .= custom_breadcrumbs_simple_breadcrumb_table($breadcrumbs);
     $form['custom_breadcrumbs'] = array(
       '#type'           => 'fieldset',
@@ -175,9 +178,13 @@ function custom_breadcrumbs_form_alter(&$form, $form_state, $form_id) {
 
 /**
  * Select a breadcrumb from an array of breadcrumbs.
- * @param $breadcrumbs is the array of breadcrumb objects
- * @param $obj is an optional object (node, view, ...) to aid in the selection process
- * @return $breadcrumb is the selected breadcrumb object
+ *
+ * @param $breadcrumbs 
+ *   The array of breadcrumb objects that the breadcrumb will be selected from.
+ * @param $obj
+ *   An optional object (node, view, ...) to aid in the selection process.
+ * @return $breadcrumb 
+ *   The selected breadcrumb object.
  */
 function custom_breadcrumbs_select_breadcrumb($breadcrumbs, $obj = NULL) {
   while ($breadcrumb = array_pop($breadcrumbs)) {
@@ -188,7 +195,9 @@ function custom_breadcrumbs_select_breadcrumb($breadcrumbs, $obj = NULL) {
 }
 
 /**
- * Set custom breadcrumb. This can be used by submodules, but they could also provide their own function.
+ * Set custom breadcrumb.
+ *
+ * This can be used by submodules, but they could also provide their own function.
  * @param $breadcrumb
  *   The breadcrumb object
  * @param $obj
@@ -236,8 +245,8 @@ function custom_breadcrumbs_set_breadcrumb($breadcrumb, $obj = NULL) {
   }
 }
 
-/*
- * Private function to save breadcrumb to database using submodules save function.
+/**
+ * Private function to save breadcrumb.
  *
  * @param $table
  *   The table to save the breadcrumb to.
@@ -261,20 +270,25 @@ function _custom_breadcrumbs_save_breadcrumb($table, $breadcrumb, $func = NULL) 
       drupal_write_record($table, $breadcrumb);
     }
   }
-  // call submodule function to save the breadrumb
+  // Call submodule function after the breadcrumb has been saved.
   if (function_exists($func)) {
     $func($breadcrumb);
   }
 }
 
-/*
- * Private function to delete breadcrumb from database.
+/**
+ * Private function to delete breadcrumb.
+ *
+ * @param $table
+ *   The table to delete the breadcrumb from.
  * @param $bid
- *   The unique breadcrumb id to be deleted.
+ *   The id for the breadcrumb that is to be deleted.
+ * @param $func
+ *   Any additional submodule function to call after breadcrumb has been deleted.
  */
 function _custom_breadcrumbs_delete_breadcrumb($table, $bid, $func = NULL) {
   db_query('DELETE FROM {'. $table .'} WHERE bid = %d', $bid);
-  // call submodule function to save the breadrumb
+  // Call submodule function after the breadrumb has been deleted.
   if (function_exists($func)) {
     $func($bid);
   }
@@ -289,6 +303,12 @@ function _custom_breadcrumbs_delete_breadcrumb($table, $bid, $func = NULL) {
  *   The desired URI and/or special identifier
  */
 function _custom_breadcrumbs_create_crumb($title, $original_path) {
+  // Checked for named anchor #fragment, and strip it out. Then replace it below.
+  $options = array();
+  if (strpos($original_path, '#') !== FALSE) {
+    list($original_path, $fragment) = explode('#', $original_path, 2);
+    $options = array('fragment' => $fragment);
+  }
   list($identifier, $path) = explode("|", $original_path, 2);
   // decode title to properly handle special characters
   // Suggested by aangle http://drupal.org/node/318272
@@ -297,11 +317,11 @@ function _custom_breadcrumbs_create_crumb($title, $original_path) {
     switch ($identifier) {
       case '<pathauto>':
         if (module_exists('pathauto')) {
-          $crumb = l(t($title), pathauto_cleanstring($path, FALSE));
+          $crumb = l(t($title), pathauto_cleanstring($path, FALSE), $options);
         }
         break;
       default:
-        $crumb = l(t($title), $original_path);
+        $crumb = l(t($title), $original_path, $options);
     }
   }
   else { // This may be just be a single identifier
@@ -310,7 +330,7 @@ function _custom_breadcrumbs_create_crumb($title, $original_path) {
         $crumb = check_plain(t($title));
         break;
       default:
-        $crumb = l(t($title), $original_path);
+        $crumb = l(t($title), $original_path, $options);
     }
   }
   return $crumb;
@@ -339,13 +359,17 @@ function theme_custom_breadcrumbs_help_identifiers()  {
 
 /**
  * Load custom breadcrumb from submodule table
- *  @param $module is the name of the custom breadcrumbs submodule managing the requested breadcrumb
- *  @param $table is the name of the table to limit the search to. This only needs to be provided if
+ *
+ *  @param $module
+ *    The name of the custom breadcrumbs submodule managing the requested breadcrumb.
+ *  @param $table
+ *    The name of the table to limit the search to. This only needs to be provided if
  *    the submodule provides breadcrumbs from more than one table.
- *  @param $param is an array of the form 'field' => $value used in the SQL WHERE clause.
+ *  @param $param
+ *    An array of the form 'field' => $value used in the SQL WHERE clause.
  *  @return
  *    if $param is empty, all breadcrumbs from the table will be return as an array
- *    otherwise a single breadcrumb object is be returned
+ *    otherwise a single breadcrumb object is be returned.
  */
 function custom_breadcrumbs_load_breadcrumbs($module, $table = NULL,  $param = array(), $languages = array()) {
   $breadcrumbs = array();
@@ -384,10 +408,13 @@ function custom_breadcrumbs_load_breadcrumbs($module, $table = NULL,  $param = a
 
 /**
  *  Use PHP code to determine the breadcrumb visibility.
+ *
  *  @param $breadcrumb
- *    the breadcrumb object
- *  @param $node
- *    the node object (if available it can be used in the php code)
+ *    The breadcrumb object
+ *  @param $obj
+ *    An object (node or view) that can be used in the php code.
+ *  @return
+ *    TRUE if the breadcrumb should be displayed, FALSE otherwise.
  */
 function custom_breadcrumbs_is_visible($breadcrumb, $obj = NULL) {
   $visibility = TRUE;
@@ -406,10 +433,13 @@ function custom_breadcrumbs_is_visible($breadcrumb, $obj = NULL) {
 
 /**
  * Load all breadcrumbs from all submodules.
- * current breadcrumbs are held as static variable
+ *
+ * Current breadcrumbs are held as static variable
  *
  * @param $refresh
  *   If set to TRUE, reload breadcrumbs from database.
+ * @return $breadcrumbs
+ *   An array of breadcrumb objects.
  */
 function _custom_breadcrumbs_load_all_breadcrumbs($refresh = FALSE) {
   static $breadcrumbs;

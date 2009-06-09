@@ -75,46 +75,46 @@ function custom_breadcrumbs_taxonomy_uninstall() {
  */
 function custom_breadcrumbs_taxonomy_schema() {
   $schema['custom_breadcrumbs_taxonomy_term'] = array(
-    'description' => t('Stores custom breadcrumbs for taxonomy terms'),
+    'description' => 'Stores custom breadcrumbs for taxonomy terms',
     'fields' => array(
       'bid' => array(
         'type' => 'serial',
         'unsigned' => TRUE,
         'not null' => TRUE,
-        'description' => t("Unique identifier for the {custom_breadcrumbs_taxonomy} breadcrumbs."),
+        'description' => 'Unique identifier for the {custom_breadcrumbs_taxonomy} breadcrumbs.',
       ),
       'titles' => array(
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
         'default' => '',
-        'description' => t("A title for the breadcrumb link.")
+        'description' => 'A title for the breadcrumb link.',
       ),
       'paths' => array(
         'type' => 'varchar',
         'length' => 255,
         'not null' => FALSE,
-        'description' => t("A path for the breadcrumb link."),
+        'description' => 'A path for the breadcrumb link.',
       ),
       'tid'   => array(
         'type'      => 'int',
         'unsigned' => TRUE,
         'not null'  => TRUE,
-        'description' => t('The taxonomy term id for this breadcrumb.'),
+        'description' => 'The taxonomy term id for this breadcrumb.',
       ),
 
       'visibility_php' => array(
         'type' => 'text',
         'not null' => TRUE,
         'size' => 'medium',
-        'description' => t("An optional PHP snippet to control the {custom_breadcrumbs_views} visibility."),
+        'description' => 'An optional PHP snippet to control the {custom_breadcrumbs_views} visibility.',
       ),
       'language' => array(
         'type' => 'varchar',
         'length' => 12,
         'not null' => TRUE,
         'default' => '',
-        'description' => t('The language this breadcrumb is for; if blank, the breadcrumb will be used for unknown languages.'),
+        'description' => 'The language this breadcrumb is for; if blank, the breadcrumb will be used for unknown languages.',
       ),
     ),
     'indexes' => array(
@@ -125,45 +125,45 @@ function custom_breadcrumbs_taxonomy_schema() {
   );
   
   $schema['custom_breadcrumbs_taxonomy_vocabulary'] = array(
-    'description' => t('Stores custom breadcrumbs for taxonomy vocabularies'),
+    'description' => 'Stores custom breadcrumbs for taxonomy vocabularies',
     'fields' => array(
       'bid' => array(
         'type' => 'serial',
         'unsigned' => TRUE,
         'not null' => TRUE,
-        'description' => t("Unique identifier for the {custom_breadcrumbs_taxonomy} breadcrumbs."),
+        'description' => 'Unique identifier for the {custom_breadcrumbs_taxonomy} breadcrumbs.',
       ),
       'titles' => array(
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
         'default' => '',
-        'description' => t("A titles for the breadcrumb link.")
+        'description' => 'A titles for the breadcrumb link.',
       ),
       'paths' => array(
         'type' => 'varchar',
         'length' => 255,
         'not null' => FALSE,
-        'description' => t("A paths for the breadcrumb link."),
+        'description' => 'A paths for the breadcrumb link.',
       ),
       'vid'   => array(
         'type'      => 'int',
         'unsigned' => TRUE,
         'not null'  => TRUE,
-        'description' => t('The taxonomy vocabulary id for this breadcrumb.'),
+        'description' => 'The taxonomy vocabulary id for this breadcrumb.',
       ),
       'visibility_php' => array(
         'type' => 'text',
         'not null' => TRUE,
         'size' => 'medium',
-        'description' => t("An optional PHP snippet to control the {custom_breadcrumbs_views} visibility."),
+        'description' => 'An optional PHP snippet to control the {custom_breadcrumbs_views} visibility.',
       ),
       'language' => array(
         'type' => 'varchar',
         'length' => 12,
         'not null' => TRUE,
         'default' => '',
-        'description' => t('The language this breadcrumb is for; if blank, the breadcrumb will be used for unknown languages.'),
+        'description' => 'The language this breadcrumb is for; if blank, the breadcrumb will be used for unknown languages.',
       ),
     ),
     'indexes' => array(
