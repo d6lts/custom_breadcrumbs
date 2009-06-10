@@ -150,7 +150,7 @@ function custom_breadcrumbs_taxonomy_nodeapi($node, $op, $teaser, $page) {
     if ($in_list == variable_get('custom_breadcrumbs_taxonomy_include_nodes', FALSE) ) {
       if (variable_get('custom_breadcrumbs_taxonomy_use_hierarchy', TRUE)) {
         // Extract lightest term from lightest vocabulary assosciated with node.
-        $term = _custom_breadcrumbs_taxonomy_node_get_lightest_term($node->nid);
+        $term = custom_breadcrumbs_taxonomy_node_get_lightest_term($node->nid);
         $breadcrumb = custom_breadcrumbs_taxonomy_generate_breadcrumb($term->tid, FALSE, $node);
      if (variable_get('custom_breadcrumbs_taxonomy_include_node_title', FALSE)) {
           $breadcrumb[] = $node->title;
