@@ -216,4 +216,4 @@ Leave it blank to have no home breadcrumb.
 
 Authors
 -------
-bennybobw, dbabbage, MGN
+bennybobw, dbabbage, Michelle, MGN

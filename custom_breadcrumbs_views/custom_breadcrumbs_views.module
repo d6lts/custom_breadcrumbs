@@ -48,81 +48,20 @@ function custom_breadcrumbs_views_menu() {
 }
 
 /**
- * Implementation of hook_menu_alter().
- * Add breadcrumbs based on paths of views breadcrumbs
- *  @param $callbacks
- *    Associative array of menu router definitions.
+ * Implementation of hook_views_pre_render().
  */
-function custom_breadcrumbs_views_menu_alter(&$callbacks) {
-  // Search through all the custom breadcrumb views paths and menu callback paths for a match
-  // if a match exists, check to see if its already set to our new callback function
-  // if not, change the callback function to our new one
-  // push the original callback function name onto the page arguments array
-  // push the breadcrumb id onto the page arguments array
-  // these will be popped off for use by _custom_breadcrumbs_views_menu_redirect()
-
-  // Match any wildcard starting with %.
-  $pattern = '/%\w+/';
-  $candidates = array();
-  foreach ($callbacks as $path => $callback) {
-    if (isset($callback['page callback']) && $callback['page callback'] == 'views_page') {
-      // Replace wildcards with a simple %.
-      $newpath = preg_replace($pattern, '%', $path);
-      $candidates[$path] = $newpath;
+function custom_breadcrumbs_views_views_pre_render(&$view) {
+  // Don't really do anything with the view. This is just a pretense to insert a breadcrumb.
+  global $language;
+  $languages = array('language' => $language->language, 'all' => '');
+  foreach ($view->display as $display) {
+    if ($display->display_plugin != 'page' || $display->handler->view->is_attachment) continue;
+    $name = $display->display_options['path'];
+    $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs_views', NULL, array('views_path' => $name), $languages);
+    if ($breadcrumb = custom_breadcrumbs_select_breadcrumb($breadcrumbs, $view)) {
+      custom_breadcrumbs_set_breadcrumb($breadcrumb, $view);
+      return;
     }
-  }
-  $result = db_query('SELECT bid, views_path FROM {custom_breadcrumbs_views}');
-  $list = array();
-  while ($breadcrumb = db_fetch_object($result)) {
-    $list[] = array( 'bid' => $breadcrumb->bid, 'path' => $breadcrumb->views_path);
-  }
-  foreach ($list as $item) {
-    $fixed = preg_replace($pattern, '%', $item['path']);
-    foreach ($candidates as $path => $candidate) {
-      if (trim($fixed) == trim($candidate)) {
-        if (isset($callbacks[$path])) {
-          $oldcb = $callbacks[$path]['page callback'];
-          $newcb = '_custom_breadcrumbs_views_menu_redirect';
-          if ($oldcb != $newcb) {
-            $callbacks[$path]['page callback'] = $newcb;
-            array_unshift($callbacks[$path]['page arguments'], $item['path'], $oldcb);
-          }
-        }
-        unset($candidates[$path]);  // no longer a candidate
-        break;
-      }
-    }
-  }
-}
-
-/*
- *  Private callback function. It sets the custom breadcrumb and
- *  then calls the original page callback function with the original page arguments.
- */
-
-function _custom_breadcrumbs_views_menu_redirect() {
-  for ($i = 0; $i < func_num_args(); ++$i) {
-    $params[] = func_get_arg($i);
-  }
-  // The first param is the views_path, needed to retrieve the breadcrumb.
-  $views_path = $params[0];
-  // The second param is the original callback function.
-  $original_callback = $params[1]; 
-  // Pass the remaining params to the original callback function
-  $callback_params = array_slice($params, 2);
-  if (function_exists($original_callback)) {
-    global $language;
-    $languages = array('language' => $language->language, 'all' => '');
-    $output = call_user_func_array($original_callback, $callback_params);
-    $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs_views', NULL, array('views_path' => $views_path), $languages);
-    while ($breadcrumb = array_pop($breadcrumbs)) {
-      if (custom_breadcrumbs_is_visible($breadcrumb)) {
-        custom_breadcrumbs_set_breadcrumb($breadcrumb);
-        // Don't check any others once a visible breadcrumb is found.
-        return $output;
-      }
-    }
-    return $output;
   }
 }
 
@@ -163,22 +102,10 @@ function custom_breadcrumbs_views_form(&$form_state, $type) {
   );
   // Store information needed to save this breadcrumb.
   $form['#table'] = 'custom_breadcrumbs_views';
-  $form['#save_func'] = '_custom_breadcrumbs_views_update';
-  $form['#delete_func'] = '_custom_breadcrumbs_views_update';
   $form += custom_breadcrumbs_common_form_elements($bid, $breadcrumb);
   $form['visibility_php']['#description'] = t('Determine whether this breadcrumb should be displayed by using a snippet of PHP to return TRUE or FALSE.');
   $form['#submit'][] = 'custom_breadcrumbs_form_submit';
   $form['#validate'][] = 'custom_breadcrumbs_form_validate';
 
   return $form;
-}
-
-/*
- * Private function called when views breadcrumb is saved or deleted.
- * @param $bid
- *   The unique breadcrumb id.
- */
-function _custom_breadcrumbs_views_update($bid) {
-  // Rebuild the menu router to replace page callback function for views.
-  menu_rebuild();
 }
