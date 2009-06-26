@@ -5,8 +5,7 @@
  * @file
  * Assign custom breadcrumbs based on the Drupal path.
  */
-
-require_once(drupal_get_path('module', 'custom_breadcrumbs') .'/custom_breadcrumbs.admin.inc');
+module_load_include('inc', 'custom_breadcrumbs', 'custom_breadrumbs.admin');
 
 /**
  * Implementation of hook_cb_breadcrumb_info().
@@ -42,6 +41,15 @@ function custom_breadcrumbs_paths_menu() {
     'type'             => MENU_CALLBACK,
   );
   return $items;
+}
+
+/**
+ * Implementation of hook_init().
+ */
+function custom_breadcrumbs_paths_init() {
+  // Check for a match to cover module callback pages.
+  // Can't do token replacement without context.
+  _custom_breadcrumbs_paths_set_breadcrumb();
 }
 
 /**
@@ -94,15 +102,17 @@ function custom_breadcrumbs_paths_views_pre_render(&$view) {
  * @param $obj 
  *   the object (node or view) to use to check for breadcrumb visibility and token replacement
  */
-function _custom_breadcrumbs_paths_set_breadcrumb($obj) {
+function _custom_breadcrumbs_paths_set_breadcrumb($obj = NULL) {
   $matchpath = variable_get('custom_breadcrumbs_paths_allow_wildcards', FALSE);
   $breadcrumbs = _custom_breadcrumbs_paths_get_breadcrumbs($matchpath);
-  while ($breadcrumb = array_pop($breadcrumbs)) {
-    if ((!$matchpath) || _custom_breadcrumbs_paths_page_match($breadcrumb, $matchpath)) {
-      if (custom_breadcrumbs_is_visible($breadcrumb, $obj)) {
-        custom_breadcrumbs_set_breadcrumb($breadcrumb, $obj);
-        // Don't check any others once a visible breadcrumb is found.
-        return;
+  if (!empty($breadcrumbs)) {
+    while ($breadcrumb = array_pop($breadcrumbs)) {
+      if ((!$matchpath) || _custom_breadcrumbs_paths_page_match($breadcrumb, $matchpath)) {
+        if (custom_breadcrumbs_is_visible($breadcrumb, $obj)) {
+          custom_breadcrumbs_set_breadcrumb($breadcrumb, $obj);
+          // Don't check any others once a visible breadcrumb is found.
+          return;
+        }
       }
     }
   }
@@ -120,15 +130,15 @@ function _custom_breadcrumbs_paths_get_breadcrumbs($matchpath = FALSE, $path = N
   global $language;
   $languages = array('language' => $language->language, 'all' => '');
   if ($matchpath) {
-    // get all breadcrumbs
-    $param = array();  
-  } 
+    // Get all breadcrumbs.
+    $param = array();
+  }
   else {
     // Check for path prefix and strip it out if its found.
     $prefix = $language->language .'/';
     $path = is_null($path) ? str_replace($prefix, '', $_REQUEST['q']) : $path;
     $param = array('specific_path' => $path);
-    }
+  }
   $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs_paths', NULL, $param, $languages);
   return $breadcrumbs;
 }

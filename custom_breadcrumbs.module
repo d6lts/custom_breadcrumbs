@@ -85,6 +85,16 @@ function custom_breadcrumbs_menu() {
 }
 
 /**
+ * Implementation of hook_init().
+ */
+function custom_breadcrumbs_init() {
+  if (variable_get('custom_breadcrumbs_set_menu_breadcrumb', FALSE)) {
+    // Use default menu structure to set the breadcrumb.
+    custom_breadcrumbs_set_menu_breadcrumb();
+  }
+}
+
+/**
  * Implementation of hook_perm().
  */
 function custom_breadcrumbs_perm() {
@@ -127,8 +137,10 @@ function custom_breadcrumbs_nodeapi($node, $op, $teaser, $page) {
     global $language;
     $languages = array('language' => $language->language, 'all' => '');
     $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs', NULL, array('node_type' => $node->type), $languages);
-    if ($breadcrumb = custom_breadcrumbs_select_breadcrumb($breadcrumbs, $node)) {
-      custom_breadcrumbs_set_breadcrumb($breadcrumb, $node);
+    if (!empty($breadcrumbs)) {
+      if ($breadcrumb = custom_breadcrumbs_select_breadcrumb($breadcrumbs, $node)) {
+        custom_breadcrumbs_set_breadcrumb($breadcrumb, $node);
+      }
     }
   }
 }
@@ -161,7 +173,7 @@ function custom_breadcrumbs_form_alter(&$form, $form_state, $form_id) {
       $output = '<p>'. t('Custom breadcrumbs have been created for this %type page. Use the !link to add additional breadcrumbs. Or follow the links in the table below to edit or delete existing custom breadcrumbs.', array('%type' => $form['type']['#value'], '!link' => l('Custom Breadcrumbs Administration Page', 'admin/build/custom_breadcrumbs'))) .'</p>';
     }
     // Show a table of custom breadcrumbs with links to the edit form.
-    require_once(drupal_get_path('module', 'custom_breadcrumbs') .'/custom_breadcrumbs.admin.inc');
+    module_load_include('inc', 'custom_breadcrumbs', 'custom_breadrumbs.admin');
 
     $output .= custom_breadcrumbs_simple_breadcrumb_table($breadcrumbs);
     $form['custom_breadcrumbs'] = array(
@@ -321,6 +333,7 @@ function _custom_breadcrumbs_create_crumb($title, $original_path) {
     switch ($identifier) {
       case '<pathauto>':
         if (module_exists('pathauto')) {
+          module_load_include('inc', 'pathauto', 'pathauto');
           $crumb = l(t($title), pathauto_cleanstring($path, FALSE), $options);
         }
         break;
@@ -458,6 +471,17 @@ function _custom_breadcrumbs_load_all_breadcrumbs($refresh = FALSE) {
     //$breadcrumbs[] = module_invoke_all('cb_load_all_breadcrumbs'); // module can handle bc load itself if desired
   }
   return $breadcrumbs;
+}
+
+/**
+ * Set the breadcrumb trail to match the menu structure.
+ * Using the same approach as in the menu_breadcrumb module.
+ */
+function custom_breadcrumbs_set_menu_breadcrumb() {
+  $menu_item = menu_get_item();
+  $menu_link = menu_link_load(db_result(db_query("SELECT mlid FROM {menu_links} WHERE link_path = '%s'", $menu_item['href'])));
+  $use_menu = $menu_link['menu_name'];
+  menu_set_active_menu_name($use_menu);
 }
 
 /**

@@ -190,6 +190,14 @@ function custom_breadcrumbs_admin_settings() {
     '#collapsible'    => TRUE,
   );
 
+ $form['adv_settings']['custom_breadcrumbs_set_menu_breadcrumb'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Use the menu structure to set the breadcrumb trail'),
+    '#default_value' => variable_get('custom_breadcrumbs_set_menu_breadcrumb', FALSE),
+    '#description' => t("When checked, the default breadcrumb trail will be patterned after the page's placement in the menu structure. Note that this default can be superceded by other custom breadcrumbs."),
+    '#weight' => -30,
+  );
+
   $form['adv_settings']['custom_breadcrumbs_force_active_trail'] = array(
     '#type' => 'checkbox',
     '#title' => t('Force the active trail'),
