@@ -173,7 +173,7 @@ function custom_breadcrumbs_form_alter(&$form, $form_state, $form_id) {
       $output = '<p>'. t('Custom breadcrumbs have been created for this %type page. Use the !link to add additional breadcrumbs. Or follow the links in the table below to edit or delete existing custom breadcrumbs.', array('%type' => $form['type']['#value'], '!link' => l('Custom Breadcrumbs Administration Page', 'admin/build/custom_breadcrumbs'))) .'</p>';
     }
     // Show a table of custom breadcrumbs with links to the edit form.
-    module_load_include('inc', 'custom_breadcrumbs', 'custom_breadrumbs.admin');
+    module_load_include('inc', 'custom_breadcrumbs', 'custom_breadcrumbs.admin');
 
     $output .= custom_breadcrumbs_simple_breadcrumb_table($breadcrumbs);
     $form['custom_breadcrumbs'] = array(

@@ -4,7 +4,7 @@
  * @file
  * Provide custom breadcrumbs for views pages.
  */
-module_load_include('inc', 'custom_breadcrumbs', 'custom_breadrumbs.admin');
+module_load_include('inc', 'custom_breadcrumbs', 'custom_breadcrumbs.admin');
 
 /**
  * Implementation of hook_cb_breadcrumb_info().
