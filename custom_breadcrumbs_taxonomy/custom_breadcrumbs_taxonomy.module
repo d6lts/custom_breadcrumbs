@@ -34,7 +34,7 @@
  * custom breadcrumbs are matched against the node's vocabularies.
  */
 
-require_once(drupal_get_path('module', 'custom_breadcrumbs') .'/custom_breadcrumbs.admin.inc');
+module_load_include('inc', 'custom_breadcrumbs', 'custom_breadcrumbs.admin');
 
 // default value for Advanced Settings, Node Types
 define('CUSTOM_BREADCRUMBS_TAXONOMY_NODE_TYPES_DEFAULT', 'book');
@@ -139,46 +139,9 @@ function custom_breadcrumbs_taxonomy_menu() {
  */
 function custom_breadcrumbs_taxonomy_nodeapi($node, $op, $teaser, $page) {
   if ($op == 'alter' && empty($teaser) && !empty($page)) {
-    require_once drupal_get_path('module', 'custom_breadcrumbs_taxonomy') .'/custom_breadcrumbs_taxonomy.inc';
-    // See if the node type of the current node is part of the node types listed on the advanced settings page.
-    $array_of_types = array_filter((array)variable_get('custom_breadcrumbs_taxonomy_node_types', CUSTOM_BREADCRUMBS_TAXONOMY_NODE_TYPES_DEFAULT));
-    $in_list = in_array($node->type, $array_of_types);
-
-    // if the node type IS IN     the node types list and the list IS     inclusive OR
-    // if the node type IS NOT IN the node types list and the list IS NOT inclusive (e.g. exclusive)
-    // THEN modify the breadcrumb trail.
-    if ($in_list == variable_get('custom_breadcrumbs_taxonomy_include_nodes', FALSE) ) {
-      if (variable_get('custom_breadcrumbs_taxonomy_use_hierarchy', TRUE)) {
-        // Extract lightest term from lightest vocabulary assosciated with node.
-        $term = custom_breadcrumbs_taxonomy_node_get_lightest_term($node->nid);
-        $breadcrumb = custom_breadcrumbs_taxonomy_generate_breadcrumb($term->tid, FALSE, $node);
-     if (variable_get('custom_breadcrumbs_taxonomy_include_node_title', FALSE)) {
-          $breadcrumb[] = $node->title;
-        }
-        drupal_set_breadcrumb($breadcrumb);
-   }
-   else {
-        global $language;
-        $languages = array('language' => $language->language, 'all' => '');
-        // Check each term to see if it has a custom breadcrumb.
-        $terms = taxonomy_node_get_terms($node);
-        foreach ($terms as $term) {
-          $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs_taxonomy', 'custom_breadcrumbs_taxonomy_term', array('tid' => $term->tid), $languages);
-          if ($breadcrumb = custom_breadcrumbs_select_breadcrumb($breadcrumbs, $node)) {
-            custom_breadcrumbs_set_breadcrumb($breadcrumb, $node);
-            return;
-          }
-        }
-        // No terms match, look for a match on the taxonomy vocabulary.
-        $vocabularies = taxonomy_get_vocabularies($node->type);
-        foreach ($vocabularies as $vocabulary) {
-          $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs_taxonomy', 'custom_breadcrumbs_taxonomy_vocabulary', array('vid' => $vocabulary->vid), $languages);
-          if ($breadcrumb = custom_breadcrumbs_select_breadcrumb($breadcrumbs, $node)) {
-            custom_breadcrumbs_set_breadcrumb($breadcrumb, $node);
-            return;
-          }
-        }
-      }
+    if (_custom_breadcrumbs_taxonomy_allowed_node_type($node->type)) {
+      module_load_include('inc', 'custom_breadcrumbs_taxonomy');
+      _custom_breadcrumbs_taxonomy_set_breadcrumb($node);
     }
   }
 }
@@ -187,19 +150,78 @@ function custom_breadcrumbs_taxonomy_nodeapi($node, $op, $teaser, $page) {
  * Implementation of hook_menu_alter().
  */
 function custom_breadcrumbs_taxonomy_menu_alter(&$callbacks) {
-  $term_callback = &$callbacks['taxonomy/term/%'];
 
-  $callback = $term_callback['page callback'];
-  $arguments = $term_callback['page arguments'];
-  $file = $term_callback['file'];
-  $filepath = isset($term_callback['file path']) ? $term_callback['file path'] : drupal_get_path('module', $term_callback['module']);
+  // This will not work if views has overriden taxonomy/term/%
+  if (isset($callbacks['taxonomy/term/%']) && ($callbacks['taxonomy/term/%']['page callback'] != 'views_page')) {
+    $term_callback = &$callbacks['taxonomy/term/%'];
+    $callback = $term_callback['page callback'];
+    $arguments = $term_callback['page arguments'];
+    $file = $term_callback['file'];
+    $filepath = isset($term_callback['file path']) ? $term_callback['file path'] : drupal_get_path('module', $term_callback['module']);
+    $term_callback['page callback'] = 'custom_breadcrumbs_taxonomy_term_page';
+    $term_callback['page arguments'] = array_merge(array($callback, $file, $filepath, 2), $arguments);
+    $term_callback['file'] = 'custom_breadcrumbs_taxonomy.inc';
+    $term_callback['file path'] = drupal_get_path('module', 'custom_breadcrumbs_taxonomy');
+  }
 
-  $term_callback['page callback'] = 'custom_breadcrumbs_taxonomy_term_page';
-  $term_callback['page arguments'] = array_merge(array($callback, $file, $filepath, 2), $arguments);
-  $term_callback['file'] = 'custom_breadcrumbs_taxonomy.inc';
-  $term_callback['file path'] = drupal_get_path('module', 'custom_breadcrumbs_taxonomy');
 }
 
+/**
+ * Implementation of hook_views_pre_render().
+ */
+function custom_breadcrumbs_taxonomy_views_pre_render(&$view) {
+  if (variable_get('custom_breadcrumbs_taxonomy_views', FALSE)) {
+    // Set the taxonomy breadcrumb for the view.
+    if (!empty($view->display)) {
+      foreach ($view->display as $display) {
+        if (!empty($display->display_options['arguments'])) {
+          // Try to use the view argument to generate the breadcrumb.
+          foreach ($display->display_options['arguments'] as $argument) {
+            $args = $display->handler->view->args;
+            $arg = array_pop($args);
+            $tid = NULL;
+            $vid = NULL;
+            switch ($argument['id']) {
+              case 'tid':
+              case 'term_node_tid_depth':
+                $terms = taxonomy_terms_parse_string($arg);
+                $tid = empty($terms['tids']) ? NULL : $terms['tids'][0];
+                break;
+              case 'name':
+                if (drupal_substr($argument['table'], 0, 5) == 'term_') {
+                  $terms = taxonomy_get_term_by_name($arg);
+                  $tid = empty($terms) ? NULL : $terms[0]->tid;
+                }
+                break;
+              case 'vid':
+                $vid = $arg;
+                break;
+            }
+            if (!is_null($tid) || !is_null($vid)) {
+              module_load_include('inc', 'custom_breadcrumbs_taxonomy');
+              $breadcrumb = custom_breadcrumbs_taxonomy_generate_breadcrumb($tid, $vid, FALSE, $view);
+              drupal_set_breadcrumb($breadcrumb);
+              return;
+            }
+          }
+        }
+      }
+      // Otherwise, use the first result node that is of an allowed node type to generate the breadcrumb.
+      if (drupal_substr($display->id, 0, 4)  == 'page' && !empty($view->result)) {
+        foreach ($view->result as $result) {
+          if (isset($result->nid)) {
+            $node = node_load(array('nid' => $result->nid));
+            if (_custom_breadcrumbs_taxonomy_allowed_node_type($node->type)) {
+              module_load_include('inc', 'custom_breadcrumbs_taxonomy');
+              _custom_breadcrumbs_taxonomy_set_breadcrumb($node);
+              return;
+            }
+          }
+        }
+      }
+    }
+  }
+}
 /**
  * Implementation of hook_help().
  */
@@ -237,12 +259,28 @@ function custom_breadcrumbs_taxonomy_form_alter(&$form, $form_state, $form_id) {
       '#weight' => 10,
     );
 
+    $form['settings']['custom_breadcrumbs_taxonomy_append_breadcrumb'] = array(
+      '#type'           => 'checkbox',
+      '#title'          => t('Append taxonomy breadcrumb trail to current breadcrumb for selected node types'),
+      '#default_value'  => variable_get('custom_breadcrumbs_taxonomy_append_breadcrumb', FALSE),
+      '#description'    => t('When enabled along with the taxonomy hierarchy option (above), the taxonomy breadcrumb trail will be appended to the current breadcrumb trail.'),
+      '#weight'         => 20,
+    );
+
+    $form['settings']['custom_breadcrumbs_taxonomy_show_vocabulary'] = array(
+      '#type'           => 'checkbox',
+      '#title'          => t('Show vocabulary in breadcrumb trail?'),
+      '#description'    => t('When enabled, the vocabulary name will be shown in the breadcrumb trail, even when a custom breadcrumb has not been defined for the vocabulary. In this case the crumb will not be linked. If a custom breadcrumb has been defined for the vocabulary, it will be displayed whether or not this option is enabled.'),
+      '#default_value'  => variable_get('custom_breadcrumbs_taxonomy_show_vocabulary', FALSE),
+      '#weight' => 25,
+    );
+
     $form['settings']['custom_breadcrumbs_taxonomy_show_current_term'] = array(
       '#type'           => 'checkbox',
       '#title'          => t('Show current taxonomy term in breadcrumb trail?'),
       '#description'    => t('When enabled, the lightest term associated with node is shown as the last breadcrumb in the breadcrumb trail.  When disabled, the only terms shown in the breadcrumb trail are parent terms (if any parents exist).  The recommended setting is enabled.'),
       '#default_value'  => variable_get('custom_breadcrumbs_taxonomy_show_current_term', TRUE),
-      '#weight' => 20,
+      '#weight' => 30,
     );
 
     $form['settings']['custom_breadcrumbs_taxonomy_include_node_title'] = array(
@@ -250,7 +288,15 @@ function custom_breadcrumbs_taxonomy_form_alter(&$form, $form_state, $form_id) {
       '#title'          => t('Show current node title in taxonomy breadcrumb trail?'),
       '#default_value'  => variable_get('custom_breadcrumbs_taxonomy_include_node_title', FALSE),
       '#description'    => t('When enabled along with the taxonomy hierarchy option (above) and when viewing a node, the node\'s title will be shown as the last breadcrumb in the breadcrumb trail.'),
-      '#weight'         => 30,
+      '#weight'         => 40,
+    );
+
+ $form['settings']['custom_breadcrumbs_taxonomy_views'] = array(
+      '#type'           => 'checkbox',
+      '#title'          => t('Use taxonomy breadcrumbs for views?'),
+      '#default_value'  => variable_get('custom_breadcrumbs_taxonomy_views', FALSE),
+      '#description'    => t('When enabled, the view argument and/or the taxonomy structure of nodes returned by views will be used to form the taxonomy breadcrumb trail.'),
+      '#weight'         => 50,
     );
 
     $form['adv_settings']['custom_breadcrumbs_taxonomy_include_nodes'] = array(
@@ -335,9 +381,7 @@ function custom_breadcrumbs_taxonomy_form_taxonomy_form_term_alter(&$form, &$for
  */
 function custom_breadcrumbs_taxonomy_cb_node_form_table($node) {
   $breadcrumbs = array();
-  $array_of_types = array_filter((array)variable_get('custom_breadcrumbs_taxonomy_node_types', CUSTOM_BREADCRUMBS_TAXONOMY_NODE_TYPES_DEFAULT));
-  $in_list = in_array($node->type, $array_of_types);
-  if ($in_list == variable_get('custom_breadcrumbs_taxonomy_include_nodes', FALSE) ) {
+  if (_custom_breadcrumbs_taxonomy_allowed_node_type($node->type)) {
     if (!variable_get('custom_breadcrumbs_taxonomy_use_hierarchy', TRUE)) {
       // Check each term to see if it has a custom breadcrumb.
       $terms = taxonomy_node_get_terms($node);
@@ -358,4 +402,24 @@ function custom_breadcrumbs_taxonomy_cb_node_form_table($node) {
     }
   }
   return $breadcrumbs;
+}
+
+/**
+ *  Helper function to determine if the current node is one of the types listed on the
+ *  the advanced settings page. 
+ *  @param $nodetype
+ *    The node type being considered for a custom breadcrumb.
+ *  @return $allowed
+ *    TRUE if the node type is selected for a custom breadcrumbs taxonomy breadcrumb.
+ *    FALSE otherwise.
+ */
+function _custom_breadcrumbs_taxonomy_allowed_node_type($nodetype) {
+  // If the node type IS IN     the node types list and the list IS     inclusive OR
+  // If the node type IS NOT IN the node types list and the list IS NOT inclusive (e.g. exclusive)
+  // THEN modify the breadcrumb trail.
+
+  $array_of_types = array_filter((array)variable_get('custom_breadcrumbs_taxonomy_node_types', CUSTOM_BREADCRUMBS_TAXONOMY_NODE_TYPES_DEFAULT));
+  $in_list = in_array($nodetype, $array_of_types);
+  $allowed = ($in_list == variable_get('custom_breadcrumbs_taxonomy_include_nodes', FALSE));
+  return $allowed;
 }

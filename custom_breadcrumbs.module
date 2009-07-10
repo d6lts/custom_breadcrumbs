@@ -30,6 +30,7 @@ function custom_breadcrumbs_theme() {
   return array(
     'custom_breadcrumbs_filter_form' => array('arguments' => array('form' => NULL), 'file' => 'custom_breadcrumbs.admin.inc', ),
     'custom_breadcrumbs_filters' => array('arguments' => array('form' => NULL), 'file' => 'custom_breadcrumbs.admin.inc', ),
+    'custom_breadcrumbs_help_identifiers' => array('arguments' => array()),
   );
 }
 
@@ -219,22 +220,10 @@ function custom_breadcrumbs_set_breadcrumb($breadcrumb, $obj = NULL) {
   if ($breadcrumb) {
     $titles = preg_split("/[\n]+/", $breadcrumb->titles);
     $paths = preg_split("/[\n]+/", $breadcrumb->paths);
+
     if (module_exists('token')) {
       // Do token replacement.
-      global $user;
-      if ($user->uid) {
-        $user = user_load(array('uid' => $user->uid));
-      }
-      $types = array();
-      if (isset($obj->nid)) {
-        $types['node'] = $obj;
-      }
-      elseif (!empty($obj->display) && ($nid = $obj->result[0]->nid)) {
-        // Load the first node of the view to provide an object for token replacement.
-        $types['node'] = node_load(array('nid' => $nid));
-      }
-      $types['user'] = $user;
-      $types['global'] = NULL;
+      $types = custom_breadcrumbs_token_types($obj);
       $titles = token_replace_multiple($titles, $types);
       $paths = token_replace_multiple($paths, $types);
     }
@@ -260,6 +249,34 @@ function custom_breadcrumbs_set_breadcrumb($breadcrumb, $obj = NULL) {
     drupal_set_breadcrumb($trail);
   }
 }
+
+/**
+ *  Helper function to prepare contexts for token substitution.
+ *
+ *  @param $obj
+ *    A node, or view to be used for context in token replacement.
+ *  @return $types
+ *    An array of substitution classes for token_replace_multiple().
+ */
+function custom_breadcrumbs_token_types($obj = NULL) {
+  global $user;
+  if ($user->uid) {
+    $user = user_load(array('uid' => $user->uid));
+  }
+  $types = array();
+  if (isset($obj->nid)) {
+    $types['node'] = $obj;
+  }
+  elseif (!empty($obj->display) && ($nid = $obj->result[0]->nid)) {
+    // Load the first node of the view to provide an object for token replacement.
+    $types['node'] = node_load(array('nid' => $nid));
+  }
+  $types['user'] = $user;
+  $types['global'] = NULL;
+
+  return $types;
+}
+
 
 /**
  * Private function to save breadcrumb.
@@ -334,20 +351,20 @@ function _custom_breadcrumbs_create_crumb($title, $original_path) {
       case '<pathauto>':
         if (module_exists('pathauto')) {
           module_load_include('inc', 'pathauto', 'pathauto');
-          $crumb = l(t($title), pathauto_cleanstring($path, FALSE), $options);
+          $crumb = l($title, pathauto_cleanstring($path, FALSE), $options);
         }
         break;
       default:
-        $crumb = l(t($title), $original_path, $options);
+        $crumb = l($title, $original_path, $options);
     }
   }
   else { // This may be just be a single identifier
     switch ($identifier) {
       case '<none>':
-        $crumb = check_plain(t($title));
+        $crumb = check_plain($title);
         break;
       default:
-        $crumb = l(t($title), $original_path, $options);
+        $crumb = l($title, $original_path, $options);
     }
   }
   return $crumb;
@@ -435,15 +452,17 @@ function custom_breadcrumbs_load_breadcrumbs($module, $table = NULL,  $param = a
  */
 function custom_breadcrumbs_is_visible($breadcrumb, $obj = NULL) {
   $visibility = TRUE;
-  // If object is a node, let users access it via $node.
-  $node = isset($obj->nid) ? $obj : NULL;
-  // If a views object, let users access it via $view.
-  $view = !empty($obj->current_display) ? $obj : NULL;
-  // Guard against hidden spaces.
-  if (($trimmed = trim($breadcrumb->visibility_php)) != '' ) {
-    ob_start();
-    $visibility = eval($trimmed);
-    ob_end_clean();
+  if (isset($breadcrumb)) {
+    // If object is a node, let users access it via $node.
+    $node = isset($obj->nid) ? $obj : NULL;
+    // If a views object, let users access it via $view.
+    $view = !empty($obj->current_display) ? $obj : NULL;
+    // Guard against hidden spaces.
+    if (isset($breadcrumb->visibility_php) && ($trimmed = trim($breadcrumb->visibility_php)) != '' ) {
+      ob_start();
+      $visibility = eval($trimmed);
+      ob_end_clean();
+    }
   }
   return $visibility;
 }

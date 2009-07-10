@@ -121,9 +121,11 @@ function custom_breadcrumbs_views_form(&$form_state, $type) {
  *  Helper function to specify allowed views displays for breadcrumb placement.
  */
 function _allowed_display($display) {
-  if (drupal_substr($display->id, 0, 5)  == 'page_' || drupal_substr($display->id, 0, 9)  == 'calendar_') {
-    if (isset($display->display_options['path']) && !$display->handler->view->is_attachment) {
-      return TRUE;
+  if (drupal_substr($display->id, 0, 4)  == 'page' || drupal_substr($display->id, 0, 8)  == 'calendar') {
+    if (!(isset($display->handler->view->is_attachment) && $display->handler->view->is_attachment)) {
+      if (isset($display->display_options['path'])) {
+        return TRUE;
+      }
     }
   }
   return FALSE;

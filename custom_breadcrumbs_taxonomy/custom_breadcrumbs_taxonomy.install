@@ -13,9 +13,12 @@ function custom_breadcrumbs_taxonomy_install() {
   // Create tables.
   drupal_install_schema('custom_breadcrumbs_taxonomy');
 
-  // Set weight of custom_breadcrumbs_taxonomy to be greater than taxonomy.
-  $weight = (int) db_result(db_query("SELECT weight FROM {system} WHERE name = 'taxonomy'"));
-  db_query("UPDATE {system} SET weight = %d WHERE name = 'custom_breadcrumbs_taxonomy'", $weight + 1);
+  // Set weight of custom_breadcrumbs_taxonomy to be greater than taxonomy, views, and custom_breadcrumbs.
+  $tax_weight = (int) db_result(db_query("SELECT weight FROM {system} WHERE name = 'taxonomy'"));
+  $views_weight = (int) db_result(db_query("SELECT weight FROM {system} WHERE name = 'views'"));
+  $cb_weight = (int) db_result(db_query("SELECT weight FROM {system} WHERE name = 'custom_breadcrumbs'"));
+  $cb_tax_weight = max($tax_weight, $views_weight, $cb_weight) + 2;
+  db_query("UPDATE {system} SET weight = %d WHERE name = 'custom_breadcrumbs_taxonomy'", $cb_tax_weight);
 
   // If taxonomy_breadcrumbs is installed, copy term and vocab breadcrumb to custom_breadcrumbs_taxonomy tables.
   if (module_exists('taxonomy_breadcrumb')) {
@@ -45,7 +48,7 @@ function custom_breadcrumbs_taxonomy_install() {
     // Set custom_breadcrumbs_taxonomy to use taxonomy hierarchy in constructing breadcrumb.
     variable_set('custom_breadcrumbs_taxonomy_use_hierarchy', TRUE);
 
-    if ( $found > 0) {
+    if ($found > 0) {
       drupal_set_message(format_plural($found, 'Copied 1 breadcrumb.', 'Copied @count breadcrumbs.'));
       drupal_set_message(t('You can now disable taxonomy_breadcrumb, and test custom_breadcrumb_taxonomy.'));
     }
@@ -175,3 +178,17 @@ function custom_breadcrumbs_taxonomy_schema() {
 
   return $schema;
 }
+
+/**
+ * Set weight of custom_breadcrumbs_taxonomy to be greater than taxonomy, views, and custom_breadcrumbs.
+ */
+function custom_breadcrumbs_taxonomy_update_6000() {
+  $ret = array();
+  $tax_weight = (int) db_result(db_query("SELECT weight FROM {system} WHERE name = 'taxonomy'"));
+  $views_weight = (int) db_result(db_query("SELECT weight FROM {system} WHERE name = 'views'"));
+  $cb_weight = (int) db_result(db_query("SELECT weight FROM {system} WHERE name = 'custom_breadcrumbs'"));
+  $cb_tax_weight = max($tax_weight, $views_weight, $cb_weight) + 2;
+  db_query("UPDATE {system} SET weight = %d WHERE name = 'custom_breadcrumbs_taxonomy'", $cb_tax_weight);
+  return $ret;
+}
+

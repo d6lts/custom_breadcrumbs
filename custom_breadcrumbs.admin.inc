@@ -107,7 +107,8 @@ function _custom_breadcrumbs_sort_cmp($bc1, $bc2) {
   );
   $options = array('name', 'breadcrumb_type', 'language'); 
   $first = $custom_breadcrumbs_sort['column'];
-  $key = array_pop(array_keys($options, $first));
+  $keys = array_keys($options, $first);
+  $key = array_pop($keys);
   unset($options[$key]);
   // Reindex the array.
   $options = array_values($options);
@@ -136,7 +137,8 @@ function custom_breadcrumbs_form(&$form_state, $type) {
   $bid = arg(5);
   if (isset($bid)) {
     drupal_set_title('Edit Custom Breadcrumb for Node');
-    $breadcrumb = array_pop(custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs', NULL, array('bid' => $bid)));
+    $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs', NULL, array('bid' => $bid));
+    $breadcrumb = array_pop($breadcrumbs);
   }
   else {
     drupal_set_title('Add Custom Breadcrumb for Node');
