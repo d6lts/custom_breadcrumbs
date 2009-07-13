@@ -58,7 +58,7 @@ function custom_breadcrumbs_paths_init() {
 function custom_breadcrumbs_paths_nodeapi($node, $op, $teaser, $page) {
   if ($op == 'alter' && empty($teaser) && !empty($page)) {
     // Check for breadcrumb at this path and set if a match is found.
-    _custom_breadcrumbs_paths_set_breadcrumb($node);
+    _custom_breadcrumbs_paths_set_breadcrumb(array('node' => $node));
  }
 }
 
@@ -93,7 +93,7 @@ function custom_breadcrumbs_paths_views_pre_render(&$view) {
   }
   if ($viewpage) {
     // Check for breadcrumb at this path and set if a match is found.
-    _custom_breadcrumbs_paths_set_breadcrumb($view);
+    _custom_breadcrumbs_paths_set_breadcrumb(array('view' => $view));
   }
 }
 
@@ -102,14 +102,14 @@ function custom_breadcrumbs_paths_views_pre_render(&$view) {
  * @param $obj 
  *   the object (node or view) to use to check for breadcrumb visibility and token replacement
  */
-function _custom_breadcrumbs_paths_set_breadcrumb($obj = NULL) {
+function _custom_breadcrumbs_paths_set_breadcrumb($objs = array()) {
   $matchpath = variable_get('custom_breadcrumbs_paths_allow_wildcards', FALSE);
   $breadcrumbs = _custom_breadcrumbs_paths_get_breadcrumbs($matchpath);
   if (!empty($breadcrumbs)) {
     while ($breadcrumb = array_pop($breadcrumbs)) {
       if ((!$matchpath) || _custom_breadcrumbs_paths_page_match($breadcrumb, $matchpath)) {
-        if (custom_breadcrumbs_is_visible($breadcrumb, $obj)) {
-          custom_breadcrumbs_set_breadcrumb($breadcrumb, $obj);
+        if (custom_breadcrumbs_is_visible($breadcrumb, $objs)) {
+          custom_breadcrumbs_set_breadcrumb($breadcrumb, $objs);
           // Don't check any others once a visible breadcrumb is found.
           return;
         }
@@ -193,6 +193,7 @@ function custom_breadcrumbs_paths_cb_node_form_table($node) {
 function custom_breadcrumbs_paths_form(&$form_state, $type) {
   $form = array();
   $bid = arg(5);
+  $breadcrumb = NULL;
   if (isset($bid)) {
     drupal_set_title('Edit Custom Breadcrumb for Path');
     $breadcrumb = array_pop(custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs_paths', NULL, array('bid' => $bid)));
@@ -209,7 +210,7 @@ function custom_breadcrumbs_paths_form(&$form_state, $type) {
     '#title' => t('Specific Path'),
     '#required' => TRUE,
     '#description' => $description,
-    '#default_value' => $bid ?  $breadcrumb->specific_path : NULL,
+    '#default_value' => isset($breadcrumb->specific_path) ?  $breadcrumb->specific_path : NULL,
     '#weight' => -10,
   );
   $form += custom_breadcrumbs_common_form_elements($bid, $breadcrumb);

@@ -139,8 +139,9 @@ function custom_breadcrumbs_nodeapi($node, $op, $teaser, $page) {
     $languages = array('language' => $language->language, 'all' => '');
     $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs', NULL, array('node_type' => $node->type), $languages);
     if (!empty($breadcrumbs)) {
-      if ($breadcrumb = custom_breadcrumbs_select_breadcrumb($breadcrumbs, $node)) {
-        custom_breadcrumbs_set_breadcrumb($breadcrumb, $node);
+      $objs = array('node' => $node);
+      if ($breadcrumb = custom_breadcrumbs_select_breadcrumb($breadcrumbs, $objs)) {
+        custom_breadcrumbs_set_breadcrumb($breadcrumb, $objs);
       }
     }
   }
@@ -199,9 +200,9 @@ function custom_breadcrumbs_form_alter(&$form, $form_state, $form_id) {
  * @return $breadcrumb 
  *   The selected breadcrumb object.
  */
-function custom_breadcrumbs_select_breadcrumb($breadcrumbs, $obj = NULL) {
+function custom_breadcrumbs_select_breadcrumb($breadcrumbs, $objs = array()) {
   while ($breadcrumb = array_pop($breadcrumbs)) {
-    if (custom_breadcrumbs_is_visible($breadcrumb, $obj)) {
+    if (custom_breadcrumbs_is_visible($breadcrumb, $objs)) {
       return $breadcrumb;
     }
   }
@@ -216,14 +217,14 @@ function custom_breadcrumbs_select_breadcrumb($breadcrumbs, $obj = NULL) {
  * @param $obj
  *   A node object (if available) for building token substituions.
  */
-function custom_breadcrumbs_set_breadcrumb($breadcrumb, $obj = NULL) {
+function custom_breadcrumbs_set_breadcrumb($breadcrumb, $objs = array()) {
   if ($breadcrumb) {
     $titles = preg_split("/[\n]+/", $breadcrumb->titles);
     $paths = preg_split("/[\n]+/", $breadcrumb->paths);
 
     if (module_exists('token')) {
       // Do token replacement.
-      $types = custom_breadcrumbs_token_types($obj);
+      $types = custom_breadcrumbs_token_types($objs);
       $titles = token_replace_multiple($titles, $types);
       $paths = token_replace_multiple($paths, $types);
     }
@@ -253,23 +254,32 @@ function custom_breadcrumbs_set_breadcrumb($breadcrumb, $obj = NULL) {
 /**
  *  Helper function to prepare contexts for token substitution.
  *
- *  @param $obj
- *    A node, or view to be used for context in token replacement.
+ *  @param $objs
+ *    An array of objects to be used in token replacement. Array keys indicate type of object.
  *  @return $types
  *    An array of substitution classes for token_replace_multiple().
  */
-function custom_breadcrumbs_token_types($obj = NULL) {
+function custom_breadcrumbs_token_types($objs = array()) {
   global $user;
   if ($user->uid) {
     $user = user_load(array('uid' => $user->uid));
   }
   $types = array();
-  if (isset($obj->nid)) {
-    $types['node'] = $obj;
-  }
-  elseif (!empty($obj->display) && ($nid = $obj->result[0]->nid)) {
-    // Load the first node of the view to provide an object for token replacement.
-    $types['node'] = node_load(array('nid' => $nid));
+  foreach ($objs as $type => $obj) {
+    switch ($type) {
+      case 'node':
+        $types['node'] = $obj;
+         break;
+      case 'view': 
+        if (!empty($obj->display) && (isset($obj->result[0]) && ($nid = $obj->result[0]->nid))) {
+          // Load the first node of the view to provide an object for token replacement.
+          $types['node'] = node_load(array('nid' => $nid));
+        }
+        break;
+      case 'taxonomy':
+        $types['taxonomy'] = $obj;
+        break;
+    }
   }
   $types['user'] = $user;
   $types['global'] = NULL;
@@ -445,18 +455,21 @@ function custom_breadcrumbs_load_breadcrumbs($module, $table = NULL,  $param = a
  *
  *  @param $breadcrumb
  *    The breadcrumb object
- *  @param $obj
- *    An object (node or view) that can be used in the php code.
+ *  @param $objs
+ *    An array of objects (node, taxonomy, or view) that can be used in the php code.
  *  @return
  *    TRUE if the breadcrumb should be displayed, FALSE otherwise.
  */
-function custom_breadcrumbs_is_visible($breadcrumb, $obj = NULL) {
+function custom_breadcrumbs_is_visible($breadcrumb, $objs = array()) {
   $visibility = TRUE;
   if (isset($breadcrumb)) {
     // If object is a node, let users access it via $node.
-    $node = isset($obj->nid) ? $obj : NULL;
+    $node = isset($objs['node']) ? $objs['node'] : NULL;
     // If a views object, let users access it via $view.
-    $view = !empty($obj->current_display) ? $obj : NULL;
+    $view = isset($objs['view']) ? $objs['view'] : NULL;
+    // If a taxonomy term, let users access it via $term.
+    $term = isset($objs['taxonomy']) ? $objs['taxonomy'] : NULL;
+
     // Guard against hidden spaces.
     if (isset($breadcrumb->visibility_php) && ($trimmed = trim($breadcrumb->visibility_php)) != '' ) {
       ob_start();

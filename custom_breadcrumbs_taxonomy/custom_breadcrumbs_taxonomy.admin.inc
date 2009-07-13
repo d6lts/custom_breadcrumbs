@@ -10,6 +10,7 @@
 function custom_breadcrumbs_taxonomy_term_form(&$form_state, $type) {
   $form = array();
   $bid = arg(5);
+  $breadcrumb = NULL;
   if (isset($bid)) {
     $title = 'Edit Custom Breadcrumb for Taxonomy Term';
     $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs_taxonomy', 'custom_breadcrumbs_taxonomy_term', array('bid' => $bid));
@@ -26,7 +27,7 @@ function custom_breadcrumbs_taxonomy_term_form(&$form_state, $type) {
     '#options' => $options,
     '#required' => TRUE,
     '#description' => t('Select the taxonomy term to apply this breadcrumb to'), 
-    '#default_value' => $bid ?  $breadcrumb->tid : NULL,
+    '#default_value' => isset($breadcrumb->tid) ?  $breadcrumb->tid : NULL,
     '#weight' => -10,
   );  
 
@@ -57,6 +58,7 @@ function custom_breadcrumbs_taxonomy_term_form(&$form_state, $type) {
 function custom_breadcrumbs_taxonomy_vocabulary_form(&$form_state, $type) {
   $form = array();
   $bid = arg(5);
+  $breadcrumb = NULL;
   if (isset($bid)) {
     drupal_set_title('Edit Custom Breadcrumb for Taxonomy Vocabulary');
     $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs_taxonomy', 'custom_breadcrumbs_taxonomy_vocabulary', array('bid' => $bid));
@@ -78,7 +80,7 @@ function custom_breadcrumbs_taxonomy_vocabulary_form(&$form_state, $type) {
     '#options' => $options,
     '#required' => TRUE,
     '#description' => t('Select taxonomy vocabulary to apply this breadcrumb to.'), 
-    '#default_value' => $bid ?  $breadcrumb->vid : NULL,
+    '#default_value' => isset($breadcrumb->vid)  ?  $breadcrumb->vid : NULL,
     '#weight' => -10,
   );  
 

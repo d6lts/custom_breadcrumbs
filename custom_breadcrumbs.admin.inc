@@ -49,7 +49,7 @@ function custom_breadcrumbs_page() {
   if ($multilingual) {
     $columns['language'] = 'Language';
   }
-  $order = in_array($_GET['order'], array_keys($columns)) ? $_GET['order'] : 'name';
+  $order = (isset($_GET['order']) && in_array($_GET['order'], array_keys($columns))) ? $_GET['order'] : 'name';
   $sort[$order] = (isset($_GET['sort']) && ($_GET['sort'] == 'desc')) ? 'desc' : 'asc';
   variable_set('custom_breadcrumbs_sort', array('direction' => $sort, 'column' => $order));
   usort($breadcrumbs, '_custom_breadcrumbs_sort_cmp');

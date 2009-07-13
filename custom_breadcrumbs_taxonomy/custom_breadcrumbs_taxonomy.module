@@ -140,8 +140,13 @@ function custom_breadcrumbs_taxonomy_menu() {
 function custom_breadcrumbs_taxonomy_nodeapi($node, $op, $teaser, $page) {
   if ($op == 'alter' && empty($teaser) && !empty($page)) {
     if (_custom_breadcrumbs_taxonomy_allowed_node_type($node->type)) {
+      // Extract lightest term from lightest vocabulary assosciated with node.
       module_load_include('inc', 'custom_breadcrumbs_taxonomy');
-      _custom_breadcrumbs_taxonomy_set_breadcrumb($node);
+      $term = custom_breadcrumbs_taxonomy_node_get_lightest_term($node->nid);
+      if ($term) {
+        $terms = taxonomy_node_get_terms($node);
+        _custom_breadcrumbs_taxonomy_set_breadcrumb($term->tid, FALSE, array('node' => $node), $terms);
+      }
     }
   }
 }
@@ -199,7 +204,7 @@ function custom_breadcrumbs_taxonomy_views_pre_render(&$view) {
             }
             if (!is_null($tid) || !is_null($vid)) {
               module_load_include('inc', 'custom_breadcrumbs_taxonomy');
-              $breadcrumb = custom_breadcrumbs_taxonomy_generate_breadcrumb($tid, $vid, FALSE, $view);
+              $breadcrumb = custom_breadcrumbs_taxonomy_generate_breadcrumb($tid, $vid, FALSE, array('view' => $view) );
               drupal_set_breadcrumb($breadcrumb);
               return;
             }
@@ -213,8 +218,12 @@ function custom_breadcrumbs_taxonomy_views_pre_render(&$view) {
             $node = node_load(array('nid' => $result->nid));
             if (_custom_breadcrumbs_taxonomy_allowed_node_type($node->type)) {
               module_load_include('inc', 'custom_breadcrumbs_taxonomy');
-              _custom_breadcrumbs_taxonomy_set_breadcrumb($node);
-              return;
+              $term = custom_breadcrumbs_taxonomy_node_get_lightest_term($node->nid);
+              if ($term) {
+                $terms = taxonomy_node_get_terms($node);
+                _custom_breadcrumbs_taxonomy_set_breadcrumb($term->tid, FALSE, array('node' => $node), $terms);
+                return;
+              }
             }
           }
         }
