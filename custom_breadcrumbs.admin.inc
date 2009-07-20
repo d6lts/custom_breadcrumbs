@@ -192,6 +192,14 @@ function custom_breadcrumbs_admin_settings() {
     '#collapsible'    => TRUE,
   );
 
+ $form['adv_settings']['custom_breadcrumbs_set_global_home_breadcrumb'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Set the Home breadcrumb text on all pages'),
+    '#default_value' => variable_get('custom_breadcrumbs_set_global_home_breadcrumb', FALSE),
+    '#description' => t("When enabled, the home breadcrumb text will be used on all pages, not just those with defined custom breadcrumbs."),
+    '#weight' => -40,
+  );
+
  $form['adv_settings']['custom_breadcrumbs_set_menu_breadcrumb'] = array(
     '#type' => 'checkbox',
     '#title' => t('Use the menu structure to set the breadcrumb trail'),

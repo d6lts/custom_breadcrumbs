@@ -89,6 +89,19 @@ function custom_breadcrumbs_menu() {
  * Implementation of hook_init().
  */
 function custom_breadcrumbs_init() {
+  if (variable_get('custom_breadcrumbs_set_global_home_breadcrumb', FALSE)) {
+    // Use default menu structure to set the breadcrumb.
+    $trail = drupal_get_breadcrumb();
+    if (!empty($trail)) {
+      array_shift($trail);
+      $cb_home = custom_breadcrumbs_home_crumb();
+      if (!empty($cb_home)) {
+        array_unshift($trail, array_pop($cb_home));
+      }
+      drupal_set_breadcrumb($trail);
+    }
+  }
+
   if (variable_get('custom_breadcrumbs_set_menu_breadcrumb', FALSE)) {
     // Use default menu structure to set the breadcrumb.
     custom_breadcrumbs_set_menu_breadcrumb();
@@ -219,6 +232,11 @@ function custom_breadcrumbs_select_breadcrumb($breadcrumbs, $objs = array()) {
  */
 function custom_breadcrumbs_set_breadcrumb($breadcrumb, $objs = array()) {
   if ($breadcrumb) {
+    $location = array();
+    $trail = custom_breadcrumbs_home_crumb();
+    if (!empty($trail)) {
+      $location = array('title' => variable_get('custom_breadcrumb_home', t('Home')), 'href' => '<front>', 'localized_options' => array());
+    }
     $titles = preg_split("/[\n]+/", $breadcrumb->titles);
     $paths = preg_split("/[\n]+/", $breadcrumb->paths);
 
@@ -228,15 +246,7 @@ function custom_breadcrumbs_set_breadcrumb($breadcrumb, $objs = array()) {
       $titles = token_replace_multiple($titles, $types);
       $paths = token_replace_multiple($paths, $types);
     }
-    $location = array();
-    $hometext = variable_get('custom_breadcrumb_home', t('Home'));
-    if ($hometext != '') {
-      $trail = array(l($hometext, '<front>'));
-      $location[] = array('title' => check_plain($hometext), 'href' => '<front>', 'localized_options' => array());
-    }
-    else {
-      $trail = array();
-    }
+  
     for ($i = 0; $i < count($titles); $i++) {
       if ($title = trim($titles[$i])) {
         // Create breadcrumb.
@@ -338,6 +348,21 @@ function _custom_breadcrumbs_delete_breadcrumb($table, $bid, $func = NULL) {
 }
 
 /**
+ * Create the Home breadcrumb trail.
+ */
+function custom_breadcrumbs_home_crumb() {
+  $hometext = variable_get('custom_breadcrumb_home', t('Home'));
+  if ($hometext != '') {
+    $trail = array(l($hometext, '<front>'));
+  }
+  else {
+    $trail = array();
+  }
+  return $trail;
+}
+
+
+/**
  * Private function for custom breadcrumb to create a crumb item
  *
  * @param $title
@@ -346,13 +371,14 @@ function _custom_breadcrumbs_delete_breadcrumb($table, $bid, $func = NULL) {
  *   The desired URI and/or special identifier
  */
 function _custom_breadcrumbs_create_crumb($title, $original_path) {
-  // Checked for named anchor #fragment, and strip it out. Then replace it below.
   $options = array();
+  // Checked for named anchor #fragment, and strip it out. Then replace it below.
   if (strpos($original_path, '#') !== FALSE) {
     list($original_path, $fragment) = explode('#', $original_path, 2);
     $options = array('fragment' => $fragment);
   }
   list($identifier, $path) = explode("|", $original_path, 2);
+
   // decode title to properly handle special characters
   // Suggested by aangle http://drupal.org/node/318272
   $title = ($title == '<none>') ? ' ' : decode_entities($title);
@@ -603,15 +629,16 @@ function custom_breadcrumbs_override_links($links, $attributes = array('class' =
  * follow the recursion of menu_tree_output().
  */
 function custom_breadcrumbs_theme_menu_item_link($link) {
+  if (isset($link['mlid'])) {
+    $link['localized_options']['attributes']['id'] = 'custom_breadcrumbs_menu-'. _custom_breadcrumbs_menu_unique_id($link['mlid']);
 
-  $link['localized_options']['attributes']['id'] = 'custom_breadcrumbs_menu-'. _custom_breadcrumbs_menu_unique_id($link['mlid']);
-
-  // Each link in series is another level of recursion. Add it to the stack.
-  _custom_breadcrumbs_menu_stack($link);
-  if (custom_breadcrumbs_in_active_trail($link)) {
-    $link['localized_options']['attributes']['class'] = 'active';
+    // Each link in series is another level of recursion. Add it to the stack.
+    _custom_breadcrumbs_menu_stack($link);
+    if (custom_breadcrumbs_in_active_trail($link)) {
+      $link['localized_options']['attributes']['class'] = 'active';
+    }
+    // Pass the altered variables to the normal menu themer.
   }
-  // Pass the altered variables to the normal menu themer.
   return theme_menu_item_link($link);
 }
 

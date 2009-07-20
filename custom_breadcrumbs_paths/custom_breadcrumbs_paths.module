@@ -6,6 +6,7 @@
  * Assign custom breadcrumbs based on the Drupal path.
  */
 module_load_include('inc', 'custom_breadcrumbs', 'custom_breadcrumbs.admin');
+module_load_include('inc', 'custom_breadcrumbs', 'custom_breadcrumbs_common');
 
 /**
  * Implementation of hook_cb_breadcrumb_info().
@@ -65,10 +66,6 @@ function custom_breadcrumbs_paths_nodeapi($node, $op, $teaser, $page) {
 /**
  * Implementation of hook_views_pre_render().
  */
-// TODO: create a common helper function for these hooks to avoid code duplication
-// TODO: pass $this into custom_breadcrumbs_is_visible to allow use of the views object in
-//       determining visibility. Needs some modification of that function to check for the
-//       object type.
 function custom_breadcrumbs_paths_views_pre_render(&$view) {
   // Don't really do anything with the view. This is just a pretense to insert a breadcrumb.
   $curpath = drupal_get_normal_path($_GET['q']);
@@ -76,20 +73,9 @@ function custom_breadcrumbs_paths_views_pre_render(&$view) {
   $viewpage = FALSE;
   foreach ($view->display as $display) {
     // We're only interested in main page views.
-    if (drupal_substr($display->id, 0, 5)  != 'page_' || $display->handler->view->is_attachment) continue;
-    $bits = explode('/', $display->display_options['path']);
-    $viewargs = $view->args;
-    foreach ($bits as $pos => $bit) {
-      if ($bit == '%' && !empty($viewargs)) {
-        $bits[$pos] = array_shift($viewargs);
-      }
-    }
-    if (!empty($viewargs)) {
-      // Add any additional arguments to end of path.
-      $bits = array_merge($bits, $viewargs);
-    }
-    $viewpath = implode('/', $bits);
-    $viewpage = $viewpage || _custom_breadcrumbs_paths_match_path($curpath, $viewpath);
+    if (!_custom_breadcrumbs_allowed_display($display)) continue;
+    $viewpath = _custom_breadcrumbs_construct_view_path($display, $view->args);  
+    $viewpage = $viewpage || _custom_breadcrumbs_match_path($curpath, $viewpath);
   }
   if ($viewpage) {
     // Check for breadcrumb at this path and set if a match is found.
@@ -99,8 +85,8 @@ function custom_breadcrumbs_paths_views_pre_render(&$view) {
 
 /**
  * Check for a custom breadcrumb at the current path and set if one is found.
- * @param $obj 
- *   the object (node or view) to use to check for breadcrumb visibility and token replacement
+ * @param $objs
+ *    An array of objects to be used in token replacement. Array keys indicate type of object.
  */
 function _custom_breadcrumbs_paths_set_breadcrumb($objs = array()) {
   $matchpath = variable_get('custom_breadcrumbs_paths_allow_wildcards', FALSE);
@@ -153,15 +139,17 @@ function _custom_breadcrumbs_paths_get_breadcrumbs($matchpath = FALSE, $path = N
  */
 function _custom_breadcrumbs_paths_page_match($breadcrumb, $matchpath) {
   $page_match = FALSE;
-  if ($matchpath) {
-    if (isset($breadcrumb->language)) {
-      // Check for a match on the prefixed path.
-      $path = $breadcrumb->language .'/'. $breadcrumb->specific_path;
-      $page_match = _custom_breadcrumbs_paths_match_path($_REQUEST['q'], $path);
-    }
-    if (!$page_match) {
-      // Check for a direct match.
-      $page_match = _custom_breadcrumbs_paths_match_path($_REQUEST['q'], $breadcrumb->specific_path);
+  if (isset($_REQUEST['q'])) {
+    if ($matchpath) {
+      if (isset($breadcrumb->language)) {
+        // Check for a match on the prefixed path.
+        $path = $breadcrumb->language .'/'. $breadcrumb->specific_path;
+        $page_match = _custom_breadcrumbs_match_path($_REQUEST['q'], $path);
+      }
+      if (!$page_match) {
+        // Check for a direct match.
+        $page_match = _custom_breadcrumbs_match_path($_REQUEST['q'], $breadcrumb->specific_path);
+      }
     }
   }
   return $page_match;
@@ -180,7 +168,7 @@ function custom_breadcrumbs_paths_cb_node_form_table($node) {
   $param = array('specific_path' => $node->path);
   $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs_paths', NULL, $param);
    foreach ($breadcrumbs as $key => $breadcrumb) {
-    if (!_custom_breadcrumbs_paths_match_path($node->path, $breadcrumb->specific_path)) {
+    if (!_custom_breadcrumbs_match_path($node->path, $breadcrumb->specific_path)) {
       unset($breadcrumbs[$key]);
     }
   }
@@ -236,20 +224,4 @@ function custom_breadcrumbs_paths_form_alter(&$form, $form_state, $form_id) {
       '#weight' => -20,
     );
   }
-}
-
-/**
- * Helper function to determine if two paths match, allowing for wildcards and aliases.
- * @param $curpath and $breadcrumb_path are the two paths to compare
- * @return
- *    TRUE (1) if the paths match, FALSE (0) otherwise.
- */
-function _custom_breadcrumbs_paths_match_path($curpath, $breadcrumb_path) {
-  $path = drupal_get_path_alias($curpath);
-  // Compare with the internal and path alias (if any).
-  $page_match = drupal_match_path($path, $breadcrumb_path);
-  if ($path != $curpath) {
-   $page_match = $page_match || drupal_match_path($curpath, $breadcrumb_path);
-  }
-  return $page_match;
 }

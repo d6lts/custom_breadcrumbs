@@ -5,6 +5,8 @@
  * Provide custom breadcrumbs for views pages.
  */
 module_load_include('inc', 'custom_breadcrumbs', 'custom_breadcrumbs.admin');
+module_load_include('inc', 'custom_breadcrumbs', 'custom_breadcrumbs_common');
+
 
 /**
  * Implementation of hook_cb_breadcrumb_info().
@@ -54,20 +56,25 @@ function custom_breadcrumbs_views_views_pre_render(&$view) {
   global $language;
   $languages = array('language' => $language->language, 'all' => '');
 
+  $curpath = drupal_get_normal_path($_GET['q']);
+  // Check to see if the view path matches the current path.
   foreach ($view->display as $display) {
     // Identify allowed displays for breadcrumb replacement.
-    if (!_allowed_display($display)) continue;
-    $name = $display->display_options['path'];
-    $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs_views', NULL, array('views_path' => $name), $languages);
-    if (!empty($breadcrumbs)) {
-      if ($breadcrumb = custom_breadcrumbs_select_breadcrumb($breadcrumbs, array('view' => $view))) {
-        custom_breadcrumbs_set_breadcrumb($breadcrumb, array('view' => $view));
-        return;
+    if (!_custom_breadcrumbs_allowed_display($display)) continue;
+    $viewpath = _custom_breadcrumbs_construct_view_path($display, $view->args);  
+    if (_custom_breadcrumbs_match_path($curpath, $viewpath)) {
+      $loadpath = $display->display_options['path'];
+      $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs_views', NULL, array('views_path' => $loadpath), $languages);
+      if (!empty($breadcrumbs)) {
+        if ($breadcrumb = custom_breadcrumbs_select_breadcrumb($breadcrumbs, array('view' => $view))) {
+          custom_breadcrumbs_set_breadcrumb($breadcrumb, array('view' => $view));
+          return;
+        }
       }
     }
   }
   if (variable_get('custom_breadcrumbs_set_menu_breadcrumb', FALSE)) {
-    // If a views breadcrumb has not been defined for this view, then use default menu structure.
+    // If a views breadcrumb has not been defined for this view, then use the default menu structure.
     custom_breadcrumbs_set_menu_breadcrumb();
   }
 }
@@ -91,7 +98,7 @@ function custom_breadcrumbs_views_form(&$form_state, $type) {
   foreach ($views as $view) {
     if (!isset($view->disabled)) {
       foreach ($view->display as $display) {
-        if (_allowed_display($display)) {
+        if (_custom_breadcrumbs_allowed_display($display)) {
           $name = $display->display_options['path'];
           $options[$name] = $name;
         }
@@ -104,7 +111,7 @@ function custom_breadcrumbs_views_form(&$form_state, $type) {
     '#required' => TRUE,
     '#options' => $options,
     '#description' => t('The path to the view that this custom breadcrumb trail will apply to.'),
-    '#default_value' => $bid ? $breadcrumb->views_path : NULL,
+    '#default_value' => isset($breadcrumb->views_path) ? $breadcrumb->views_path : NULL,
     '#weight' => -10,
   );
   // Store information needed to save this breadcrumb.
@@ -115,18 +122,4 @@ function custom_breadcrumbs_views_form(&$form_state, $type) {
   $form['#validate'][] = 'custom_breadcrumbs_form_validate';
 
   return $form;
-}
-
-/**
- *  Helper function to specify allowed views displays for breadcrumb placement.
- */
-function _allowed_display($display) {
-  if (drupal_substr($display->id, 0, 4)  == 'page' || drupal_substr($display->id, 0, 8)  == 'calendar') {
-    if (!(isset($display->handler->view->is_attachment) && $display->handler->view->is_attachment)) {
-      if (isset($display->display_options['path'])) {
-        return TRUE;
-      }
-    }
-  }
-  return FALSE;
 }

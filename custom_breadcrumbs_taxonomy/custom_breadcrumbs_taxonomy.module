@@ -35,6 +35,7 @@
  */
 
 module_load_include('inc', 'custom_breadcrumbs', 'custom_breadcrumbs.admin');
+module_load_include('inc', 'custom_breadcrumbs', 'custom_breadcrumbs_common');
 
 // default value for Advanced Settings, Node Types
 define('CUSTOM_BREADCRUMBS_TAXONOMY_NODE_TYPES_DEFAULT', 'book');
@@ -70,7 +71,7 @@ function custom_breadcrumbs_taxonomy_cb_breadcrumb_info() {
  */
 function _custom_breadcrumbs_taxonomy_term_breadcrumb_name($breadcrumb) {
   $names = array();
-  $parents = taxonomy_get_parents($breadcrumb->tid);
+  $parents = taxonomy_get_parents_all($breadcrumb->tid);
   while ($parent = array_shift($parents)) {
     $names[] = $parent->name; 
   }
@@ -78,7 +79,6 @@ function _custom_breadcrumbs_taxonomy_term_breadcrumb_name($breadcrumb) {
   $vocabulary = taxonomy_vocabulary_load($term->vid);
   $names[] = $vocabulary->name; 
   $names = array_reverse($names);
-  $names[] = $term->name; 
   $output = implode('>', $names);
   return $output;
 }
@@ -145,7 +145,7 @@ function custom_breadcrumbs_taxonomy_nodeapi($node, $op, $teaser, $page) {
       $term = custom_breadcrumbs_taxonomy_node_get_lightest_term($node->nid);
       if ($term) {
         $terms = taxonomy_node_get_terms($node);
-        _custom_breadcrumbs_taxonomy_set_breadcrumb($term->tid, FALSE, array('node' => $node), $terms);
+        _custom_breadcrumbs_taxonomy_set_breadcrumb($term->tid, NULL, FALSE, array('node' => $node), $terms);
       }
     }
   }
@@ -204,15 +204,21 @@ function custom_breadcrumbs_taxonomy_views_pre_render(&$view) {
             }
             if (!is_null($tid) || !is_null($vid)) {
               module_load_include('inc', 'custom_breadcrumbs_taxonomy');
-              $breadcrumb = custom_breadcrumbs_taxonomy_generate_breadcrumb($tid, $vid, FALSE, array('view' => $view) );
-              drupal_set_breadcrumb($breadcrumb);
+              $terms = array();
+              if (!is_null($tid)) {
+                $term = taxonomy_get_term($tid);
+                if ($term) {
+                  $terms[$term->tid] = $term;
+                }
+              }
+              _custom_breadcrumbs_taxonomy_set_breadcrumb($tid, $vid, TRUE, array('view' => $view), $terms);
               return;
             }
           }
         }
       }
       // Otherwise, use the first result node that is of an allowed node type to generate the breadcrumb.
-      if (drupal_substr($display->id, 0, 4)  == 'page' && !empty($view->result)) {
+      if (_custom_breadcrumbs_allowed_display($display) && !empty($view->result)) {
         foreach ($view->result as $result) {
           if (isset($result->nid)) {
             $node = node_load(array('nid' => $result->nid));
@@ -221,7 +227,7 @@ function custom_breadcrumbs_taxonomy_views_pre_render(&$view) {
               $term = custom_breadcrumbs_taxonomy_node_get_lightest_term($node->nid);
               if ($term) {
                 $terms = taxonomy_node_get_terms($node);
-                _custom_breadcrumbs_taxonomy_set_breadcrumb($term->tid, FALSE, array('node' => $node), $terms);
+                _custom_breadcrumbs_taxonomy_set_breadcrumb($term->tid, NULL, TRUE, array('node' => $node), $terms);
                 return;
               }
             }
