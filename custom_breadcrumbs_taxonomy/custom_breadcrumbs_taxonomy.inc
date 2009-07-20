@@ -40,7 +40,7 @@ function custom_breadcrumbs_taxonomy_term_page() {
   }
   require_once($filepath .'/'. $file);
   $output = call_user_func_array($callback, $args);
-  _custom_breadcrumbs_taxonomy_set_breadcrumb($tids['tids'][0], TRUE, array(), $terms);
+  _custom_breadcrumbs_taxonomy_set_breadcrumb($tids['tids'][0], NULL, TRUE, array(), $terms);
 
   return $output;
 }
