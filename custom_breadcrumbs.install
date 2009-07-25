@@ -102,14 +102,14 @@ function custom_breadcrumbs_update_1() {
   $search = array_keys($stuff);
   $replace = array_values($stuff);
 
-  $result = db_query("SELECT * FROM {custom_breadcrumb} cb");
+  $result = db_query("SELECT * FROM {custom_breadcrumb}");
   while ($crumb = db_fetch_object($result)) {
     $crumb->titles = str_replace($search, $replace, $crumb->titles);
     $crumb->paths = str_replace($search, $replace, $crumb->paths);
-    custom_breadcrumbs_save_breadcrumb($crumb);
+    _custom_breadcrumbs_save_breadcrumb('custom_breadcrumb', $crumb);
   }
 
-  return array('Custom Breadcrumb replacement strings updated for use with Token module.');
+  return array('success' => TRUE, 'query' => 'Custom Breadcrumb replacement strings updated for use with Token module.');
 }
 
 function custom_breadcrumbs_update_2() {
