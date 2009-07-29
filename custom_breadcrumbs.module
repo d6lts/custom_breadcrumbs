@@ -547,6 +547,15 @@ function custom_breadcrumbs_set_menu_breadcrumb() {
  */
 function custom_breadcrumbs_theme_registry_alter(&$theme_registry) {
   if (variable_get('custom_breadcrumbs_force_active_trail', FALSE) && !empty($theme_registry['links'])) {
+    global $theme;
+    // Store the existing theme functions.
+    $themes = variable_get('custom_breadcrumbs_menu_theme', array());
+    $themes[$theme] = array(
+      'menu_item' => $theme_registry['menu_item']['function'],
+      'menu_item_link' => $theme_registry['menu_item_link']['function'],
+    );
+    variable_set('custom_breadcrumbs_menu_theme', $themes);
+    // Replace these with our own functions. We will call the original functions after call these override functions.
     $theme_registry['links']['function'] = 'custom_breadcrumbs_override_links';
     $theme_registry['menu_item_link']['function'] = 'custom_breadcrumbs_theme_menu_item_link';
     $theme_registry['menu_item']['function'] = 'custom_breadcrumbs_theme_menu_item';
@@ -562,7 +571,7 @@ function custom_breadcrumbs_in_active_trail($link) {
     return FALSE;
   }
   foreach ($trail as $step) {
-    if ($step['href'] == $link['href'] || $step['href'] == drupal_get_path_alias($link['href'])) {
+    if (isset($step['href']) && ($step['href'] == $link['href'] || $step['href'] == drupal_get_path_alias($link['href']))) {
       return TRUE;
     }
   }
@@ -629,51 +638,68 @@ function custom_breadcrumbs_override_links($links, $attributes = array('class' =
  * follow the recursion of menu_tree_output().
  */
 function custom_breadcrumbs_theme_menu_item_link($link) {
+  // Find out which theme function to dispatch to after preprocessing.
+  global $theme;
+  static $function;
+  if (!isset($function)) {
+    $registry = variable_get('custom_breadcrumbs_menu_theme', array());
+    $function = isset($registry[$theme]) ? $registry[$theme]['menu_item_link'] : 'theme_menu_item_link';
+  }
+
   if (isset($link['mlid'])) {
+    // Some themes use options, others use localized_options. Populate both.
     $link['localized_options']['attributes']['id'] = 'custom_breadcrumbs_menu-'. _custom_breadcrumbs_menu_unique_id($link['mlid']);
+    $link['options']['attributes']['id'] = $link['localized_options']['attributes']['id'];
 
     // Each link in series is another level of recursion. Add it to the stack.
     _custom_breadcrumbs_menu_stack($link);
     if (custom_breadcrumbs_in_active_trail($link)) {
       $link['localized_options']['attributes']['class'] = 'active';
     }
-    // Pass the altered variables to the normal menu themer.
   }
-  return theme_menu_item_link($link);
+  // Pass the altered variables to the normal menu themer.
+  return $function($link);
 }
 
 function custom_breadcrumbs_theme_menu_item($link, $has_children, $menu = '', $in_active_trail = FALSE, $extra_class = NULL) {
+  global $theme;
+  static $function;
+
+  if (!isset($function)) {
+    $registry = variable_get('custom_breadcrumbs_menu_theme', array());
+    $function = isset($registry[$theme]) ? $registry[$theme]['menu_item'] : 'theme_menu_item';
+  }
+
   /* When theme('menu_item') is called, the menu tree below it has been
    * rendered already. Since we are done on this recursion level,
    * one element must be popped off the stack.
    */
-  $stack = _custom_breadcrumbs_menu_stack();
 
-  // Move to the last element in the stack (the current item).
-  end($stack);
+  $item = _custom_breadcrumbs_menu_stack();
 
   // If there are children, but they were not loaded...
   if ($has_children && !$menu) {
     // Load the tree below the current position.
-    $tree = _custom_breadcrumbs_menu_subtree($stack);
+    $tree = _custom_breadcrumbs_menu_subtree($item);
     $force_active_trail = FALSE;
-    foreach ($tree as $sub => $data) {
-      if (custom_breadcrumbs_in_active_trail($data['link'])) {
-        $force_active_trail = TRUE;
-      }
-      else {
-        $belows = (array)$data['below'];
-        foreach ($belows as $id => $below) { //descend
-          if (custom_breadcrumbs_in_active_trail($below['link'])) {
-            $force_active_trail = TRUE;
-          }
-          else {
-            unset($tree[$sub]['below'][$id]);
+    if (!empty($tree)) {
+      foreach ($tree as $sub => $data) {
+        if (custom_breadcrumbs_in_active_trail($data['link'])) {
+          $force_active_trail = TRUE;
+        }
+        else {
+          $belows = (array)$data['below'];
+          foreach ($belows as $id => $below) { //descend
+            if (custom_breadcrumbs_in_active_trail($below['link'])) {
+              $force_active_trail = TRUE;
+            }
+            else {
+              unset($tree[$sub]['below'][$id]);
+            }
           }
         }
       }
     }
-
     if ($force_active_trail) {
       // Render it...
       $menu = menu_tree_output($tree);
@@ -689,8 +715,8 @@ function custom_breadcrumbs_theme_menu_item($link, $has_children, $menu = '', $i
   if ($menu && !$in_active_trail) {
     $extra_class .= ' collapsed start-collapsed ';
   }
-
-  return theme_menu_item($link, $has_children, $menu, $in_active_trail, $extra_class);
+  // Pass the altered variables to the normal menu themer.
+  return $function($link, $has_children, $menu, $in_active_trail, $extra_class);
 }
 
 /**
@@ -703,31 +729,26 @@ function custom_breadcrumbs_theme_menu_item($link, $has_children, $menu = '', $i
  * @return
  *   The items below the lowest item in the stack.
  */
-function _custom_breadcrumbs_menu_subtree($stack) {
+function _custom_breadcrumbs_menu_subtree($item) {
   static $index = array();
   static $indexed = array();
 
-  reset($stack);
-  $start = current($stack);
-
   // This looks expensive, but menu_tree_all_data uses static caching.
-  $tree = menu_tree_all_data($start['menu_name']);
-
-  if (!isset($indexed[$start['menu_name']])) {
+  $tree = menu_tree_all_data($item['menu_name']);
+  if (!isset($indexed[$item['menu_name']])) {
     $index += _custom_breadcrumbs_menu_index($tree);
-    $indexed[$start['menu_name']] = TRUE;
+    $indexed[$item['menu_name']] = TRUE;
   }
-
   // Traverse the tree.
-  foreach ($stack as $item) {
-    $key = $index[$item['mlid']];
+  foreach ($index[$item['mlid']]['parents'] as $mlid) {
+    $key = $index[$mlid]['key'];
     if (!isset($tree[$key])) {
-      $tree = $tree[key($tree)]['below'];
-      if (!isset($tree[$key])) return array();
+      return array();
     }
     $tree = $tree[$key]['below'];
   }
-  return $tree;
+  $key = $index[$item['mlid']]['key'];
+  return isset($tree[$key]) ? $tree[$key]['below'] : array();
 }
 
 /**
@@ -740,12 +761,16 @@ function _custom_breadcrumbs_menu_subtree($stack) {
  * @return
  *   An array associating mlid values with the internal keys of the menu tree.
  */
-function _custom_breadcrumbs_menu_index($tree) {
+function _custom_breadcrumbs_menu_index($tree, $ancestors = array(), $parent = NULL) {
   $index = array();
+  if ($parent) $ancestors[] = $parent;
   foreach ($tree as $key => $item) {
-    $index[$item['link']['mlid']] = $key;
+    $index[$item['link']['mlid']] = array(
+      'key' => $key,
+      'parents' => $ancestors,
+    );
     if (!empty($item['below'])) {
-      $index += _custom_breadcrumbs_menu_index($item['below']);
+      $index += _custom_breadcrumbs_menu_index($item['below'], $ancestors, $item['link']['mlid']);
     }
   }
   return $index;
@@ -779,11 +804,9 @@ function _custom_breadcrumbs_menu_unique_id($id) {
 function _custom_breadcrumbs_menu_stack($link = FALSE) {
   static $stack = array();
   if ($link) {
-    $stack[$link['localized_options']['attributes']['id']] = $link;
+    array_push($stack, $link);
   }
   else {
-    $copy = $stack;
-    array_pop($stack);
-    return $copy;
+    return array_pop($stack);
   }
 }
