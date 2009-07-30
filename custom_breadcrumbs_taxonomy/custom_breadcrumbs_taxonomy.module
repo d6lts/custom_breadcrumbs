@@ -145,7 +145,7 @@ function custom_breadcrumbs_taxonomy_nodeapi($node, $op, $teaser, $page) {
       $term = custom_breadcrumbs_taxonomy_node_get_lightest_term($node->nid);
       if ($term) {
         $terms = taxonomy_node_get_terms($node);
-        _custom_breadcrumbs_taxonomy_set_breadcrumb($term->tid, NULL, FALSE, array('node' => $node), $terms);
+        _custom_breadcrumbs_taxonomy_set_breadcrumb($term->tid, $term->vid, FALSE, array('node' => $node), $terms);
       }
     }
   }
@@ -155,9 +155,9 @@ function custom_breadcrumbs_taxonomy_nodeapi($node, $op, $teaser, $page) {
  * Implementation of hook_menu_alter().
  */
 function custom_breadcrumbs_taxonomy_menu_alter(&$callbacks) {
-
-  // This will not work if views has overriden taxonomy/term/%
-  if (isset($callbacks['taxonomy/term/%']) && ($callbacks['taxonomy/term/%']['page callback'] != 'views_page')) {
+  // This will not work if views or panels has overriden taxonomy/term/%
+  if (isset($callbacks['taxonomy/term/%']) && ($callbacks['taxonomy/term/%']['page callback'] != 'views_page')
+    && ($callbacks['taxonomy/term/%']['page callback'] != 'page_manager_term_view')) {
     $term_callback = &$callbacks['taxonomy/term/%'];
     $callback = $term_callback['page callback'];
     $arguments = $term_callback['page arguments'];
@@ -179,6 +179,7 @@ function custom_breadcrumbs_taxonomy_views_pre_render(&$view) {
     // Set the taxonomy breadcrumb for the view.
     if (!empty($view->display)) {
       foreach ($view->display as $display) {
+        if (module_exists('panels') && panels_get_current_page_display()) continue;
         if (!empty($display->display_options['arguments'])) {
           // Try to use the view argument to generate the breadcrumb.
           foreach ($display->display_options['arguments'] as $argument) {
@@ -207,6 +208,7 @@ function custom_breadcrumbs_taxonomy_views_pre_render(&$view) {
               $terms = array();
               if (!is_null($tid)) {
                 $term = taxonomy_get_term($tid);
+                $vid = $term->vid;
                 if ($term) {
                   $terms[$term->tid] = $term;
                 }
@@ -227,7 +229,7 @@ function custom_breadcrumbs_taxonomy_views_pre_render(&$view) {
               $term = custom_breadcrumbs_taxonomy_node_get_lightest_term($node->nid);
               if ($term) {
                 $terms = taxonomy_node_get_terms($node);
-                _custom_breadcrumbs_taxonomy_set_breadcrumb($term->tid, NULL, TRUE, array('node' => $node), $terms);
+                _custom_breadcrumbs_taxonomy_set_breadcrumb($term->tid, $term->vid, TRUE, array('node' => $node), $terms);
                 return;
               }
             }

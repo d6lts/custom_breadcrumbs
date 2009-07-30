@@ -49,7 +49,7 @@ function custom_breadcrumbs_taxonomy_term_page() {
  */
 function _custom_breadcrumbs_taxonomy_set_breadcrumb($tid, $vid = NULL, $is_term_page = FALSE, $objs = array(), $terms = array()) {
   if (variable_get('custom_breadcrumbs_taxonomy_use_hierarchy', TRUE)) {
-    $breadcrumb = custom_breadcrumbs_taxonomy_generate_breadcrumb($tid, $vid, $is_term_page, $objs, $terms);
+    $breadcrumb = custom_breadcrumbs_taxonomy_generate_breadcrumb($tid, $vid, $is_term_page, $objs);
     if (variable_get('custom_breadcrumbs_taxonomy_include_node_title', FALSE) && isset($objs['node'])) {
       $breadcrumb[] = $objs['node']->title;
     }
@@ -98,7 +98,7 @@ function custom_breadcrumbs_taxonomy_node_get_lightest_term($nid) {
   /* We only want the first row of the result--this is the lightest term of the
    * lightest vocab.
    */
-  $result = db_query(db_rewrite_sql('SELECT t.* FROM {term_node} r INNER JOIN {term_data} t ON r.tid = t.tid INNER JOIN {term_hierarchy} h ON t.tid = h.tid INNER JOIN {vocabulary} v ON t.vid = v.vid WHERE r.nid = %d ORDER BY v.weight, h.parent DESC, t.weight, t.name', 't', 'tid'), $nid);
+  $result = db_query(db_rewrite_sql('SELECT t.* FROM {term_node} r INNER JOIN {term_data} t ON r.tid = t.tid INNER JOIN {term_hierarchy} h ON t.tid = h.tid INNER JOIN {vocabulary} v ON t.vid = v.vid WHERE r.nid = %d ORDER BY v.weight, h.parent, t.weight, t.name', 't', 'tid'), $nid);
 
   // Extract the first row of query.
   $term = db_fetch_object($result);
@@ -110,8 +110,8 @@ function custom_breadcrumbs_taxonomy_node_get_lightest_term($nid) {
  * breadcrumb, and will only be used on the taxonomy term page and on nodes if
  * custom_breadcrumbs_taxonomy_use_hierarchy has been enabled. 
  */
-function custom_breadcrumbs_taxonomy_generate_breadcrumb($tid, $vid = NULL, $is_term_page = FALSE, $objs = NULL, $terms = array()) {
-  $term = (!empty($terms)) ? array_pop($terms) : NULL;
+function custom_breadcrumbs_taxonomy_generate_breadcrumb($tid, $vid = NULL, $is_term_page = FALSE, $objs = NULL) {
+  $term = (is_null($tid)) ? NULL : taxonomy_get_term($tid);
   $vocabid = (!is_null($vid)) ? $vid : (is_null($term) ? NULL : $term->vid);
   $types = NULL;
   if (module_exists('token')) {
