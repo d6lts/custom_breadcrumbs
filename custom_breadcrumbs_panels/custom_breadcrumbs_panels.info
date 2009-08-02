@@ -1,0 +1,12 @@
+; $Id$
+name = Custom Breadcrumbs for Panels
+package = Custom Breadcrumbs
+dependencies[] = custom_breadcrumbs
+dependencies[] = panels
+dependencies[] = ctools
+dependencies[] = page_manager
+description = Provides Custom Breadcrumbs for panels pages.
+core = 6.x
+
+
+

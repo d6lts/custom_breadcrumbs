@@ -58,6 +58,9 @@ function _custom_breadcrumbs_allowed_display($display) {
   if (drupal_substr($display->id, 0, 4)  == 'page' || drupal_substr($display->id, 0, 8)  == 'calendar') {
     if (!(isset($display->handler->view->is_attachment) && $display->handler->view->is_attachment)) {
       if (isset($display->display_options['path']) ) {
+        if (module_exists('panels') && panels_get_current_page_display()) {
+          return FALSE;
+        }
         return TRUE;
       }
     }

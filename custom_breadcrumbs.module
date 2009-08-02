@@ -28,9 +28,10 @@ function custom_breadcrumbs_cb_breadcrumb_info() {
  */
 function custom_breadcrumbs_theme() {
   return array(
-    'custom_breadcrumbs_filter_form' => array('arguments' => array('form' => NULL), 'file' => 'custom_breadcrumbs.admin.inc', ),
-    'custom_breadcrumbs_filters' => array('arguments' => array('form' => NULL), 'file' => 'custom_breadcrumbs.admin.inc', ),
+    'custom_breadcrumbs_filter_form' => array('arguments' => array('form' => array()), 'file' => 'custom_breadcrumbs.admin.inc', ),
+    'custom_breadcrumbs_filters' => array('arguments' => array('form' => array()), 'file' => 'custom_breadcrumbs.admin.inc', ),
     'custom_breadcrumbs_help_identifiers' => array('arguments' => array()),
+    'custom_breadcrumbs_module_weight' => array('arguments' => array('form' => array()), 'file' => 'custom_breadcrumbs.admin.inc', ), 
   );
 }
 
@@ -809,4 +810,12 @@ function _custom_breadcrumbs_menu_stack($link = FALSE) {
   else {
     return array_pop($stack);
   }
+}
+
+/**
+ *  Helper function to retrieve module weight.
+ */
+function _custom_breadcrumbs_get_module_weight($name) {
+  $weight = (int) db_result(db_query("SELECT weight FROM {system} WHERE name = '%s'", $name));
+  return $weight;
 }

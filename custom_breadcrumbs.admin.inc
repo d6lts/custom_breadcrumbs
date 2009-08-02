@@ -215,16 +215,92 @@ function custom_breadcrumbs_admin_settings() {
     '#default_value' => variable_get('custom_breadcrumbs_force_active_trail', FALSE),
     '#weight' => -10,
   );
+  $form['adv_settings']['module_weights'] = array(
+    '#type'           => 'fieldset',
+    '#title'          => t('Module weights'),
+    '#description'    => t('When enabled, the relative module weights can be adjusted in the table below. Lighter module weights will provide custom breadcrumbs that could be modified, or overriden by heavier modules.'),
+    '#collapsible'    => TRUE,
+    '#collapsed'      => FALSE,
+  );
 
+ $form['adv_settings']['module_weights']['custom_breadcrumbs_adjust_module_weights'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Adjust module weights'),
+    '#default_value' => FALSE,
+  );
+
+  $form['adv_settings']['module_weights']['table'] = custom_breadcrumbs_module_weight();
+  if (!empty($form['adv_settings']['module_weights']['table'])) {
+    $form['adv_settings']['module_weights']['table']['#theme'] = 'custom_breadcrumbs_module_weight';
+  } 
+  else {
+    unset($form['adv_settings']['module_weights']);
+  }
   $form['#submit'][] = 'custom_breadcrumbs_admin_settings_submit';
 
   return system_settings_form($form);
 }
 
+/**
+ * Form builder to list and manage custom breadcrumb module weights.
+ *
+ * @ingroup forms
+ * @see custom_breadcrumbs_module_weight_submit()
+ * @see theme_custom_breadcrumbs_module_weight()
+ */
+function custom_breadcrumbs_module_weight() {
+  // Get a list of all custom_breadcrumbs submodules and their module weights.  
+  $modules = module_implements('cb_breadcrumb_info');
+  $form = array('#tree' => TRUE);
+  $module_id = 0;
+  foreach ($modules as $module) {
+    $weight = _custom_breadcrumbs_get_module_weight($module);
+    $info = drupal_parse_info_file(drupal_get_path('module', $module) .'/'. $module .'.info');
+    $form[$module_id]['#weight'] = $weight;
+    $form[$module_id]['#module'] = $module;
+    $form[$module_id]['name'] = array('#value' => check_plain($info['name']));
+    $form[$module_id]['weight'] = array('#type' => 'weight', '#delta' => 200, '#default_value' => $weight);
+    ++$module_id;
+  }
+
+  // Only add this form if there is more than one module.
+  return ($module_id > 1)  ? $form : array();
+}
+
 function custom_breadcrumbs_admin_settings_submit($form, &$form_state) {
-  // Rebuild the theme registry.
-  drupal_rebuild_theme_registry();
-  drupal_set_message('The theme registry has been rebuilt');
+  if (!empty($form['adv_settings']['module_weights']['table']) && $form_state['values']['custom_breadcrumbs_adjust_module_weights']) {
+    // Set the initial weight of the lightest module to zero.
+    $current_mod_weight = 0;  
+    $table = array('module name' => array(), 'table weight' => array(), 'module weight' => array());
+    // Prepare module table that can be sorted by table weight.
+    foreach ($form_state['values']['table'] as $module_id => $value) { 
+      if (is_numeric($module_id)) {
+        $module = $form['adv_settings']['module_weights']['table'][$module_id]['#module'];
+        $table['table weight'][$module] = $form_state['values']['table'][$module_id]['weight'];
+        $table['module weight'][$module] = $form['adv_settings']['module_weights']['table'][$module_id]['#weight']; 
+      }
+    }
+    // Sort module list by table weight.
+    array_multisort($table['table weight'], $table['module weight'] );
+    foreach ($table['module weight'] as $module => $orig_weight) {
+       // Find the module's minimum weight determined by dependence on other modules.
+      $func = $module . '_minimum_module_weight';
+      $min = function_exists($func)  ? $func() : 0;
+      $weight = max($min, $current_mod_weight);
+      // Update module weight in the system table if it has changed.
+      if ($orig_weight != $weight) {
+        db_query("UPDATE {system} SET weight = %d WHERE name = '%s'", $weight, $module);
+        variable_set('menu_rebuild_needed', TRUE);
+      }
+      $current_mod_weight = $weight + 1;
+    }
+  }
+
+  // Rebuild the theme registry if custom_breadcrumbs_force_active_trail has changed.
+  if ($form_state['values']['custom_breadcrumbs_force_active_trail'] != $form['adv_settings']['custom_breadcrumbs_force_active_trail']['#default_value']) {
+    drupal_rebuild_theme_registry();
+    drupal_set_message('The theme registry has been rebuilt');
+  }
 }
 
 /*
@@ -481,7 +557,6 @@ function theme_custom_breadcrumbs_filter_form($form) {
 
 /**
  * Theme custom_breadcrumbs filter selector.
- *
  * @ingroup themeable
  */
 function theme_custom_breadcrumbs_filters($form) {
@@ -538,4 +613,32 @@ function custom_breadcrumbs_simple_breadcrumb_table($breadcrumbs) {
     $rows[] = array(array('data' => t('You can define custom breadcrumbs at !link.', array('!link' => l('Custom Breadcrumbs Administration Page', 'admin/build/custom_breadcrumbs'))), 'colspan' => 5 + (int)$multilingual));
   }
   return theme('table', $header, $rows);
+}
+
+
+/**
+ * Theme the module weights as a sortable list.
+ *
+ * @ingroup themeable
+ * @see custom_breadcrumbs_module_weight()
+ */
+function theme_custom_breadcrumbs_module_weight($form) {
+  $rows = array();
+  foreach (element_children($form) as $key) {
+    if (isset($form[$key]['name'])) {
+      $module = &$form[$key];
+      $row = array();
+      $row[] = drupal_render($module['name']);
+      if (isset($module['weight'])) {
+        $module['weight']['#attributes']['class'] = 'module-weight';
+        $row[] = drupal_render($module['weight']);
+      }
+      $rows[] = array('data' => $row, 'class' => 'draggable');
+    }
+  }
+
+  $header = array(t('Module Name'));
+  $header[] = t('Weight');
+  drupal_add_tabledrag('custom_breadcrumbs', 'order', 'self', 'module-weight');
+  return theme('table', $header, $rows, array('id' => 'custom_breadcrumbs')) . drupal_render($form);
 }

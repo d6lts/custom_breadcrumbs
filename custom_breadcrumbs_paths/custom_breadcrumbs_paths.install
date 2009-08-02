@@ -6,9 +6,6 @@
  */
 function custom_breadcrumbs_paths_install() {
   drupal_install_schema('custom_breadcrumbs_paths');
-  // Increase the weight so its greater than custom_breadcrumbs
-  $weight = (int) db_result(db_query("SELECT weight FROM {system} WHERE name = 'custom_breadcrumbs'"));
-  db_query("UPDATE {system} SET weight = %d WHERE name = 'custom_breadcrumbs_paths'", $weight + 1);
 
   // Search for Paths breadcrumbs in existing {custom_breadcrumb} and copy to new table.
   drupal_set_message(t('Looking for Specify Path breadcrumbs to copy from {custom_breadcrumb}...'));

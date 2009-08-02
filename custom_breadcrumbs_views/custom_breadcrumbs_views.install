@@ -10,8 +10,6 @@
  */
 function custom_breadcrumbs_views_install() {
   drupal_install_schema('custom_breadcrumbs_views');
-  $weight = (int) db_result(db_query("SELECT weight FROM {system} WHERE name = 'views'"));
-  db_query("UPDATE {system} SET weight = %d WHERE name = 'custom_breadcrumbs_views'", $weight + 1);
 
   // Search for Views breadcrumbs in existing {custom_breadcrumb} and move to new table.
   drupal_set_message('Looking for views breadcrumbs to copy from {custom_breadcrumb}...');

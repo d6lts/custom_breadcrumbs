@@ -13,13 +13,6 @@ function custom_breadcrumbs_taxonomy_install() {
   // Create tables.
   drupal_install_schema('custom_breadcrumbs_taxonomy');
 
-  // Set weight of custom_breadcrumbs_taxonomy to be greater than taxonomy, views, and custom_breadcrumbs.
-  $tax_weight = (int) db_result(db_query("SELECT weight FROM {system} WHERE name = 'taxonomy'"));
-  $views_weight = (int) db_result(db_query("SELECT weight FROM {system} WHERE name = 'views'"));
-  $cb_weight = (int) db_result(db_query("SELECT weight FROM {system} WHERE name = 'custom_breadcrumbs'"));
-  $cb_tax_weight = max($tax_weight, $views_weight, $cb_weight) + 2;
-  db_query("UPDATE {system} SET weight = %d WHERE name = 'custom_breadcrumbs_taxonomy'", $cb_tax_weight);
-
   // If taxonomy_breadcrumbs is installed, copy term and vocab breadcrumb to custom_breadcrumbs_taxonomy tables.
   if (module_exists('taxonomy_breadcrumb')) {
     // Search for taxonomy_breadcrumb term and vocabulary breadcrumbs and copy to new custom_breadcrumb_taxonomy tables.
@@ -55,7 +48,7 @@ function custom_breadcrumbs_taxonomy_install() {
     else {
       drupal_set_message(t('No taxonomy_breadcrumbs were found'));
     }
-  }  
+  }
   drupal_set_message('Custom Breadcrumbs for Taxonomy Terms and Vocabularies: Taxonomy based breadcrumbs should now appear on node pages and taxonomy/term pages.  For the most common applications this module will work "out of the box" and no further configuration is necessary.  If customization is desired settings can be changed on the '. l('administration page', 'admin/settings/custom-breadcrumbs') .'.');
 }
 
@@ -66,11 +59,16 @@ function custom_breadcrumbs_taxonomy_uninstall() {
   // Remove tables.
   drupal_uninstall_schema('custom_breadcrumbs_taxonomy');
 
-  // Remove global variables.
+  // Remove persistent variables.
   variable_del('custom_breadcrumbs_taxonomy_use_hierarchy');
+  variable_del('custom_breadcrumbs_taxonomy_append_breadcrumb');
+  variable_del('custom_breadcrumbs_taxonomy_show_vocabulary');
   variable_del('custom_breadcrumbs_taxonomy_show_current_term');
+  variable_del('custom_breadcrumbs_taxonomy_include_node_title');
   variable_del('custom_breadcrumbs_taxonomy_include_nodes');
   variable_del('custom_breadcrumbs_taxonomy_node_types');
+  variable_del('custom_breadcrumbs_taxonomy_views');
+
 }
 
 /**

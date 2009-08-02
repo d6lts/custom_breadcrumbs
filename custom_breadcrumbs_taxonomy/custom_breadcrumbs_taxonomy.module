@@ -316,12 +316,12 @@ function custom_breadcrumbs_taxonomy_form_alter(&$form, $form_state, $form_id) {
       '#weight'         => 50,
     );
 
-    $form['adv_settings']['custom_breadcrumbs_taxonomy_include_nodes'] = array(
+    $form['settings']['custom_breadcrumbs_taxonomy_include_nodes'] = array(
       '#type'           => 'radios',
       '#title'          => t('Include or exclude taxonomy-based breadcrumbs for the following node types'),
       '#default_value'  => variable_get('custom_breadcrumbs_taxonomy_include_nodes', FALSE),
       '#options'        => array(TRUE => t('Include'), FALSE => t('Exclude')),
-      '#weight'         => 10,
+      '#weight'         => 60,
     );
 
     $cb_tax_types = (array) variable_get('custom_breadcrumbs_taxonomy_node_types', CUSTOM_BREADCRUMBS_TAXONOMY_NODE_TYPES_DEFAULT);
@@ -332,14 +332,14 @@ function custom_breadcrumbs_taxonomy_form_alter(&$form, $form_state, $form_id) {
       }
     }
 
-    $form['adv_settings']['custom_breadcrumbs_taxonomy_node_types'] = array(
+    $form['settings']['custom_breadcrumbs_taxonomy_node_types'] = array(
       '#type'           => 'checkboxes',
       '#multiple'       => TRUE,
       '#title'          => t('Node types to include or exclude'),
       '#default_value'  => $default,
       '#options'        => array_map('check_plain', node_get_types('names')),
       '#description'    => t('A list of node types to include or exclude applying taxonomy-based breadcrumbs.'),
-      '#weight'         => 20,
+      '#weight'         => 70,
     );
   }
 }
@@ -439,4 +439,31 @@ function _custom_breadcrumbs_taxonomy_allowed_node_type($nodetype) {
   $in_list = in_array($nodetype, $array_of_types);
   $allowed = ($in_list == variable_get('custom_breadcrumbs_taxonomy_include_nodes', FALSE));
   return $allowed;
+}
+
+/**
+ * Implementation of hook_enable().
+ */
+function custom_breadcrumbs_taxonomy_enable() {
+  // Set weight of custom_breadcrumbs_taxonomy to be greater than taxonomy, views, and custom_breadcrumbs.
+  $max_weight = custom_breadcrumbs_taxonomy_minimum_module_weight();
+  $current_weight =  _custom_breadcrumbs_get_module_weight('custom_breadcrumbs_taxonomy');
+  if ($current_weight < $max_weight) {
+    drupal_set_message(t('Increasing the weight of custom_breadcrumbs_taxonomy for use with other modules.'));
+    db_query("UPDATE {system} SET weight = %d WHERE name = 'custom_breadcrumbs_taxonomy'", $max_weight);
+    variable_set('menu_rebuild_needed', TRUE);
+  }
+}
+
+/**
+ * Implementation of hook_minimum_module_weight().
+ *   @see custom_breadcrumbs_admin_settings_submit()
+ */
+function custom_breadcrumbs_taxonomy_minimum_module_weight() {
+  $modules = array('taxonomy', 'views', 'page_manager', 'custom_breadcrumbs');
+  foreach ($modules as $module) {
+    $weight[] = _custom_breadcrumbs_get_module_weight($module);
+  }
+  $max_weight = max($weight);
+  return $max_weight + 1;
 }
