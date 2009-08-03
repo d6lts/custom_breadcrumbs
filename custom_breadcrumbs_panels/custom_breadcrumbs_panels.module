@@ -103,7 +103,7 @@ function custom_breadcrumbs_panels_form_alter(&$form, $form_state, $form_id) {
         '#title'          => t('Use taxonomy breadcrumbs for panels?'),
         '#default_value'  => variable_get('custom_breadcrumbs_taxonomy_panels', FALSE),
         '#description'    => t('When enabled, the view argument and/or the taxonomy structure of nodes returned by panels will be used to form the taxonomy breadcrumb trail.'),
-        '#weight'         => 60,
+        '#weight'         => 45,
       );
     }
   }
