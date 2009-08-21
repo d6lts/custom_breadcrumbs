@@ -181,7 +181,7 @@ installed to provide custom breadcrumbs in a variety of situations:
   the custom breadcrumbs configuration settings page. The option to add the node title
   at the end of the breadcrumb trail can also be enabled on that page.
 
-  In the standard custom_breadcrumbs mode, you can provid the standard titles and paths
+  In the standard custom_breadcrumbs mode, you can provide the standard titles and paths
   for constructing the breadcrumb trail on nodes that have defined taxonomy terms. Note
   that if a node has more than one term, the lightest term in the lightest vocabulary with
   a defined custom breadcrumb will be used.
@@ -217,7 +217,10 @@ HOME breadcrumb
 ---------------
 The text to display at beginning of the breadcrumb trail can be assigned from the custom
 breadcrumb configuration settings page. Typically this is home or your site name. You can
-Leave it blank to have no home breadcrumb.
+Leave it blank to have no home breadcrumb. Their is also an advanced setting to 
+set the Home breadcrumb text on ALL pages, not just those with defined custom breadcrumbs.
+You can also use this feature to remove the home breadcrumb on all pages on the site - just
+enable the advanced setting and then leaving the home breadcrumb text blank.
 
 Authors
 -------

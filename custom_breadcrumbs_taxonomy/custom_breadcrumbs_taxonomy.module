@@ -140,9 +140,9 @@ function custom_breadcrumbs_taxonomy_menu() {
 function custom_breadcrumbs_taxonomy_nodeapi($node, $op, $teaser, $page) {
   if ($op == 'alter' && empty($teaser) && !empty($page)) {
     if (_custom_breadcrumbs_taxonomy_allowed_node_type($node->type)) {
-      // Extract lightest term from lightest vocabulary assosciated with node.
       module_load_include('inc', 'custom_breadcrumbs_taxonomy');
-      $term = custom_breadcrumbs_taxonomy_node_get_lightest_term($node->nid);
+      // Extract the most recently viewed term or the lightest term from lightest vocabulary assosciated with node.
+      $term = custom_breadcrumbs_taxonomy_node_get_term($node);
       if ($term) {
         $terms = taxonomy_node_get_terms($node);
         _custom_breadcrumbs_taxonomy_set_breadcrumb($term->tid, $term->vid, FALSE, array('node' => $node), $terms);
@@ -177,44 +177,48 @@ function custom_breadcrumbs_taxonomy_menu_alter(&$callbacks) {
 function custom_breadcrumbs_taxonomy_views_pre_render(&$view) {
   if (variable_get('custom_breadcrumbs_taxonomy_views', FALSE)) {
     // Set the taxonomy breadcrumb for the view.
-    if (!empty($view->display)) {
+    if (isset($view->display) && !empty($view->display)) {
       foreach ($view->display as $display) {
         if (module_exists('panels') && panels_get_current_page_display()) continue;
-        if (!empty($display->display_options['arguments'])) {
+        if (isset($display->display_options['arguments']) && !empty($display->display_options['arguments'])) {
           // Try to use the view argument to generate the breadcrumb.
           foreach ($display->display_options['arguments'] as $argument) {
-            $args = $display->handler->view->args;
-            $arg = array_pop($args);
-            $tid = NULL;
-            $vid = NULL;
-            switch ($argument['id']) {
-              case 'tid':
-              case 'term_node_tid_depth':
-                $terms = taxonomy_terms_parse_string($arg);
-                $tid = empty($terms['tids']) ? NULL : $terms['tids'][0];
-                break;
-              case 'name':
-                if (drupal_substr($argument['table'], 0, 5) == 'term_') {
-                  $terms = taxonomy_get_term_by_name($arg);
-                  $tid = empty($terms) ? NULL : $terms[0]->tid;
-                }
-                break;
-              case 'vid':
-                $vid = $arg;
-                break;
-            }
-            if (!is_null($tid) || !is_null($vid)) {
-              module_load_include('inc', 'custom_breadcrumbs_taxonomy');
-              $terms = array();
-              if (!is_null($tid)) {
-                $term = taxonomy_get_term($tid);
-                $vid = $term->vid;
-                if ($term) {
-                  $terms[$term->tid] = $term;
-                }
+            if (isset($display->handler->view->args) && is_array($display->handler->view->args)) {
+              $arg = array_pop($display->handler->view->args);              
+              $tid = NULL;
+              $vid = NULL;
+              switch ($argument['id']) {
+                case 'tid':
+                case 'term_node_tid_depth':
+                  $terms = taxonomy_terms_parse_string($arg);
+                  $tid = empty($terms['tids']) ? NULL : $terms['tids'][0];
+                  break;
+                case 'name':
+                  if (drupal_substr($argument['table'], 0, 5) == 'term_') {
+                    $terms = taxonomy_get_term_by_name($arg);
+                    $tid = empty($terms) ? NULL : $terms[0]->tid;
+                  }
+                  break;
+                case 'vid':
+                  $vid = $arg;
+                  break;
               }
-              _custom_breadcrumbs_taxonomy_set_breadcrumb($tid, $vid, TRUE, array('view' => $view), $terms);
-              return;
+              if (!is_null($tid) || !is_null($vid)) {
+                module_load_include('inc', 'custom_breadcrumbs_taxonomy');
+                $terms = array();
+                if (!is_null($tid)) {
+                  $term = taxonomy_get_term($tid);
+                  $vid = $term->vid;
+                  if ($term) {
+                    $terms[$term->tid] = $term;
+                  }
+                }
+                _custom_breadcrumbs_taxonomy_set_breadcrumb($tid, $vid, TRUE, array('view' => $view), $terms);
+               if (!is_null($tid)) {
+                 _custom_breadcrumbs_taxonomy_recent_term($tid);
+               } 
+                return;
+              }
             }
           }
         }
@@ -226,10 +230,11 @@ function custom_breadcrumbs_taxonomy_views_pre_render(&$view) {
             $node = node_load(array('nid' => $result->nid));
             if (_custom_breadcrumbs_taxonomy_allowed_node_type($node->type)) {
               module_load_include('inc', 'custom_breadcrumbs_taxonomy');
-              $term = custom_breadcrumbs_taxonomy_node_get_lightest_term($node->nid);
+              $term = custom_breadcrumbs_taxonomy_node_get_term($node);
               if ($term) {
                 $terms = taxonomy_node_get_terms($node);
                 _custom_breadcrumbs_taxonomy_set_breadcrumb($term->tid, $term->vid, TRUE, array('node' => $node), $terms);
+                _custom_breadcrumbs_taxonomy_recent_term($term->tid);
                 return;
               }
             }

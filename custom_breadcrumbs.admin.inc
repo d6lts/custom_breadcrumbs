@@ -196,7 +196,7 @@ function custom_breadcrumbs_admin_settings() {
     '#type' => 'checkbox',
     '#title' => t('Set the Home breadcrumb text on all pages'),
     '#default_value' => variable_get('custom_breadcrumbs_set_global_home_breadcrumb', FALSE),
-    '#description' => t("When enabled, the home breadcrumb text will be used on all pages, not just those with defined custom breadcrumbs."),
+    '#description' => t("When enabled, the home breadcrumb text will be used on all pages, not just those with defined custom breadcrumbs. If you don't want a home breadcrumb to be displayed, just enable this option and make sure that the <em>home breadcrumb text</em> above is empty."),
     '#weight' => -40,
   );
 

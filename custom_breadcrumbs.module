@@ -372,36 +372,30 @@ function custom_breadcrumbs_home_crumb() {
  *   The desired URI and/or special identifier
  */
 function _custom_breadcrumbs_create_crumb($title, $original_path) {
-  $options = array();
-  // Checked for named anchor #fragment, and strip it out. Then replace it below.
-  if (strpos($original_path, '#') !== FALSE) {
-    list($original_path, $fragment) = explode('#', $original_path, 2);
-    $options = array('fragment' => $fragment);
-  }
-  list($identifier, $path) = explode("|", $original_path, 2);
-
-  // decode title to properly handle special characters
-  // Suggested by aangle http://drupal.org/node/318272
+  // Decode title to properly handle special characters.
   $title = ($title == '<none>') ? ' ' : decode_entities($title);
+  list($identifier, $path) = explode("|", $original_path, 2);
   if (isset($path) && $path !== '') {
+    $options = parse_url($path);
     switch ($identifier) {
       case '<pathauto>':
         if (module_exists('pathauto')) {
           module_load_include('inc', 'pathauto', 'pathauto');
-          $crumb = l($title, pathauto_cleanstring($path, FALSE), $options);
+          $crumb = l($title, pathauto_cleanstring($options['path'], FALSE), $options);
         }
         break;
       default:
-        $crumb = l($title, $original_path, $options);
+        $crumb = l($title, $options['path'], $options);
     }
   }
-  else { // This may be just be a single identifier
+  else { // This may be just be a single identifier.
+    $options = parse_url($original_path);
     switch ($identifier) {
       case '<none>':
         $crumb = check_plain($title);
         break;
       default:
-        $crumb = l($title, $original_path, $options);
+        $crumb = l($title, $options['path'], $options);
     }
   }
   return $crumb;

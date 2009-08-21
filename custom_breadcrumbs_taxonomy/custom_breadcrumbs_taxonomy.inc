@@ -50,6 +50,9 @@ function custom_breadcrumbs_taxonomy_term_page() {
 function _custom_breadcrumbs_taxonomy_set_breadcrumb($tid, $vid = NULL, $is_term_page = FALSE, $objs = array(), $terms = array()) {
   if (variable_get('custom_breadcrumbs_taxonomy_use_hierarchy', TRUE)) {
     $breadcrumb = custom_breadcrumbs_taxonomy_generate_breadcrumb($tid, $vid, $is_term_page, $objs);
+    if ($is_term_page) {
+      _custom_breadcrumbs_taxonomy_recent_term($tid);
+    }
     if (variable_get('custom_breadcrumbs_taxonomy_include_node_title', FALSE) && isset($objs['node'])) {
       $breadcrumb[] = $objs['node']->title;
     }
@@ -66,6 +69,7 @@ function _custom_breadcrumbs_taxonomy_set_breadcrumb($tid, $vid = NULL, $is_term
         $objs['taxonomy'] = $term;
         if ($breadcrumb = custom_breadcrumbs_select_breadcrumb($breadcrumbs, $objs)) {
           custom_breadcrumbs_set_breadcrumb($breadcrumb, $objs);
+          _custom_breadcrumbs_taxonomy_recent_term($term->tid);
           return;
         }
         if (!isset($vids[$term->vid])) {
@@ -89,20 +93,87 @@ function _custom_breadcrumbs_taxonomy_set_breadcrumb($tid, $vid = NULL, $is_term
 }
 
 /**
- * Return lightest term for given node ($nid).
- * Similar to taxonomy_node_get_terms, but only return the lightest term in the
- * lightest vocab for the node.
+ * Return the previous selected term or the lightest term for a given node.
  */
-function custom_breadcrumbs_taxonomy_node_get_lightest_term($nid) {
-
-  /* We only want the first row of the result--this is the lightest term of the
-   * lightest vocab.
-   */
-  $result = db_query(db_rewrite_sql('SELECT t.* FROM {term_node} r INNER JOIN {term_data} t ON r.tid = t.tid INNER JOIN {term_hierarchy} h ON t.tid = h.tid INNER JOIN {vocabulary} v ON t.vid = v.vid WHERE r.nid = %d ORDER BY v.weight, h.parent, t.weight, t.name', 't', 'tid'), $nid);
-
-  // Extract the first row of query.
-  $term = db_fetch_object($result);
+function custom_breadcrumbs_taxonomy_node_get_term($node) {
+  // First try to see if a recently viewed term matches one of the nodes terms.
+  $term = custom_breadcrumbs_taxonomy_node_get_recent_term($node);
+  // If not, then select the nodes lightest term.
+  if (is_null($term)) {
+    $term = custom_breadcrumbs_taxonomy_node_get_lightest_term($node);
+  }
   return $term;
+}
+
+/**
+ * Return the most recent term for a given node.
+ */
+function custom_breadcrumbs_taxonomy_node_get_recent_term($node) {
+  $terms = taxonomy_node_get_terms($node);
+  $tid = _custom_breadcrumbs_taxonomy_recent_term();
+  if (is_array($terms) && !empty($terms) && !is_null($tid)) {
+    return (isset($terms[$tid])) ? taxonomy_get_term($tid) : NULL;
+  }
+}
+
+/**
+ * Helper function to return the previous selected term id, if available.
+ */
+function _custom_breadcrumbs_taxonomy_recent_term($tid = NULL, $flush = FALSE) {
+  if (!is_null($tid)) {
+   $_SESSION['custom_breadcrumbs_previous_term'] = $tid;
+  } 
+  elseif (isset($_SESSION['custom_breadcrumbs_previous_term'])) {
+    return $_SESSION['custom_breadcrumbs_previous_term'];
+  }
+}
+
+/**
+ * Return lightest term for a given node.
+ */
+function custom_breadcrumbs_taxonomy_node_get_lightest_term($node) {
+  $terms = taxonomy_node_get_terms($node);
+  if (!empty($terms)) {
+    if (count($terms) > 1) {
+      foreach ($terms as $term) {
+        // Only consider terms in the lightest vocabulary. 
+        if (!isset($vid)) {
+          $vid = $term->vid;
+        }
+        elseif ($term->vid != $vid) continue;
+        // If the term has parents, the weight of the term is the weight of the lightest parent.
+        $parents = taxonomy_get_parents_all($term->tid);
+        $depth = count($parents);
+        if ($depth > 0) {
+          $parent = array_pop($parents);
+          $weight = $parent->weight;
+        }
+        else {
+          $weight = $term->weight;
+        }
+        if ((isset($lweight) && ($weight < $lweight)) || !isset($lweight)) {
+          $lterm = $term;
+          $lweight = $weight;
+          $ldepth = $depth;
+        }
+        elseif (isset($lweight) && ($weight == $lweight)) {
+          // If the node has multiple child terms with the same parent, choose the child with the greatest depth.
+          if ($depth > $ldepth) {
+            $lterm = $term;
+            $ldepth = $depth;
+          }
+          elseif ($depth == $ldepth) {
+            // If the terms have the same depth, pick the term with the lightest weight.
+            $lterm = ($lterm->weight < $term->weight) ? $lterm : $term;
+          }
+        }
+      }
+      return $lterm;
+    }
+    else {
+      return array_pop($terms);
+    }
+  }
 }
 
 /**
@@ -130,7 +201,7 @@ function custom_breadcrumbs_taxonomy_generate_breadcrumb($tid, $vid = NULL, $is_
     $term_trail = _custom_breadcrumbs_taxonomy_term_trail($tid, $is_term_page, $objs, $types);
     $trail = array_merge($trail, $term_trail);
     // Optionally remove the current TERM from end of breadcrumb trail.
-    if (!variable_get('custom_breadcrumbs_taxonomy_show_current_term', TRUE) && (count($trail) > 1)) {
+    if (!variable_get('custom_breadcrumbs_taxonomy_show_current_term', TRUE) && (count($trail) > 1) || $is_term_page) {
       array_pop($trail);
     }
   }
