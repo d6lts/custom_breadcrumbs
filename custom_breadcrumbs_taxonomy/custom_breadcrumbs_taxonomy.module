@@ -182,9 +182,10 @@ function custom_breadcrumbs_taxonomy_views_pre_render(&$view) {
         if (module_exists('panels') && panels_get_current_page_display()) continue;
         if (isset($display->display_options['arguments']) && !empty($display->display_options['arguments'])) {
           // Try to use the view argument to generate the breadcrumb.
+          $viewargs = (isset($display->handler->view->args) && is_array($display->handler->view->args)) ? $display->handler->view->args : array();
           foreach ($display->display_options['arguments'] as $argument) {
-            if (isset($display->handler->view->args) && is_array($display->handler->view->args)) {
-              $arg = array_pop($display->handler->view->args);              
+            if (!empty($viewargs)) {
+              $arg = array_pop($viewargs);
               $tid = NULL;
               $vid = NULL;
               switch ($argument['id']) {
