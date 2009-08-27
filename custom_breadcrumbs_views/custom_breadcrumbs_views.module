@@ -61,13 +61,18 @@ function custom_breadcrumbs_views_views_pre_render(&$view) {
   foreach ($view->display as $display) {
     // Identify allowed displays for breadcrumb replacement.
     if (!_custom_breadcrumbs_allowed_display($display)) continue;
-    $viewpath = _custom_breadcrumbs_construct_view_path($display, $view->args);  
+    $viewpath = _custom_breadcrumbs_construct_view_path($display, $view->args);
     if (_custom_breadcrumbs_match_path($curpath, $viewpath)) {
       $loadpath = $display->display_options['path'];
       $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs_views', NULL, array('views_path' => $loadpath), $languages);
       if (!empty($breadcrumbs)) {
         if ($breadcrumb = custom_breadcrumbs_select_breadcrumb($breadcrumbs, array('view' => $view))) {
-          custom_breadcrumbs_set_breadcrumb($breadcrumb, array('view' => $view));
+          $objs = _custom_breadcrumbs_views_token_types($display);
+          if (!isset($objs['node']) && isset($view->result[0]->nid)) {
+            $node = node_load(array('nid' => $view->result[0]->nid));
+            $objs['node'] = $node;
+          }
+          custom_breadcrumbs_set_breadcrumb($breadcrumb, $objs);
           return;
         }
       }

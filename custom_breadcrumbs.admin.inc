@@ -284,7 +284,7 @@ function custom_breadcrumbs_admin_settings_submit($form, &$form_state) {
     array_multisort($table['table weight'], $table['module weight'] );
     foreach ($table['module weight'] as $module => $orig_weight) {
        // Find the module's minimum weight determined by dependence on other modules.
-      $func = $module . '_minimum_module_weight';
+      $func = $module .'_minimum_module_weight';
       $min = function_exists($func)  ? $func() : 0;
       $weight = max($min, $current_mod_weight);
       // Update module weight in the system table if it has changed.

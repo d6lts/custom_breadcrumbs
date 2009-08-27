@@ -263,7 +263,7 @@ function custom_breadcrumbs_set_breadcrumb($breadcrumb, $objs = array()) {
 }
 
 /**
- *  Helper function to prepare contexts for token substitution.
+ *  Helper function to prepare some common contexts for token substitution.
  *
  *  @param $objs
  *    An array of objects to be used in token replacement. Array keys indicate type of object.
@@ -271,33 +271,17 @@ function custom_breadcrumbs_set_breadcrumb($breadcrumb, $objs = array()) {
  *    An array of substitution classes for token_replace_multiple().
  */
 function custom_breadcrumbs_token_types($objs = array()) {
-  global $user;
-  if ($user->uid) {
-    $user = user_load(array('uid' => $user->uid));
-  }
-  $types = array();
-  foreach ($objs as $type => $obj) {
-    switch ($type) {
-      case 'node':
-        $types['node'] = $obj;
-         break;
-      case 'view': 
-        if (!empty($obj->display) && (isset($obj->result[0]) && ($nid = $obj->result[0]->nid))) {
-          // Load the first node of the view to provide an object for token replacement.
-          $types['node'] = node_load(array('nid' => $nid));
-        }
-        break;
-      case 'taxonomy':
-        $types['taxonomy'] = $obj;
-        break;
+  if (!isset($objs['user'])) {
+    global $user;
+    if ($user->uid) {
+      $user = user_load(array('uid' => $user->uid));
     }
+    $objs['user'] = $user;
   }
-  $types['user'] = $user;
-  $types['global'] = NULL;
+  $objs['global'] = NULL;
 
-  return $types;
+  return $objs;
 }
-
 
 /**
  * Private function to save breadcrumb.
@@ -490,6 +474,8 @@ function custom_breadcrumbs_is_visible($breadcrumb, $objs = array()) {
     $view = isset($objs['view']) ? $objs['view'] : NULL;
     // If a taxonomy term, let users access it via $term.
     $term = isset($objs['taxonomy']) ? $objs['taxonomy'] : NULL;
+    // If a user object, let users access it via $user.
+    $user = isset($objs['user']) ? $objs['user'] : NULL;
 
     // Guard against hidden spaces.
     if (isset($breadcrumb->visibility_php) && ($trimmed = trim($breadcrumb->visibility_php)) != '' ) {
