@@ -92,23 +92,36 @@ function _custom_breadcrumbs_paths_set_breadcrumb($objs = array()) {
   $matchpath = variable_get('custom_breadcrumbs_paths_allow_wildcards', FALSE);
   $breadcrumbs = _custom_breadcrumbs_paths_get_breadcrumbs($matchpath);
   if (!empty($breadcrumbs)) {
-    while ($breadcrumb = array_pop($breadcrumbs)) {
+    foreach ($breadcrumbs as $id => $breadcrumb) {
       if ((!$matchpath) || _custom_breadcrumbs_paths_page_match($breadcrumb, $matchpath)) {
         if (custom_breadcrumbs_is_visible($breadcrumb, $objs)) {
-          custom_breadcrumbs_set_breadcrumb($breadcrumb, $objs);
-          // Don't check any others once a visible breadcrumb is found.
-          return;
+          if ($matchpath) {
+            $num = substr_count($breadcrumb->specific_path, '*');
+            if (!isset($min) || (isset($min) && ($num < $min))) {
+                $min = $num;
+                $min_id = $id;
+            }
+            if ($num == 0) break;
+          }
+          else {
+            $min_id = $id;
+            // Don't check any others once a visible breadcrumb is found.
+            break;
+          }
         }
       }
+    }
+    if (isset($min_id)) {
+      custom_breadcrumbs_set_breadcrumb($breadcrumbs[$min_id], $objs);
     }
   }
 }
 
 /**
- * Helper function to get custom breadcrumbs_paths breadcrumbs from the database. 
- * @param $matchpath 
+ * Helper function to get custom_breadcrumbs_paths breadcrumbs from the database.
+ * @param $matchpath
  *   if TRUE, then load all paths breadcrumbs to allow wildcard matching
- *   otherwise only the current path is queried 
+ *   otherwise only the current path is queried
  * @return $breadcrumbs
  *   an array of breadcrumb objects meeting the query criteria
  */
@@ -130,12 +143,14 @@ function _custom_breadcrumbs_paths_get_breadcrumbs($matchpath = FALSE, $path = N
 }
 
 /**
- * Helper function to get custom breadcrumbs_paths breadcrumbs from the database. 
- * @param $matchpath 
+ * Helper function to determine if the current url matches the breadcrumb specific path.
+ * @param $matchpath
  *   if TRUE, then load all paths breadcrumbs to allow wildcard matching
- *   otherwise only the current path is queried 
- * @return $breadcrumbs
- *   an array of breadcrumb objects meeting the query criteria
+ *   otherwise only the current path is queried
+ * @param $breadcrumb
+ *    the breadcrumb object
+ * @return $page_match
+ *   TRUE if the current path matches the breadcrumb specific path, FALSE otherwise.
  */
 function _custom_breadcrumbs_paths_page_match($breadcrumb, $matchpath) {
   $page_match = FALSE;
@@ -156,18 +171,18 @@ function _custom_breadcrumbs_paths_page_match($breadcrumb, $matchpath) {
 }
 
 /**
- * Implementation of hook_cb_node_form_table. 
- * @param $node 
- *   The node object being edited  
+ * Implementation of hook_cb_node_form_table.
+ * @param $node
+ *   The node object being edited
  * @return $breadcrumbs
  *   an array of breadcrumb objects with the same path as the node
  *   used in the custom_breadcrumbs fieldset on the node edit page
  */
 function custom_breadcrumbs_paths_cb_node_form_table($node) {
   $matchpath = variable_get('custom_breadcrumbs_paths_allow_wildcards', FALSE);
-  $param = array('specific_path' => $node->path);
+  $param = ($matchpath) ? array() : array('specific_path' => $node->path);
   $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs_paths', NULL, $param);
-   foreach ($breadcrumbs as $key => $breadcrumb) {
+  foreach ($breadcrumbs as $key => $breadcrumb) {
     if (!_custom_breadcrumbs_match_path($node->path, $breadcrumb->specific_path)) {
       unset($breadcrumbs[$key]);
     }
