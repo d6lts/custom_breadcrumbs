@@ -15,7 +15,7 @@ module_load_include('inc', 'custom_breadcrumbs', 'custom_breadcrumbs.admin');
  */
 function custom_breadcrumbsapi_cb_breadcrumb_info() {
   $breadcrumb_type_info = array();
-  $breadcrumb_type_info[] = array('table' => 'custom_breadcrumbsapi', 'field' => 'module_page', 'type' => 'module page');
+  $breadcrumb_type_info[] = array('table' => 'custom_breadcrumbsapi', 'field' => 'module_page', 'type' => 'module');
   return $breadcrumb_type_info;
 }
 
