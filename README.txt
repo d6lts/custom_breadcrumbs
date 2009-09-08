@@ -195,6 +195,29 @@ installed to provide custom breadcrumbs in a variety of situations:
   taxonomy term pages, then be sure to enable the "Use taxonomy breadcrumbs for views?"
   option.
 
++ custom_breadcrumbsapi provides a simple api that allows custom breadcrumbs to be defined 
+  for module pages implementing the api. Module developers need to provide a
+  modulename_custom_breadcrumbsapi() function that returns an array containing the names of
+  the module pages for which custom breadcrumbs may be defined.
+
+  The following is an example that could be used with the forum module.
+
+  /**
+   *  Implementation of hook_custom_breadcrumbsapi().
+   *  Allow custom breadcrumbs for the following module pages.
+   */
+  function forum_custom_breadcrumbsapi() {
+    return array('forum listing');
+  }
+
+  Then, in the callback functions for each of those pages, the following line must be inserted
+  within the function (preferably after defining $breadcrumb but before setting the breadcrumb):
+  
+  drupal_alter('breadcrumb', $breadcrumb, 'module_page_name');
+
+  Continuing with the forum module example, 'module_page_name' would be replaced with 'forum listing'.
+
+
 User Interface
 --------------
 The user interface has been modified for Custom Breadcrumbs 2.0. Breadcrumbs from all
