@@ -85,7 +85,7 @@ function custom_breadcrumbs_form() {
     '#type' => 'fieldset',
     '#collapsible' => FALSE,
     '#title' => t('Special identifiers'),
-    '#description' => t("The following identifiers can be used to achieve a special behavior:<br />" . check_plain('<pathauto>') . " will clean any path using the current pathauto module settings, if that module is installed.<br />" . check_plain('<none>') . " can be used as a path to have a breadcrumb element that is not hyperlinked.<br />&nbsp<br />Identifiers should be added to the paths area in the following format:  identifier|path.<br />For example: " . check_plain('<pathauto>') . "|[ogname-raw]"),
+    '#description' => t("The following identifiers can be used to achieve a special behavior. Identifiers should be added to the paths area in the following format:  identifier|path.<br />For example: %pathauto_id|[ogname-raw]", array('%pathauto_id' => '<pathauto>')),
   );
   
   $form['help'] = array(
