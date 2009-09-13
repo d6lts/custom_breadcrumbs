@@ -366,7 +366,7 @@ function custom_breadcrumbs_common_form_elements($bid, $breadcrumb) {
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
     '#title' => t('Special identifiers'),
-    '#description' => t("The following special identifiers can be used to achieve a special behavior. Identifiers should be added to the paths area in the following format:  identifier|path. <br />Example: ". check_plain('<pathauto>') ."|[ogname-raw]"),
+    '#description' => t("The following identifiers can be used to achieve a special behavior. Identifiers should be added to the paths area in the following format:  identifier|path.<br />For example: %pathauto_id|[ogname-raw]", array('%pathauto_id' => '<pathauto>')),
   );
   $form['help2']['tokens'] = array('#value' => theme('custom_breadcrumbs_help_identifiers'), );
 
