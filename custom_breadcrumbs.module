@@ -139,8 +139,12 @@ function _custom_breadcrumbs_delete_breadcrumb($bid) {
  */
 function _custom_breadcrumbs_create_crumb($title, $original_path)
 {
+  // Collapse double slashes to one.
+  $original_path = preg_replace('/\/+/', '/', $original_path);
+  // Removing leading and trailing slashes.
+  $original_path = preg_replace('/^\/|\/+$/', '', $original_path);
   list($identifier, $path) = explode("|", $original_path, 2);
-  
+
   if ($path) {
     switch ($identifier) {
       case '<pathauto>':
