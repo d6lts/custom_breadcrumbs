@@ -247,10 +247,11 @@ function custom_breadcrumbs_set_breadcrumb($breadcrumb, $objs = array()) {
       $titles = token_replace_multiple($titles, $types);
       $paths = token_replace_multiple($paths, $types);
     }
-  
+
     for ($i = 0; $i < count($titles); $i++) {
-      if ($title = trim($titles[$i])) {
-        // Create breadcrumb.
+      $title = trim($titles[$i]);
+      if (($title != '') && ($title != '<none>')) {
+        // Create breadcrumb only if there is a title.
         $trail[] = _custom_breadcrumbs_create_crumb($title, trim($paths[$i]));
         $location[] = array('title' => $title, 'href' => drupal_get_normal_path(trim($paths[$i])));
       }
@@ -357,7 +358,7 @@ function custom_breadcrumbs_home_crumb() {
  */
 function _custom_breadcrumbs_create_crumb($title, $original_path) {
   // Decode title to properly handle special characters.
-  $title = ($title == '<none>') ? ' ' : decode_entities($title);
+  $title = decode_entities($title);
   // Collapse double slashes to one.
   $original_path = preg_replace('/\/+/', '/', $original_path);
   // Removing leading and trailing slashes.

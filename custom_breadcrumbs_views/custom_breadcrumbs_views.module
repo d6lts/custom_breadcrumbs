@@ -101,7 +101,7 @@ function custom_breadcrumbs_views_form(&$form_state, $type) {
   $options = array();
   $views =  views_get_all_views();
   foreach ($views as $view) {
-    if (!isset($view->disabled)) {
+    if (!isset($view->disabled) || (isset($view->disabled) && !$view->disabled)) {
       foreach ($view->display as $display) {
         if (_custom_breadcrumbs_allowed_display($display)) {
           $name = $display->display_options['path'];
