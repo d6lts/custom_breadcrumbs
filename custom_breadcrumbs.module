@@ -55,7 +55,9 @@ function custom_breadcrumbs_nodeapi($node, $op, $teaser, $page) {
       $trail = array(l(t('Home'), '<front>'));
       $location = array();
       for ($i = 0; $i < count($titles); $i++) {
-        if ($title = trim($titles[$i])) { // create breadcrumb
+        $title = trim($titles[$i]);
+        if (($title != '') && ($title != '<none>')) {
+          // Create breadcrumb only if there is a title.
           $location[$i] = menu_get_item(drupal_get_normal_path($paths[$i]));
           $trail[] = _custom_breadcrumbs_create_crumb($title, trim($paths[$i]));
         }
