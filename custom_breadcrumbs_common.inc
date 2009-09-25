@@ -55,7 +55,7 @@ function _custom_breadcrumbs_construct_view_path($display, $viewargs) {
  */
 function _custom_breadcrumbs_allowed_display($display) {
 
-  if (drupal_substr($display->id, 0, 4) == 'page' || drupal_substr($display->id, 0, 8) == 'calendar') {
+  if (drupal_substr($display->id, 0, 4)  == 'page' || drupal_substr($display->id, 0, 8)  == 'calendar') {
     if (!(isset($display->handler->view->is_attachment) && $display->handler->view->is_attachment)) {
       if (isset($display->display_options['path']) ) {
         if (module_exists('panels') && panels_get_current_page_display()) {
@@ -77,31 +77,27 @@ function _custom_breadcrumbs_allowed_display($display) {
  * @return $arg_values
  *   An associate array of two elements, 'types' and 'values', each an array with elements corresponding to the views arguments.
  */
-function _custom_breadcrumbs_views_parse_args($display_argument_ids, $viewargs) {
+function _custom_breadcrumbs_views_parse_args($arguments, $viewargs) {
   $arg_values = array('types' => array(), 'values' => array());
-  foreach ($display_argument_ids as $arg_id) {
+  foreach ($arguments as $arg_id => $argument) {
     if (!empty($viewargs)) {
       $arg = array_pop($viewargs);
-      switch ($arg_id) {
-        case 'tid':
-        case 'term_node_tid_depth':
-          $terms = taxonomy_terms_parse_string($arg);
+      $arg_id_3 = drupal_substr($arg_id, 0, 3); 
+      if (($arg_id_3 == 'tid') || (drupal_substr($arg_id, 0, 19) == 'term_node_tid_depth')) {
+        $terms = taxonomy_terms_parse_string($arg);
+        $arg_values['types'][] = 'tid';
+        $arg_values['values'][] = empty($terms['tids']) ? NULL : $terms['tids'][0];
+      } 
+      elseif (drupal_substr($arg_id, 0, 4) == 'name') {
+        if (drupal_substr($argument['table'], 0, 5) == 'term_') {
+          $terms = taxonomy_get_term_by_name($arg);
           $arg_values['types'][] = 'tid';
-          $arg_values['values'][] = empty($terms['tids']) ? NULL : $terms['tids'][0];
-          break;
-        case 'name':
-          if (drupal_substr($argument['table'], 0, 5) == 'term_') {
-            $terms = taxonomy_get_term_by_name($arg);
-            $arg_values['types'][] = 'tid';
-            $arg_values['values'][] = empty($terms) ? NULL : $terms[0]->tid;
-          }
-          break;
-        case 'vid':
-        case 'uid':
-        case 'nid':
-          $arg_values['types'][] = $arg_id;
-          $arg_values['values'][] = $arg;
-          break;
+          $arg_values['values'][] = empty($terms) ? NULL : $terms[0]->tid;
+        }
+      }
+      elseif (($arg_id_3 == 'vid') || ($arg_id_3 == 'uid') || ($arg_id_3 == 'nid')) {
+        $arg_values['types'][] = $arg_id_3;
+        $arg_values['values'][] = $arg;
       }
     }
   }
@@ -117,17 +113,11 @@ function _custom_breadcrumbs_views_parse_args($display_argument_ids, $viewargs) 
  */
 function _custom_breadcrumbs_views_token_types($display) {
   $objs = array();
-  $display_argument_ids = array();
   // Check to see if the current display has overriden the default arguments.
-  if (!empty($display->handler->view->display[$display->id]->display_options['arguments'])) {
-    $display_argument_ids = array_keys($display->handler->view->display[$display->id]->display_options['arguments']);
-  } // Otherwise, check the default display.
-  elseif (!empty($display->handler->view->display['default']->display_options['arguments'])) {
-    $display_argument_ids = array_keys($display->handler->view->display['default']->display_options['arguments']);
-  }
-  if (isset($display_argument_ids)) {
+  $arguments = _custom_breadcrumbs_views_display_arguments($display);
+  if (isset($arguments) && !empty($arguments)) {
     $viewargs = (isset($display->handler->view->args) && is_array($display->handler->view->args)) ? $display->handler->view->args : array();
-    $arg_values = _custom_breadcrumbs_views_parse_args($display_argument_ids, $viewargs);
+    $arg_values = _custom_breadcrumbs_views_parse_args($arguments, $viewargs);
     foreach ($arg_values['types'] as $key => $type) {
       switch ($type) {
         case 'tid':
@@ -143,4 +133,22 @@ function _custom_breadcrumbs_views_token_types($display) {
     }
   }
   return $objs;
+}
+
+/**
+ *  Helper function to extract the views display option arguments array from the display.
+ * @param $display
+ *   The view $dipslay variable.
+ * @return $arguments
+ *   The view display option arguments array.
+ */
+function _custom_breadcrumbs_views_display_arguments($display) {
+  $arguments = NULL;
+  if (isset($display->handler->view->display[$display->id]->display_options['arguments'])) {
+    $arguments = $display->handler->view->display[$display->id]->display_options['arguments'];
+  }
+  if (!isset($arguments) && isset($display->handler->view->display['default']->display_options['arguments'])) {
+    $arguments = $display->handler->view->display['default']->display_options['arguments'];
+  }
+  return $arguments;
 }
