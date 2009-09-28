@@ -22,6 +22,12 @@ function custom_breadcrumbsapi_schema() {
         'not null' => TRUE,
         'description' => 'Unique identifier for the {custom_breadcrumbsapi}.',
       ),
+      'name' => array(
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => FALSE,
+        'description' => 'An optional name for the custom breadcrumb.',
+      ),
       'titles' => array(
         'type' => 'varchar',
         'length' => 255,
@@ -64,6 +70,15 @@ function custom_breadcrumbsapi_schema() {
   return $schema;
 }
 
+/**
+ * Add name field for improved organization of breadcrumbs
+ * Remove set_active_menu field because it is no longer used.
+ */
+function custom_breadcrumbsapi_update_6200() {
+  $ret = array();
+  db_add_field($ret, 'custom_breadcrumbsapi', 'name', array('type' => 'varchar', 'length' => 128, 'NOT NULL' => FALSE, 'description' => 'An optional name for the custom breadcrumb.'));
+  return $ret;
+}
 function custom_breadcrumbsapi_uninstall() {
   drupal_uninstall_schema('custom_breadcrumbsapi');
 }

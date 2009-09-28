@@ -46,18 +46,18 @@ define('CUSTOM_BREADCRUMBS_TAXONOMY_NODE_TYPES_DEFAULT', 'book');
  *     'table' indicating the db_table to load the breadcrumb from,
  *     'field' a field of the database table used to identify the breadcrumb
  *     'type' a string used for indicating the breadcrumb type on the admin list
- *     'name_constructor' a function which generates the breadcrumb name from the breadcrumb (optional)
+ *     'name_constructor' a function which generates the breadcrumb name from the breadcrumb
  */
 
 function custom_breadcrumbs_taxonomy_cb_breadcrumb_info() {
   $breadcrumb_type_info = array();
-  $breadcrumb_type_info[] = array(
+  $breadcrumb_type_info['taxonomy_vocabulary'] = array(
     'table' => 'custom_breadcrumbs_taxonomy_vocabulary', 
     'field' => 'vid', 
     'type' => 'taxonomy_vocabulary',
     'name_constructor' => '_custom_breadcrumbs_taxonomy_vocabulary_breadcrumb_name'
   );
-  $breadcrumb_type_info[] = array(
+  $breadcrumb_type_info['taxonomy_term'] = array(
     'table' => 'custom_breadcrumbs_taxonomy_term', 
     'field' => 'tid', 
     'type' => 'taxonomy_term',
@@ -97,7 +97,7 @@ function _custom_breadcrumbs_taxonomy_vocabulary_breadcrumb_name($breadcrumb) {
 function custom_breadcrumbs_taxonomy_menu() {
   $items = array();
   $items['admin/build/custom_breadcrumbs/taxonomy_term/add'] = array(
-    'title'            => 'Taxonomy Term',
+    'title'            => 'Term',
     'page callback'    => 'drupal_get_form',
     'page arguments'   => array('custom_breadcrumbs_taxonomy_term_form', 'taxonomy_term'),
     'access arguments' => array('administer custom breadcrumbs'),
@@ -114,7 +114,7 @@ function custom_breadcrumbs_taxonomy_menu() {
     'type'             => MENU_CALLBACK,
   );
     $items['admin/build/custom_breadcrumbs/taxonomy_vocabulary/add'] = array(
-    'title'            => 'Taxonomy Vocabulary',
+    'title'            => 'Vocabulary',
     'page callback'    => 'drupal_get_form',
     'page arguments'   => array('custom_breadcrumbs_taxonomy_vocabulary_form', 'taxonomy_vocabulary'),
     'access arguments' => array('administer custom breadcrumbs'),

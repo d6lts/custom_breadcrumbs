@@ -153,11 +153,12 @@ function custom_breadcrumbs_form(&$form_state, $type) {
     '#required' => TRUE,
     '#options' => $options,
     '#description' => t('The node type this custom breadcrumb trail will apply to.'),
-    '#default_value' => $bid ? $breadcrumb->node_type : NULL,
+    '#default_value' => isset($breadcrumb->node_type) ? $breadcrumb->node_type : NULL,
     '#weight' => -10,
   );
   // Store information needed to save this breadcrumb.
-  $form['#table'] = 'custom_breadcrumb';
+  $form['#module'] = 'custom_breadcrumbs';
+  $form['#infokey'] = 'node';
   $form += custom_breadcrumbs_common_form_elements($bid, $breadcrumb);
 
   return $form;
@@ -200,11 +201,19 @@ function custom_breadcrumbs_admin_settings() {
     '#weight' => -40,
   );
 
+ $form['adv_settings']['custom_breadcrumbs_use_php_in_titles'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Allow the use of PHP to set titles and paths'),
+    '#default_value' => variable_get('custom_breadcrumbs_use_php_in_titles', FALSE),
+    '#description' => t("When enabled, php code snippets can be used in the titles and paths section of the create breadcrumb forms. Each should return an array with text strings for each part of the crumb. Alternatively, a php code snippet placed in the titles box could return an associative array with elements 'titles' and 'paths', each an array of text strings. If this is done, the paths text field will be ignored."),
+    '#weight' => -35,
+  );
+
  $form['adv_settings']['custom_breadcrumbs_set_menu_breadcrumb'] = array(
     '#type' => 'checkbox',
     '#title' => t('Use the menu structure to set the breadcrumb trail'),
     '#default_value' => variable_get('custom_breadcrumbs_set_menu_breadcrumb', FALSE),
-    '#description' => t("When checked, the default breadcrumb trail will be patterned after the page's placement in the menu structure. Note that this default can be superceded by other custom breadcrumbs."),
+    '#description' => t("When enabled, the default breadcrumb trail will be patterned after the page's placement in the menu structure. Note that this default can be superceded by other custom breadcrumbs."),
     '#weight' => -30,
   );
 
@@ -283,7 +292,7 @@ function custom_breadcrumbs_admin_settings_submit($form, &$form_state) {
     // Sort module list by table weight.
     array_multisort($table['table weight'], $table['module weight'] );
     foreach ($table['module weight'] as $module => $orig_weight) {
-       // Find the module's minimum weight determined by dependence on other modules.
+      // Find the module's minimum weight determined by dependence on other modules.
       $func = $module .'_minimum_module_weight';
       $min = function_exists($func)  ? $func() : 0;
       $weight = max($min, $current_mod_weight);
@@ -309,13 +318,22 @@ function custom_breadcrumbs_admin_settings_submit($form, &$form_state) {
 function custom_breadcrumbs_common_form_elements($bid, $breadcrumb) {
   $form = array();
   $form['bid'] = array('#type' => 'hidden', '#value' => $bid, );
+
+  $form['name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Breadcrumb Name'),
+    '#default_value' => isset($breadcrumb->name) ? $breadcrumb->name : '',
+    '#description' => t('This name will only appear when listing custom breadcrumbs. If left blank, a name for this breadcrumb will be generated for you.'),
+    '#weight' => -50,
+  );
+
   $multilingual = _custom_breadcrumbs_multilingual();
   if ($multilingual) {
     $form['language'] = array(
       '#type' => 'select',
       '#title' => t('Language'),
       '#options' => array('' => t('All languages')) + locale_language_list('name'),
-      '#default_value' => $bid ? $breadcrumb->language : NULL,
+      '#default_value' => isset($breadcrumb->language) ? $breadcrumb->language : NULL,
       '#description' => t('A breadcrumb set for a specific language will always be used when displaying a node in that language, and takes precedence over breadcrumbs set for <em>All languages</em>.'),
     );
   }
@@ -327,21 +345,32 @@ function custom_breadcrumbs_common_form_elements($bid, $breadcrumb) {
     '#title' => t('Breadcrumb visibility'),
     '#access' => user_access('use php in custom breadcrumbs'),
     '#description' => t('Determine whether this breadcrumb should be displayed by using a snippet of PHP to return TRUE or FALSE. Note that this code has access to the $node variable, and can check its type or any other property.'),
-    '#default_value' => $bid ? $breadcrumb->visibility_php : '',
+    '#default_value' => isset($breadcrumb->visibility_php) ? $breadcrumb->visibility_php : '',
   );
-  $form['titles'] = array(
+
+ $description = t('A list of titles for the breadcrumb links, one on each line.');
+  if (variable_get('custom_breadcrumbs_use_php_in_titles', FALSE) && user_access('use php in custom breadcrumbs')) {
+    $description .= ' '. t("Or, you can enter a PHP code snippet returning either an array of text strings for the breadcrumb titles, with one title per array element, or an associative array with elements 'titles' and 'paths' each containing an array of text strings for the breadcrumb titles and paths, respectively. Do not include PHP code tags. Use with caution. If the code does not return an array, it is assumed that each line a breadcrumb title.");
+  } 
+
+ $form['titles'] = array(
     '#type' => 'textarea',
     '#title' => t('Titles'),
     '#required' => TRUE,
-    '#description' => t('A list of titles for the breadcrumb links, one on each line.'),
-    '#default_value' => $bid ? $breadcrumb->titles : NULL,
+    '#description' => $description,
+    '#default_value' => isset($breadcrumb->titles) ? $breadcrumb->titles : NULL,
   );
+
+  $description = t('A list of Drupal paths for the breadcrumb links, one on each line.');
+  if (variable_get('custom_breadcrumbs_use_php_in_titles', FALSE) && user_access('use php in custom breadcrumbs')) {
+    $description .= ' '. t("You can also enter a PHP code snippet returning an array of drupal paths for the breadcrumb links, with one path per array element. Do not include PHP code tags. Use with caution. If the code does not return an array, it is assumed that each line is a drupal path.");
+  }
   $form['paths'] = array(
     '#type' => 'textarea',
     '#title' => t('Paths'),
-    '#required' => TRUE,
-    '#description' => t('A list of Drupal paths for the breadcrumb links, one on each line.'),
-    '#default_value' => $bid ? $breadcrumb->paths : NULL,
+    '#required' => FALSE,
+    '#description' => $description,
+    '#default_value' => isset($breadcrumb->paths) ? $breadcrumb->paths : NULL,
   );
   $form['help'] = array(
     '#type' => 'fieldset',
@@ -390,9 +419,33 @@ function custom_breadcrumbs_common_form_elements($bid, $breadcrumb) {
 }
 
 function custom_breadcrumbs_form_validate($form, &$form_state) {
-  $path_count = count(explode("\n", trim($form_state['values']['paths'])));
-  $title_count = count(explode("\n", trim($form_state['values']['titles'])));
-  if ($title_count != $path_count) {
+  if (variable_get('custom_breadcrumbs_use_php_in_titles', FALSE)) {
+    $paths = $form_state['values']['paths'];
+    $titles = $form_state['values']['titles'];
+    // Check to see if paths and titles are being specified via php code.
+    $php_titles = extract_php($titles);
+    $php_paths = extract_php($paths);
+    if (!is_null($php_titles)) {
+      if (isset($php_titles['titles']) && isset($php_titles['paths'])) {
+        // Check to make sure they have the same number of elements
+        $title_count = count($php_titles['titles']);
+        $path_count = count($php_titles['paths']);
+      }
+      else {
+        $title_count = count($php_titles);
+      }
+    }
+    if (!isset($path_count) && !is_null($php_paths)) {
+      $path_count = count($php_paths);
+    }
+  }
+  if (!isset($path_count)) {
+    $path_count = count(explode("\n", trim($form_state['values']['paths'])));
+  }
+  if (!isset($title_count)) {
+    $title_count = count(explode("\n", trim($form_state['values']['titles'])));
+  }
+  if (isset($title_count) && isset($path_count) && $title_count != $path_count) {
     $error_field = ($title_count < $path_count) ? 'titles' : 'paths';
     form_set_error($error_field, t('Every link path must have a matching title. There are !paths paths, and !titles titles.', array('!paths' => $path_count, '!titles' => $title_count)));
   }
@@ -400,12 +453,12 @@ function custom_breadcrumbs_form_validate($form, &$form_state) {
 
 function custom_breadcrumbs_form_submit($form, &$form_state) {
   $breadcrumb = (object)$form_state['values'];
-  _custom_breadcrumbs_save_breadcrumb($form['#table'], $breadcrumb, $form['#save_func']);
+  _custom_breadcrumbs_save_breadcrumb($form['#module'], $form['#infokey'], $breadcrumb);
   $form_state['redirect'] = 'admin/build/custom_breadcrumbs';
 }
 
 function custom_breadcrumbs_form_delete($form, &$form_state) {
-  _custom_breadcrumbs_delete_breadcrumb($form['#table'], $form_state['values']['bid'], $form['#delete_func']);
+  _custom_breadcrumbs_delete_breadcrumb($form['#module'], $form['#infokey'], $form_state['values']['bid']);
   $form_state['redirect'] = 'admin/build/custom_breadcrumbs';
 }
 

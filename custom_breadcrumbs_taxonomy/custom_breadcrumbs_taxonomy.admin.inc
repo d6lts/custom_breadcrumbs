@@ -46,8 +46,8 @@ function custom_breadcrumbs_taxonomy_term_form(&$form_state, $type) {
     );
   }  
   
-  // Store the function to call to save this breadcrumb.
-  $form['#table'] = 'custom_breadcrumbs_taxonomy_term';
+  $form['#module'] = 'custom_breadcrumbs_taxonomy';
+  $form['#infokey'] = 'taxonomy_term';
   $form['#submit'][] = 'custom_breadcrumbs_form_submit';
   $form['#validate'][] = 'custom_breadcrumbs_form_validate';
   return $form;
@@ -80,7 +80,7 @@ function custom_breadcrumbs_taxonomy_vocabulary_form(&$form_state, $type) {
     '#options' => $options,
     '#required' => TRUE,
     '#description' => t('Select taxonomy vocabulary to apply this breadcrumb to.'), 
-    '#default_value' => isset($breadcrumb->vid)  ?  $breadcrumb->vid : NULL,
+    '#default_value' => isset($breadcrumb->vid) ? $breadcrumb->vid : NULL,
     '#weight' => -10,
   );  
 
@@ -98,8 +98,8 @@ function custom_breadcrumbs_taxonomy_vocabulary_form(&$form_state, $type) {
       '#default_value' => $bid ? $breadcrumb->paths : NULL,
     );
   }  
-  // Store the function to call to save this breadcrumb.
-  $form['#table'] = 'custom_breadcrumbs_taxonomy_vocabulary';
+  $form['#module'] = 'custom_breadcrumbs_taxonomy';
+  $form['#infokey'] = 'taxonomy_vocabulary';
   $form['#submit'][] = 'custom_breadcrumbs_form_submit';
   $form['#validate'][] = 'custom_breadcrumbs_form_validate';
   return $form;

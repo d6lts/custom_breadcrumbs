@@ -14,11 +14,21 @@ module_load_include('inc', 'page_manager', 'page_manager.admin');
  *     'table' indicating the db_table to load the breadcrumb from,
  *     'field' a unique field of the database table used to identify the breadcrumb
  *     'type' a string used for indicating the breadcrumb type on the admin list
+ *     'name_constructor' a function which generates the breadcrumb name from the breadcrumb
  */
 function custom_breadcrumbs_panels_cb_breadcrumb_info() {
   $breadcrumb_type_info = array();
-  $breadcrumb_type_info[] = array('table' => 'custom_breadcrumbs_panels', 'field' => 'panel_id', 'type' => 'panels');
+  $breadcrumb_type_info['panels'] = array('table' => 'custom_breadcrumbs_panels', 'field' => 'panel_id', 'type' => 'panels',  'name_constructor' => '_custom_breadcrumbs_panels_breadcrumb_name');
   return $breadcrumb_type_info;
+}
+
+/**
+ * Construct a default name to display in the admin screen.
+ */
+function _custom_breadcrumbs_panels_breadcrumb_name($breadcrumb) {
+  if (isset($breadcrumb->panel_id)) {
+    return $breadcrumb->panel_id;
+  }
 }
 
 /**
@@ -100,7 +110,7 @@ function custom_breadcrumbs_panels_form_alter(&$form, $form_state, $form_id) {
     if (module_exists('custom_breadcrumbs_taxonomy')) {
       $form['settings']['custom_breadcrumbs_taxonomy_panels'] = array(
         '#type'           => 'checkbox',
-        '#title'          => t('Use taxonomy breadcrumbs for panels?'),
+        '#title'          => t('Use taxonomy breadcrumbs for panels'),
         '#default_value'  => variable_get('custom_breadcrumbs_taxonomy_panels', FALSE),
         '#description'    => t('When enabled, the view argument and/or the taxonomy structure of nodes returned by panels will be used to form the taxonomy breadcrumb trail.'),
         '#weight'         => 45,
@@ -118,7 +128,8 @@ function custom_breadcrumbs_panels_form(&$form_state, $type) {
   $bid = arg(5);
   if (isset($bid)) {
     drupal_set_title('Edit Custom Breadcrumb for Panel Page');
-    $breadcrumb = array_pop(custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs_panels', NULL, array('bid' => $bid)));
+    $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs_panels', NULL, array('bid' => $bid));
+    $breadcrumb = array_pop($breadcrumbs);
   }
   else {
     drupal_set_title('Add Custom Breadcrumb for Panel Page');
@@ -142,7 +153,8 @@ function custom_breadcrumbs_panels_form(&$form_state, $type) {
     '#weight' => -10,
   );
   // Store information needed to save this breadcrumb.
-  $form['#table'] = 'custom_breadcrumbs_panels';
+  $form['#module'] = 'custom_breadcrumbs_panels';
+  $form['#infokey'] = 'panels';
   $form += custom_breadcrumbs_common_form_elements($bid, $breadcrumb);
   $form['visibility_php']['#description'] = t('Determine whether this breadcrumb should be displayed by using a snippet of PHP to return TRUE or FALSE.');
   $form['#submit'][] = 'custom_breadcrumbs_form_submit';

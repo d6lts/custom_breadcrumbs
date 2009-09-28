@@ -23,6 +23,12 @@ function custom_breadcrumbs_schema() {
         'not null' => TRUE,
         'description' => 'Unique identifier for the {custom_breadcrumb}.',
       ),
+      'name' => array(
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => FALSE,
+        'description' => 'An optional name for the custom breadcrumb.',
+      ),
       'titles' => array(
         'type' => 'varchar',
         'length' => 255,
@@ -48,12 +54,6 @@ function custom_breadcrumbs_schema() {
         'not null' => FALSE,
         'default' => 'AND',
         'description' => 'Node types the {custom_breadcrumb} should apply to.',
-      ),
-      'set_active_menu' => array(
-        'type' => 'int',
-        'not null' => TRUE,
-        'default' => 1,
-        'description' => "Whether this {custom_breadcrumb} should override the node's default menu location.",
       ),
       'language' => array(
         'type' => 'varchar',
@@ -158,6 +158,27 @@ function custom_breadcrumbs_update_6003() {
   return $ret;
 }
 
+/**
+ * Add name field for improved organization of breadcrumbs
+ * Remove set_active_menu field because it is no longer used.
+ */
+function custom_breadcrumbs_update_6200() {
+  $ret = array();
+  db_add_field($ret, 'custom_breadcrumb', 'name', array('type' => 'varchar', 'length' => 128, 'NOT NULL' => FALSE, 'description' => 'An optional name for the custom breadcrumb.'));
+  db_drop_field($ret, 'custom_breadcrumb', 'set_active_menu');
+  return $ret;
+}
+
 function custom_breadcrumbs_uninstall() {
   drupal_uninstall_schema('custom_breadcrumbs');
+
+  // Remove persistent variables.
+  variable_del('custom_breadcrumbs_sort');
+  variable_del('custom_breadcrumb_home');
+  variable_del('custom_breadcrumbs_set_global_home_breadcrumb');
+  variable_del('custom_breadcrumbs_set_menu_breadcrumb');
+  variable_del('custom_breadcrumbs_force_active_trail');
+  variable_del('custom_breadcrumbs_menu_theme');
+  variable_del('custom_breadcrumbs_adjust_module_weights');
+  variable_del('custom_breadcrumbs_use_php_in_titles');
 }

@@ -245,6 +245,39 @@ set the Home breadcrumb text on ALL pages, not just those with defined custom br
 You can also use this feature to remove the home breadcrumb on all pages on the site - just
 enable the advanced setting and then leaving the home breadcrumb text blank.
 
+Use PHP in breadcrumb titles and paths
+----------------------------------
+If this advanced option is enabled at admin/settings/custom-breadcrumbs, then users given 
+'use php in custom breadcrumbs' permission can include php code snippets in the titles and/or
+paths fields of the add breadcrumb form. Be careful when enabling this option, as the incorrect
+use of php can break your site.
+
+There are a couple of ways to use php in breadcrumbs and titles. One way is to return an array 
+of breadcrumb titles in the titles text field and a corresponding array of breadcrumb paths in 
+the paths text field such as
+
+Titles:
+return array('title-1','title-2','title-3');
+
+Paths:
+return array('path/to/title-1','path/to/title-2','path/to/title-3');
+
+Sometimes, it may be more convient to assign the titles and paths in the same code snippet, so
+You can also return an associate array with elements 'titles' and 'paths' that contain the
+titles and paths arrays, respectively. For example,
+
+Titles:
+$titles = array('title-1','title-2','title-3');
+$paths = array('path/to/title-1','path/to/title-2','path/to/title-3');
+return array('titles' => $titles, 'paths' => $paths);
+
+(In this case, the paths text field will be ignored, so you can leave it empty). 
+
+When defined, appropriate objects such as $node, $term, or $view, will be available for these conde snippets.
+Note that if this option is enabled and an array is not returned, then the module defaults to the standard 
+operation of using each line of the titles and paths text fields to define a part of the breadcrumb. 
+
+
 Authors
 -------
 bennybobw, dbabbage, Michelle, MGN

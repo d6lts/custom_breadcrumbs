@@ -39,6 +39,12 @@ function custom_breadcrumbs_paths_schema() {
         'not null' => TRUE,
         'description' => 'Unique identifier for the {custom_breadcrumbs_views}.',
       ),
+      'name' => array(
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => FALSE,
+        'description' => 'An optional name for the custom breadcrumb.',
+      ),
       'titles' => array(
         'type' => 'varchar',
         'length' => 255,
@@ -63,12 +69,6 @@ function custom_breadcrumbs_paths_schema() {
         'length' => 255,
         'not null' => TRUE,
         'description' => 'Path to the view for this custom breadcrumb.',
-      ),
-      'set_active_menu' => array(
-        'type' => 'int',
-        'not null' => TRUE,
-        'default' => 1,
-        'description' => "Whether this {custom_breadcrumbs_views} should override the node's default menu location.",
       ),
       'language' => array(
         'type' => 'varchar',
@@ -97,6 +97,20 @@ function custom_breadcrumbs_paths_update_6000() {
   return $ret;
 }
 
+/**
+ * Add name field for improved organization of breadcrumbs
+ * Remove set_active_menu field because it is no longer used.
+ */
+function custom_breadcrumbs_paths_update_6200() {
+  $ret = array();
+  db_add_field($ret, 'custom_breadcrumbs_paths', 'name', array('type' => 'varchar', 'length' => 128, 'NOT NULL' => FALSE, 'description' => 'An optional name for the custom breadcrumb.'));
+  db_drop_field($ret, 'custom_breadcrumbs_paths', 'set_active_menu');
+  return $ret;
+}
+
 function custom_breadcrumbs_paths_uninstall() {
   drupal_uninstall_schema('custom_breadcrumbs_paths');
+
+  // Remove persistent variables.
+  variable_del('custom_breadcrumbs_paths_allow_wildcards');
 }

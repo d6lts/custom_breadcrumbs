@@ -14,11 +14,21 @@ module_load_include('inc', 'custom_breadcrumbs', 'custom_breadcrumbs_common');
  *     'table' indicating the db_table to load the breadcrumb from,
  *     'field' a unique field of the database table used to identify the breadcrumb
  *     'type' a string used for indicating the breadcrumb type on the admin list
+ *     'name_constructor' a function which generates the breadcrumb name from the breadcrumb
  */
 function custom_breadcrumbs_paths_cb_breadcrumb_info() {
   $breadcrumb_type_info = array();
-  $breadcrumb_type_info[] = array('table' => 'custom_breadcrumbs_paths', 'field' => 'specific_path', 'type' => 'path');
+  $breadcrumb_type_info['paths'] = array('table' => 'custom_breadcrumbs_paths', 'field' => 'specific_path', 'type' => 'path',  'name_constructor' => '_custom_breadcrumbs_paths_breadcrumb_name');
   return $breadcrumb_type_info;
+}
+
+/**
+ * Construct a default name to display in the admin screen.
+ */
+function _custom_breadcrumbs_paths_breadcrumb_name($breadcrumb) {
+  if (isset($breadcrumb->specific_path)) {
+    return $breadcrumb->specific_path;
+  }
 }
 
 /**
@@ -218,7 +228,8 @@ function custom_breadcrumbs_paths_form(&$form_state, $type) {
   );
   $form += custom_breadcrumbs_common_form_elements($bid, $breadcrumb);
   // Store the function to call to save this breadcrumb.
-  $form['#table'] = 'custom_breadcrumbs_paths';
+  $form['#module'] = 'custom_breadcrumbs_paths';
+  $form['#infokey'] = 'paths';
   $form['#submit'][] = 'custom_breadcrumbs_form_submit';
   $form['#validate'][] = 'custom_breadcrumbs_form_validate';
   return $form;
