@@ -139,24 +139,6 @@ function custom_breadcrumbs_update_6001() {
   return $ret;
 }
 
-/**
- * Add language support to breadcrumbs.
- */
-function custom_breadcrumbs_update_6002() {
-  $ret = array();
-  db_add_field($ret, 'custom_breadcrumb', 'language', array('type' => 'varchar', 'length' => 12, 'not null' => TRUE, 'default' => ''));
-  return $ret;
-}
-
-/**
- * Add indices to custom_breadcrumb table to improve performance.
- */
-function custom_breadcrumbs_update_6003() {
-  $ret = array();
-  db_add_index($ret, 'custom_breadcrumb', 'language', array('language'));
-  db_add_index($ret, 'custom_breadcrumb', 'node_language', array('node_type', 'language'));
-  return $ret;
-}
 
 /**
  * Remove set_active_menu field because it is no longer used.
@@ -168,9 +150,28 @@ function custom_breadcrumbs_update_6101() {
 }
 
 /**
- * Add name field for improved organization of breadcrumbs
+ * Add language support to breadcrumbs.
  */
 function custom_breadcrumbs_update_6200() {
+  $ret = array();
+  db_add_field($ret, 'custom_breadcrumb', 'language', array('type' => 'varchar', 'length' => 12, 'not null' => TRUE, 'default' => ''));
+  return $ret;
+}
+
+/**
+ * Add indices to custom_breadcrumb table to improve performance.
+ */
+function custom_breadcrumbs_update_6201() {
+  $ret = array();
+  db_add_index($ret, 'custom_breadcrumb', 'language', array('language'));
+  db_add_index($ret, 'custom_breadcrumb', 'node_language', array('node_type', 'language'));
+  return $ret;
+}
+
+/**
+ * Add name field for improved organization of breadcrumbs
+ */
+function custom_breadcrumbs_update_6202() {
   $ret = array();
   db_add_field($ret, 'custom_breadcrumb', 'name', array('type' => 'varchar', 'length' => 128, 'NOT NULL' => FALSE, 'description' => 'An optional name for the custom breadcrumb.'));
   return $ret;
