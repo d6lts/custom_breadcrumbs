@@ -2,6 +2,11 @@
 // $Id$
 
 /**
+ * @file
+ * Install file for the custom_breadcrumbs module.
+ */
+
+/**
  * Implementation of hook_install().
  */
 function custom_breadcrumbs_install() {
@@ -43,12 +48,6 @@ function custom_breadcrumbs_schema() {
         'not null' => FALSE,
         'default' => 'AND',
         'description' => 'Node types the {custom_breadcrumb} should apply to.',
-      ),
-      'set_active_menu' => array(
-        'type' => 'int',
-        'not null' => TRUE,
-        'default' => 1,
-        'description' => "Whether this {custom_breadcrumb} should override the node's default menu location.",
       ),
     ),
     'primary key' => array('bid'),
@@ -114,7 +113,14 @@ function custom_breadcrumbs_update_2() {
 // Add the menu flag.
 function custom_breadcrumbs_update_6001() {
   $ret = array();
-  db_add_field($ret, 'custom_breadcrumb', 'set_active_menu', 'int', array('default' => 1, 'NOT NULL' => TRUE));
+  db_add_field($ret, 'custom_breadcrumb', 'set_active_menu', array('type' => 'int', 'default' => 1, 'NOT NULL' => TRUE));
+  return $ret;
+}
+
+// Remove the menu flag.
+function custom_breadcrumbs_update_6101() {
+  $ret = array();
+  db_drop_field($ret, 'custom_breadcrumb', 'set_active_menu');
   return $ret;
 }
 
