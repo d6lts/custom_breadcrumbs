@@ -142,10 +142,8 @@ and year). So if you created a blog pos on June 13, 2007 your breadcrumb would s
       $output .= t('<p>Also, note that Custom Breadcrumbs doesn\'t actually check to be sure that a particular path 
 exists, so you\'ll have to check yourself to avoid 404 errors.</p>');
       $output .= t("<p>Only users with 'administer custom breadcrumbs' permission will be allowed to create or modify custom breadcrumbs.</p>");
-      $output .= t("<h2>Breadcrumb Visibility</h2><p>Users given 'use php in custom breadcrumbs' permission can include php code snippet that returns TRUE or FALSE to control whether or not the breadcrumb is displayed. Note that this code has access to the $node variable, and can check its type or any other property.</p>");
-      $output .= t('<h2>Special Identifiers</h2><p>The following identifiers can be used to achieve a special behavior:
-<ul><li><pathauto> - will clean any path using the current pathauto module settings, if that module is installed.</li>
-<li><none> - can be used as a path to have a breadcrumb element that is not hyperlinked.</li><p>Identifiers should be added to the paths area in the following format: identifier|path. To be recognized, the idenfier must be enclosed in angular brackets, and proceed any part of the path. For example: %example</p>', array('%example' => '<pathauto>|[ogname-raw]'));
+      $output .= t("<h2>Breadcrumb Visibility</h2><p>Users given 'use php in custom breadcrumbs' permission can include php code snippet that returns TRUE or FALSE to control whether or not the breadcrumb is displayed. Note that this code has access to the %node variable, and can check its type or any other property.</p>", array('%node' => '$node'));
+      $output .= t('<h2>Special Identifiers</h2><p>The following identifiers can be used to achieve a special behavior:<ul><li>%pathauto - will clean any path using the current pathauto module settings, if that module is installed.</li><li>%none - can be used as a path to have a breadcrumb element that is not hyperlinked.</li><p>Identifiers should be added to the paths area in the following format: identifier|path. To be recognized, the idenfier must be enclosed in angular brackets, and proceed any part of the path. For example: %pathauto|[ogname-raw]</p>', array('%pathauto' => '<pathauto>', '%none' => '<none>'));
       return $output;
     case 'admin/build/custom_breadcrumbs':
       $output = t('To create a custom breadcrumb, choose one of the breadcrumbs types listed above. The following table lists all of the custom breadcrumbs that have been defined. The list can be filtered by breadcrumb type or language, or sorted by clicking on one of the column headings.');
@@ -274,8 +272,9 @@ function custom_breadcrumbs_set_breadcrumb($breadcrumb, $objs = array()) {
     }
   
     for ($i = 0; $i < count($titles); $i++) {
-      if ($title = trim($titles[$i])) {
-        // Create breadcrumb.
+      $title = trim($titles[$i]);
+      if (($title != '') && ($title != '<none>')) {
+        // Create breadcrumb only if there is a title.
         $trail[] = _custom_breadcrumbs_create_crumb($title, trim($paths[$i]));
         $location[] = array('title' => $title, 'href' => drupal_get_normal_path(trim($paths[$i])));
       }
@@ -381,7 +380,11 @@ function custom_breadcrumbs_home_crumb() {
  */
 function _custom_breadcrumbs_create_crumb($title, $original_path) {
   // Decode title to properly handle special characters.
-  $title = ($title == '<none>') ? ' ' : decode_entities($title);
+  $title = decode_entities($title);
+  // Collapse double slashes to one.
+  $original_path = preg_replace('/\/+/', '/', $original_path);
+  // Removing leading and trailing slashes.
+  $original_path = preg_replace('/^\/|\/+$/', '', $original_path);
   list($identifier, $path) = explode("|", $original_path, 2);
   if (isset($path) && $path !== '') {
     $options = parse_url($path);
