@@ -1,4 +1,8 @@
 ; $Id$
 name = Custom Breadcrumbs
-description = Allows administrators to define custom breadcrumb trails for each node type.
-core = 6.x
+description = Allows administrators to define custom breadcrumb trails for node types.
+core = 7.x
+package = Custom Breadcrumbs
+files[] = custom_breadcrumbs.module
+files[] = custom_breadcrumbs.admin.inc
+files[] = custom_breadcrumbs.install
