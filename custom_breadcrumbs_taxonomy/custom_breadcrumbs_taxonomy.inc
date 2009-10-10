@@ -48,7 +48,7 @@ function custom_breadcrumbs_taxonomy_term_page() {
  *  Helper function to set the breadcrumb using a node's taxonomy.
  */
 function _custom_breadcrumbs_taxonomy_set_breadcrumb($tid, $vid = NULL, $is_term_page = FALSE, $objs = array(), $terms = array()) {
-  if (variable_get('custom_breadcrumbs_taxonomy_use_hierarchy', TRUE)) {
+  if (variable_get('custom_breadcrumbs_taxonomy_use_hierarchy', TRUE) && (!custom_breadcrumbs_exclude_path())) {
     $breadcrumb = custom_breadcrumbs_taxonomy_generate_breadcrumb($tid, $vid, $is_term_page, $objs);
     if ($is_term_page) {
       _custom_breadcrumbs_taxonomy_recent_term($tid);

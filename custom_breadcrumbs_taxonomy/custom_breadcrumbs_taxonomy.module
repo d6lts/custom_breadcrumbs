@@ -280,7 +280,13 @@ function custom_breadcrumbs_taxonomy_help($path, $arg) {
  */
 function custom_breadcrumbs_taxonomy_form_alter(&$form, $form_state, $form_id) {
   if ($form_id == 'custom_breadcrumbs_admin_settings') {
-    $form['settings']['custom_breadcrumbs_taxonomy_use_hierarchy'] = array(
+    $form['settings']['custom_breadcrumbs_taxonomy'] = array(
+      '#type'           => 'fieldset',
+      '#title'          => t('Taxonomy structure'),
+      '#collapsible'    => TRUE,
+      '#collapsed'      => FALSE,
+    );
+    $form['settings']['custom_breadcrumbs_taxonomy']['custom_breadcrumbs_taxonomy_use_hierarchy'] = array(
       '#type' => 'checkbox',
       '#title' => t('Use the taxonomy hierarchy to set the breadcrumb trail for nodes and taxonomy pages'),
       '#description' => t('If selected, the custom breadcrumb trail will be constructed from the taxonomy vocabulary and terms associated with the node. Breadcrumb titles will be selected from taxonomy term and vocabulary names.'),
@@ -288,7 +294,7 @@ function custom_breadcrumbs_taxonomy_form_alter(&$form, $form_state, $form_id) {
       '#weight' => 10,
     );
 
-    $form['settings']['custom_breadcrumbs_taxonomy_append_breadcrumb'] = array(
+    $form['settings']['custom_breadcrumbs_taxonomy']['custom_breadcrumbs_taxonomy_append_breadcrumb'] = array(
       '#type'           => 'checkbox',
       '#title'          => t('Append taxonomy breadcrumb trail to current breadcrumb for selected node types'),
       '#default_value'  => variable_get('custom_breadcrumbs_taxonomy_append_breadcrumb', FALSE),
@@ -296,7 +302,7 @@ function custom_breadcrumbs_taxonomy_form_alter(&$form, $form_state, $form_id) {
       '#weight'         => 20,
     );
 
-    $form['settings']['custom_breadcrumbs_taxonomy_show_vocabulary'] = array(
+    $form['settings']['custom_breadcrumbs_taxonomy']['custom_breadcrumbs_taxonomy_show_vocabulary'] = array(
       '#type'           => 'checkbox',
       '#title'          => t('Show vocabulary in breadcrumb trail'),
       '#description'    => t('When enabled, the vocabulary name will be shown in the breadcrumb trail, even when a custom breadcrumb has not been defined for the vocabulary. In this case the crumb will not be linked. If a custom breadcrumb has been defined for the vocabulary, it will be displayed whether or not this option is enabled.'),
@@ -304,7 +310,7 @@ function custom_breadcrumbs_taxonomy_form_alter(&$form, $form_state, $form_id) {
       '#weight' => 25,
     );
 
-    $form['settings']['custom_breadcrumbs_taxonomy_show_current_term'] = array(
+    $form['settings']['custom_breadcrumbs_taxonomy']['custom_breadcrumbs_taxonomy_show_current_term'] = array(
       '#type'           => 'checkbox',
       '#title'          => t('Show current taxonomy term in breadcrumb trail'),
       '#description'    => t('When enabled, the lightest term associated with node is shown as the last breadcrumb in the breadcrumb trail.  When disabled, the only terms shown in the breadcrumb trail are parent terms (if any parents exist).  The recommended setting is enabled.'),
@@ -312,7 +318,7 @@ function custom_breadcrumbs_taxonomy_form_alter(&$form, $form_state, $form_id) {
       '#weight' => 30,
     );
 
-    $form['settings']['custom_breadcrumbs_taxonomy_include_node_title'] = array(
+    $form['settings']['custom_breadcrumbs_taxonomy']['custom_breadcrumbs_taxonomy_include_node_title'] = array(
       '#type'           => 'checkbox',
       '#title'          => t('Show current node title in taxonomy breadcrumb trail'),
       '#default_value'  => variable_get('custom_breadcrumbs_taxonomy_include_node_title', FALSE),
@@ -321,7 +327,7 @@ function custom_breadcrumbs_taxonomy_form_alter(&$form, $form_state, $form_id) {
     );
 
     if (module_exists('views')) {
-      $form['settings']['custom_breadcrumbs_taxonomy_views'] = array(
+      $form['settings']['custom_breadcrumbs_taxonomy']['custom_breadcrumbs_taxonomy_views'] = array(
         '#type'           => 'checkbox',
         '#title'          => t('Use taxonomy breadcrumbs for views'),
         '#default_value'  => variable_get('custom_breadcrumbs_taxonomy_views', FALSE),
@@ -329,7 +335,7 @@ function custom_breadcrumbs_taxonomy_form_alter(&$form, $form_state, $form_id) {
         '#weight'         => 50,
       );
 
-      $form['settings']['custom_breadcrumbs_taxonomy_result_nodes'] = array(
+      $form['settings']['custom_breadcrumbs_taxonomy']['custom_breadcrumbs_taxonomy_result_nodes'] = array(
         '#type'           => 'checkbox',
         '#title'          => t('Use the taxonomy of nodes returned by a view to create the taxonomy breadcrumb'),
         '#default_value'  => variable_get('custom_breadcrumbs_taxonomy_result_nodes', FALSE),
@@ -338,7 +344,7 @@ function custom_breadcrumbs_taxonomy_form_alter(&$form, $form_state, $form_id) {
       );
     }
 
-    $form['settings']['custom_breadcrumbs_taxonomy_include_nodes'] = array(
+    $form['settings']['custom_breadcrumbs_taxonomy']['custom_breadcrumbs_taxonomy_include_nodes'] = array(
       '#type'           => 'radios',
       '#title'          => t('Include or exclude taxonomy-based breadcrumbs for the following node types'),
       '#default_value'  => variable_get('custom_breadcrumbs_taxonomy_include_nodes', FALSE),
@@ -354,7 +360,7 @@ function custom_breadcrumbs_taxonomy_form_alter(&$form, $form_state, $form_id) {
       }
     }
 
-    $form['settings']['custom_breadcrumbs_taxonomy_node_types'] = array(
+    $form['settings']['custom_breadcrumbs_taxonomy']['custom_breadcrumbs_taxonomy_node_types'] = array(
       '#type'           => 'checkboxes',
       '#multiple'       => TRUE,
       '#title'          => t('Node types to include or exclude'),

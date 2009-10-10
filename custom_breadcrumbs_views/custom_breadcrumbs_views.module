@@ -96,7 +96,7 @@ function custom_breadcrumbs_views_views_pre_render(&$view) {
     custom_breadcrumbs_set_breadcrumb($candidate, $objs);
     return;
   }
-  if (variable_get('custom_breadcrumbs_set_menu_breadcrumb', FALSE)) {
+  if (variable_get('custom_breadcrumbs_set_menu_breadcrumb', FALSE) && (!custom_breadcrumbs_exclude_path())) {
     // If a views breadcrumb has not been defined for this view, then use the default menu structure.
     custom_breadcrumbs_set_menu_breadcrumb();
   }

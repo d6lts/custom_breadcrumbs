@@ -187,13 +187,42 @@ function custom_breadcrumbs_admin_settings() {
     '#description'    => t('Text to display at top of breadcrumb trail.  Typically home or your site name.  Leave blank to have no home breadcrumb.'),
   );
 
+  $form['settings']['custom_breadcrumbs_menu_structure'] = array(
+    '#type'           => 'fieldset',
+    '#title'          => t('Menu structure'),
+    '#collapsible'    => TRUE,
+    '#collapsed'      => FALSE,
+  );
+
+  $form['settings']['custom_breadcrumbs_menu_structure']['custom_breadcrumbs_set_menu_breadcrumb'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Use the menu structure to set the breadcrumb trail'),
+    '#default_value' => variable_get('custom_breadcrumbs_set_menu_breadcrumb', FALSE),
+    '#description' => t("When enabled, the default breadcrumb trail will be patterned after the page's placement in the menu structure. Select the menus that this option will apply to below. Note that this default can be superceded by other custom breadcrumbs."),
+    '#weight' => -30,
+  );
+  $menu_options = array();
+  foreach (menu_get_names() as $name) {
+    $menu_options[$name] = $name;
+  }
+  $form['settings']['custom_breadcrumbs_menu_structure']['custom_breadcrumbs_menu_list'] = array(
+    '#type' => 'select',
+    '#title' => t('Menu Name'),
+    '#options' => $menu_options,
+    '#default_value' => variable_get('custom_breadcrumbs_menu_list', FALSE),
+    '#description' => t("Pages within selected menus will have a default breadcrumb patterned after the menu structure."),
+    '#multiple' => TRUE,
+    '#weight' => -20,
+  );
+
+
   $form['adv_settings'] = array(
     '#type'           => 'fieldset',
     '#title'          => t('Advanced Settings'),
     '#collapsible'    => TRUE,
   );
 
- $form['adv_settings']['custom_breadcrumbs_set_global_home_breadcrumb'] = array(
+  $form['adv_settings']['custom_breadcrumbs_set_global_home_breadcrumb'] = array(
     '#type' => 'checkbox',
     '#title' => t('Set the Home breadcrumb text on all pages'),
     '#default_value' => variable_get('custom_breadcrumbs_set_global_home_breadcrumb', FALSE),
@@ -201,20 +230,12 @@ function custom_breadcrumbs_admin_settings() {
     '#weight' => -40,
   );
 
- $form['adv_settings']['custom_breadcrumbs_use_php_in_titles'] = array(
+  $form['adv_settings']['custom_breadcrumbs_use_php_in_titles'] = array(
     '#type' => 'checkbox',
     '#title' => t('Allow the use of PHP to set titles and paths'),
     '#default_value' => variable_get('custom_breadcrumbs_use_php_in_titles', FALSE),
     '#description' => t("When enabled, php code snippets can be used in the titles and paths section of the create breadcrumb forms. Each should return an array with text strings for each part of the crumb. Alternatively, a php code snippet placed in the titles box could return an associative array with elements 'titles' and 'paths', each an array of text strings. If this is done, the paths text field will be ignored."),
     '#weight' => -35,
-  );
-
- $form['adv_settings']['custom_breadcrumbs_set_menu_breadcrumb'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Use the menu structure to set the breadcrumb trail'),
-    '#default_value' => variable_get('custom_breadcrumbs_set_menu_breadcrumb', FALSE),
-    '#description' => t("When enabled, the default breadcrumb trail will be patterned after the page's placement in the menu structure. Note that this default can be superceded by other custom breadcrumbs."),
-    '#weight' => -30,
   );
 
   $form['adv_settings']['custom_breadcrumbs_force_active_trail'] = array(
@@ -224,6 +245,34 @@ function custom_breadcrumbs_admin_settings() {
     '#default_value' => variable_get('custom_breadcrumbs_force_active_trail', FALSE),
     '#weight' => -10,
   );
+
+  $form['adv_settings']['custom_breadcrumbs_excluded'] = array(
+    '#type'           => 'fieldset',
+    '#title'          => t('Excluded paths'),
+    '#description' => t("When enabled, Custom Breadcrumbs will not modify breadcrumbs set on the paths defined below."),
+    '#collapsible'    => TRUE,
+    '#collapsed'      => FALSE,
+  );
+
+  $form['adv_settings']['custom_breadcrumbs_excluded']['custom_breadcrumbs_use_exclude_list'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Exclude custom breadcrumbs from some pages'),
+    '#default_value' => variable_get('custom_breadcrumbs_use_exclude_list', FALSE),
+  );
+    
+  $default_exclude_paths = array();
+  if (module_exists('admin_menu')) {
+    $default_exclude_paths[] = 'admin/user/user';
+    $default_exclude_paths[] = 'user';
+  }
+  $default = implode(',', $default_exclude_paths);
+  $form['adv_settings']['custom_breadcrumbs_excluded']['custom_breadcrumbs_exclude_list'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Do not set custom breadcrumbs on the following paths'),
+    '#default_value' => variable_get('custom_breadcrumbs_exclude_list', $default),
+    '#description' => t("A comma delimited set of paths to exclude from custom breadcrumbs. The '*' character can be used as a wildcard."),
+  );
+
   $form['adv_settings']['module_weights'] = array(
     '#type'           => 'fieldset',
     '#title'          => t('Module weights'),
@@ -232,7 +281,7 @@ function custom_breadcrumbs_admin_settings() {
     '#collapsed'      => FALSE,
   );
 
- $form['adv_settings']['module_weights']['custom_breadcrumbs_adjust_module_weights'] = array(
+  $form['adv_settings']['module_weights']['custom_breadcrumbs_adjust_module_weights'] = array(
     '#type' => 'checkbox',
     '#title' => t('Adjust module weights'),
     '#default_value' => FALSE,

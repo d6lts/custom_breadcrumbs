@@ -2,6 +2,11 @@
 // $Id$
 
 /**
+ * @file
+ * Install file for the custom_breadcrumbs module.
+ */
+
+/**
  * Implementation of hook_install().
  */
 function custom_breadcrumbs_paths_install() {

@@ -138,11 +138,8 @@ function _custom_breadcrumbs_paths_set_breadcrumb($objs = array()) {
 function _custom_breadcrumbs_paths_get_breadcrumbs($matchpath = FALSE, $path = NULL) {
   global $language;
   $languages = array('language' => $language->language, 'all' => '');
-  if ($matchpath) {
-    // Get all breadcrumbs.
-    $param = array();
-  }
-  else {
+  $param = array();
+  if (isset($_REQUEST['q']) && !$matchpath) {
     // Check for path prefix and strip it out if its found.
     $prefix = $language->language .'/';
     $path = is_null($path) ? str_replace($prefix, '', $_REQUEST['q']) : $path;

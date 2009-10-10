@@ -100,22 +100,24 @@ function custom_breadcrumbs_menu() {
  * Implementation of hook_init().
  */
 function custom_breadcrumbs_init() {
-  if (variable_get('custom_breadcrumbs_set_global_home_breadcrumb', FALSE)) {
-    // Use default menu structure to set the breadcrumb.
-    $trail = drupal_get_breadcrumb();
-    if (!empty($trail)) {
-      array_shift($trail);
-      $cb_home = custom_breadcrumbs_home_crumb();
-      if (!empty($cb_home)) {
-        array_unshift($trail, array_pop($cb_home));
+  if (!custom_breadcrumbs_exclude_path()) {
+    if (variable_get('custom_breadcrumbs_set_global_home_breadcrumb', FALSE)) {
+      // Use default menu structure to set the breadcrumb.
+      $trail = drupal_get_breadcrumb();
+      if (!empty($trail)) {
+        array_shift($trail);
+        $cb_home = custom_breadcrumbs_home_crumb();
+        if (!empty($cb_home)) {
+          array_unshift($trail, array_pop($cb_home));
+        }
+        drupal_set_breadcrumb($trail);
       }
-      drupal_set_breadcrumb($trail);
     }
-  }
 
-  if (variable_get('custom_breadcrumbs_set_menu_breadcrumb', FALSE)) {
-    // Use default menu structure to set the breadcrumb.
-    custom_breadcrumbs_set_menu_breadcrumb();
+    if (variable_get('custom_breadcrumbs_set_menu_breadcrumb', FALSE)) {
+      // Use default menu structure to set the breadcrumb.
+      custom_breadcrumbs_set_menu_breadcrumb();
+    }
   }
 }
 
@@ -240,7 +242,7 @@ function custom_breadcrumbs_select_breadcrumb($breadcrumbs, $objs = array()) {
  *   A node object (if available) for building token substituions.
  */
 function custom_breadcrumbs_set_breadcrumb($breadcrumb, $objs = array()) {
-  if ($breadcrumb) {
+  if ($breadcrumb && !custom_breadcrumbs_exclude_path()) {
     $location = array();
     $trail = custom_breadcrumbs_home_crumb();
     if (!empty($trail)) {
@@ -544,7 +546,10 @@ function custom_breadcrumbs_set_menu_breadcrumb() {
   $menu_item = menu_get_item();
   $menu_link = menu_link_load(db_result(db_query("SELECT mlid FROM {menu_links} WHERE link_path = '%s'", $menu_item['href'])));
   $use_menu = $menu_link['menu_name'];
-  menu_set_active_menu_name($use_menu);
+  $menus =  variable_get('custom_breadcrumbs_menu_list', array() );
+  if (in_array($use_menu, $menus)) {
+    menu_set_active_menu_name($use_menu);
+  }
 }
 
 /**
@@ -835,4 +840,25 @@ function extract_php($text, $objs = array()) {
   $output = eval($text);
   ob_end_clean();
   return (is_array($output)) ? $output : NULL;
+}
+
+/**
+ *  Helper function to determine if current path is in the excluded list.
+ */
+function custom_breadcrumbs_exclude_path() {
+  static $excluded;
+  if (variable_get('custom_breadcrumbs_use_exclude_list', FALSE)) {
+    if (!isset($excluded)) {
+      $excluded = explode(',', variable_get('custom_breadcrumbs_exclude_list', ''));
+    }
+    if (!empty($excluded)) {
+      module_load_include('inc', 'custom_breadcrumbs', 'custom_breadcrumbs_common');
+      foreach ($excluded as $path) {
+        if (_custom_breadcrumbs_match_path($_REQUEST['q'], trim($path))) {
+          return TRUE;
+        }
+      }
+    }
+  }
+  return FALSE;
 }
