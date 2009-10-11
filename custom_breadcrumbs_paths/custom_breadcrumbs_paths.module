@@ -103,7 +103,7 @@ function _custom_breadcrumbs_paths_set_breadcrumb($objs = array()) {
   $breadcrumbs = _custom_breadcrumbs_paths_get_breadcrumbs($matchpath);
   if (!empty($breadcrumbs)) {
     foreach ($breadcrumbs as $id => $breadcrumb) {
-      if ((!$matchpath) || _custom_breadcrumbs_paths_page_match($breadcrumb, $matchpath)) {
+      if ((!$matchpath) || _custom_breadcrumbs_paths_page_match($breadcrumb)) {
         if (custom_breadcrumbs_is_visible($breadcrumb, $objs)) {
           if ($matchpath) {
             $num = substr_count($breadcrumb->specific_path, '*');
@@ -136,42 +136,41 @@ function _custom_breadcrumbs_paths_set_breadcrumb($objs = array()) {
  *   an array of breadcrumb objects meeting the query criteria
  */
 function _custom_breadcrumbs_paths_get_breadcrumbs($matchpath = FALSE, $path = NULL) {
-  global $language;
-  $languages = array('language' => $language->language, 'all' => '');
-  $param = array();
-  if (isset($_REQUEST['q']) && !$matchpath) {
-    // Check for path prefix and strip it out if its found.
-    $prefix = $language->language .'/';
-    $path = is_null($path) ? str_replace($prefix, '', $_REQUEST['q']) : $path;
-    $param = array('specific_path' => $path);
+  // Don't bother checking if we don't have a path to match against.
+  if (isset($_REQUEST['q']) || !is_null($path)) {
+    global $language;
+    $languages = array('language' => $language->language, 'all' => '');
+    // Load all path breadcrumbs for wildcard matching
+    $param = array();
+    if (!$matchpath) {
+      // Check for path prefix and strip it out if its found.
+      $prefix = $language->language .'/';
+      $path = is_null($path) ? str_replace($prefix, '', $_REQUEST['q']) : $path;
+      $param = array('specific_path' => $path);
+    }
+    $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs_paths', NULL, $param, $languages);
+    return $breadcrumbs;
   }
-  $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs_paths', NULL, $param, $languages);
-  return $breadcrumbs;
 }
 
 /**
- * Helper function to determine if the current url matches the breadcrumb specific path.
- * @param $matchpath
- *   if TRUE, then load all paths breadcrumbs to allow wildcard matching
- *   otherwise only the current path is queried
+ * Helper function to determine if the current path matches the breadcrumb specific path.
  * @param $breadcrumb
- *    the breadcrumb object
+ *   The breadcrumb object
  * @return $page_match
  *   TRUE if the current path matches the breadcrumb specific path, FALSE otherwise.
  */
-function _custom_breadcrumbs_paths_page_match($breadcrumb, $matchpath) {
+function _custom_breadcrumbs_paths_page_match($breadcrumb) {
   $page_match = FALSE;
   if (isset($_REQUEST['q'])) {
-    if ($matchpath) {
-      if (isset($breadcrumb->language)) {
-        // Check for a match on the prefixed path.
-        $path = $breadcrumb->language .'/'. $breadcrumb->specific_path;
-        $page_match = _custom_breadcrumbs_match_path($_REQUEST['q'], $path);
-      }
-      if (!$page_match) {
-        // Check for a direct match.
-        $page_match = _custom_breadcrumbs_match_path($_REQUEST['q'], $breadcrumb->specific_path);
-      }
+    if (isset($breadcrumb->language)) {
+      // Check for a match on the prefixed path.
+      $path = $breadcrumb->language .'/'. $breadcrumb->specific_path;
+      $page_match = _custom_breadcrumbs_match_path($_REQUEST['q'], $path);
+    }
+    if (!$page_match) {
+      // Check for a direct match.
+      $page_match = _custom_breadcrumbs_match_path($_REQUEST['q'], $breadcrumb->specific_path);
     }
   }
   return $page_match;
