@@ -136,12 +136,12 @@ function custom_breadcrumbs_form(&$form_state, $type) {
   $breadcrumb = NULL;
   $bid = arg(5);
   if (isset($bid)) {
-    drupal_set_title('Edit Custom Breadcrumb for Node');
+    drupal_set_title(t('Edit Custom Breadcrumb for Node'));
     $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs', NULL, array('bid' => $bid));
     $breadcrumb = array_pop($breadcrumbs);
   }
   else {
-    drupal_set_title('Add Custom Breadcrumb for Node');
+    drupal_set_title(t('Add Custom Breadcrumb for Node'));
   }
   $options = array();
   foreach (node_get_types('names') as $type => $name) {
@@ -399,7 +399,7 @@ function custom_breadcrumbs_common_form_elements($bid, $breadcrumb) {
 
  $description = t('A list of titles for the breadcrumb links, one on each line.');
   if (variable_get('custom_breadcrumbs_use_php_in_titles', FALSE) && user_access('use php in custom breadcrumbs')) {
-    $description .= ' '. t("Or, you can enter a PHP code snippet returning either an array of text strings for the breadcrumb titles, with one title per array element, or an associative array with elements 'titles' and 'paths' each containing an array of text strings for the breadcrumb titles and paths, respectively. Do not include PHP code tags. Use with caution. If the code does not return an array, it is assumed that each line a breadcrumb title.");
+    $description .= ' '. t("Or, you can enter a PHP code snippet returning either an array of text strings for the breadcrumb titles, with one title per array element, or an associative array with elements 'titles' and 'paths' each containing an array of text strings for the breadcrumb titles and paths, respectively. Include the php snippet between %php. Use with caution since incorrect PHP code can break your Drupal site. Token replacement will occur after any php is evaluated.", array('%php' => '<?php ?>'));
   } 
 
  $form['titles'] = array(
@@ -412,7 +412,7 @@ function custom_breadcrumbs_common_form_elements($bid, $breadcrumb) {
 
   $description = t('A list of Drupal paths for the breadcrumb links, one on each line.');
   if (variable_get('custom_breadcrumbs_use_php_in_titles', FALSE) && user_access('use php in custom breadcrumbs')) {
-    $description .= ' '. t("You can also enter a PHP code snippet returning an array of drupal paths for the breadcrumb links, with one path per array element. Do not include PHP code tags. Use with caution. If the code does not return an array, it is assumed that each line is a drupal path.");
+    $description .= ' '. t("You can also enter a PHP code snippet returning an array of drupal paths for the breadcrumb links, with one path per array element. Include the php snippet between %php. Use with caution since incorrect PHP code can break your Drupal site.  Token replacement will occur after any php is evaluated.", array('%php' => '<?php ?>'));
   }
   $form['paths'] = array(
     '#type' => 'textarea',

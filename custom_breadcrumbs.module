@@ -833,15 +833,18 @@ function _custom_breadcrumbs_get_module_weight($name) {
  *  Helper function to determine if text string is php code and evaluate if it is.
  */
 function extract_php($text, $objs = array()) {
-  foreach ($objs as $key => $obj) {
-    $$key = $obj;
+  if (drupal_substr(trim($text), 0, 5) == '<?php') {
+    // Strip php tags.
+    $text = str_replace(array('<?php','?>'), '', $text);
+    foreach ($objs as $key => $obj) {
+      $$key = $obj;
+    }
+    ob_start();
+    $output = eval($text);
+    ob_end_clean();
+    return (is_array($output)) ? $output : NULL;
   }
-  ob_start();
-  $output = eval($text);
-  ob_end_clean();
-  return (is_array($output)) ? $output : NULL;
 }
-
 /**
  *  Helper function to determine if current path is in the excluded list.
  */

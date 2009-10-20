@@ -110,12 +110,12 @@ function custom_breadcrumbs_views_form(&$form_state, $type) {
   $breadcrumb = NULL;
   $bid = arg(5);
   if (isset($bid)) {
-    drupal_set_title('Edit Custom Breadcrumb for View');
+    drupal_set_title(t('Edit Custom Breadcrumb for View'));
     $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs_views', NULL, array('bid' => $bid));
     $breadcrumb = array_pop($breadcrumbs);
   }
   else {
-    drupal_set_title('Add Custom Breadcrumb for View');
+    drupal_set_title(t('Add Custom Breadcrumb for View'));
   }
   $options = array();
   $views =  views_get_all_views();

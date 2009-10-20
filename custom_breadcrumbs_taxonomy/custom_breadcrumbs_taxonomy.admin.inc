@@ -12,12 +12,12 @@ function custom_breadcrumbs_taxonomy_term_form(&$form_state, $type) {
   $bid = arg(5);
   $breadcrumb = NULL;
   if (isset($bid)) {
-    $title = 'Edit Custom Breadcrumb for Taxonomy Term';
+    drupal_set_title(t('Edit Custom Breadcrumb for Taxonomy Term'));
     $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs_taxonomy', 'custom_breadcrumbs_taxonomy_term', array('bid' => $bid));
     $breadcrumb = array_pop($breadcrumbs);
   }
   else {
-    drupal_set_title('Add Custom Breadcrumb for Taxonomy Term');
+    drupal_set_title(t('Add Custom Breadcrumb for Taxonomy Term'));
   }
   $options = taxonomy_form_all();
 
@@ -60,12 +60,12 @@ function custom_breadcrumbs_taxonomy_vocabulary_form(&$form_state, $type) {
   $bid = arg(5);
   $breadcrumb = NULL;
   if (isset($bid)) {
-    drupal_set_title('Edit Custom Breadcrumb for Taxonomy Vocabulary');
+    drupal_set_title(t('Edit Custom Breadcrumb for Taxonomy Vocabulary'));
     $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs_taxonomy', 'custom_breadcrumbs_taxonomy_vocabulary', array('bid' => $bid));
     $breadcrumb = array_pop($breadcrumbs);
   }
   else {
-    drupal_set_title('Add Custom Breadcrumb for Taxonomy Vocabulary');
+    drupal_set_title(t('Add Custom Breadcrumb for Taxonomy Vocabulary'));
   }
 
   // Get a list of all vocabularies.

@@ -101,12 +101,12 @@ function custom_breadcrumbsapi_form(&$form_state, $type) {
   $breadcrumb = NULL;
   $bid = arg(5);
   if (isset($bid)) {
-    drupal_set_title('Edit Custom Breadcrumb for Module Page');
+    drupal_set_title(t('Edit Custom Breadcrumb for Module Page'));
     $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbsapi', NULL, array('bid' => $bid));
     $breadcrumb = array_pop($breadcrumbs);
   }
   else {
-    drupal_set_title('Add Custom Breadcrumb for Module Page');
+    drupal_set_title(t('Add Custom Breadcrumb for Module Page'));
   }
   $options = array();
   $modules = module_implements('custom_breadcrumbsapi');
