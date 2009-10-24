@@ -35,7 +35,7 @@ function _custom_breadcrumbsapi_breadcrumb_name($breadcrumb) {
 function custom_breadcrumbsapi_help($path, $arg) {
   switch ($path) {
     case 'admin/help#custom_breadcrumbsapi':
-      $output = '<p>'. t("Custom Breadcrumbsapi provides a simple api that allows custom breadcrumbs to be defined for module pages implementing the api. Module developers need to provide a <em>modulename</em>_custom_breadcrumbsapi() function that returns an array containing the names of the module pages for which custom breadcrumbs may be defined. Then, in the callback functions for each of those pages, the following lines needs to be inserted:") .'</p>';
+      $output = '<p>'. t("Custom Breadcrumbsapi provides a simple api that allows custom breadcrumbs to be defined for module pages that use a theme template or a custom_breadcrumbsapi hook. For the latter, module developers need to provide a <em>moduleName</em>_custom_breadcrumbsapi() function that returns an array containing the names of the module pages for which custom breadcrumbs may be defined. Then, in the callback functions for each of those pages, the following lines needs to be inserted:") .'</p>';
       $output .=  "<p><strong>drupal_alter('breadcrumb', \$breadcrumb, '<em>module_page_name</em>');</strong></p>";
       $output .= t('within the function, preferably after defining $breadcrumb but before setting the breadcrumb.');
       return $output;
@@ -109,6 +109,17 @@ function custom_breadcrumbsapi_form(&$form_state, $type) {
     drupal_set_title(t('Add Custom Breadcrumb for Module Page'));
   }
   $options = array();
+  // Include any templates in the theme registry.
+  init_theme();
+  $hooks = theme_get_registry();
+  if (is_array($hooks)) {
+    foreach ($hooks as $name => $hook) {
+      if (isset($hook['template'])) {
+        $options[$name] = $hook['template'];
+      }
+    }
+  }
+  // Include all module functions specified in hook_custom_breadcrumbsapi.
   $modules = module_implements('custom_breadcrumbsapi');
   foreach ($modules as $module) {
     $func = $module .'_custom_breadcrumbsapi';
@@ -118,7 +129,7 @@ function custom_breadcrumbsapi_form(&$form_state, $type) {
     }
   }
   if (empty($options)) {
-    $form['notice'] = array('#value' => t('No module pages are currently implementing the custom breadcrumbs api. Read the !help to learn how to do this.', array('!help' => l('Documentation', 'admin/help/custom_breadcrumbsapi'))));
+    $form['notice'] = array('#value' => t('No module pages using theme templates or currently implementing the custom breadcrumbs api. Read the !help to learn how to do this.', array('!help' => l('Documentation', 'admin/help/custom_breadcrumbsapi'))));
   }
   else {
     $form['module_page'] = array(
@@ -134,9 +145,26 @@ function custom_breadcrumbsapi_form(&$form_state, $type) {
     $form['#module'] = 'custom_breadcrumbsapi';
     $form['#infokey'] = 'module';
     $form += custom_breadcrumbs_common_form_elements($bid, $breadcrumb);
-    $form['visibility_php']['#description'] = t('Determine whether this breadcrumb should be displayed by using a snippet of PHP to return TRUE or FALSE.');
+    $form['visibility_php']['#description'] = t('Determine whether this breadcrumb should be displayed by using a snippet of PHP to return TRUE or FALSE. For module pages in the theme registry, you will have access to the %var array. Consult the individual template files for variable names that are used as the arguments of this array.', array('%var' => '$variables'));
     $form['#submit'][] = 'custom_breadcrumbs_form_submit';
     $form['#validate'][] = 'custom_breadcrumbs_form_validate';
   }
   return $form;
+}
+
+function  custom_breadcrumbsapi_preprocess(&$variables, $hook) {
+  // Check to see if hook has a defined custom breadcrumb.
+  static $tried = array();
+  // Only respond to the first call for this hook.
+  if (!isset($tried[$hook])) {
+    $tried[$hook] = TRUE;
+    global $language;
+    $languages = array('language' => $language->language, 'all' => '');
+    $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbsapi', NULL, array('module_page' => $hook), $languages);
+    if (!empty($breadcrumbs)) {
+      if ($breadcrumb = custom_breadcrumbs_select_breadcrumb($breadcrumbs, array('variables' => $variables))) {
+        custom_breadcrumbs_set_breadcrumb($breadcrumb, array('variables' => $variables));
+      }
+    }
+  }
 }

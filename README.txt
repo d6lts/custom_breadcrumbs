@@ -216,7 +216,16 @@ installed to provide custom breadcrumbs in a variety of situations:
   drupal_alter('breadcrumb', $breadcrumb, 'module_page_name');
 
   Continuing with the forum module example, 'module_page_name' would be replaced with 'forum listing'.
-
+  
+  custom_breadcrumbsapi can also provide custom breadcrumbs for modules implementing theme templates
+  (e.g. files ending in .tpl.php). To add a custom breadcrumb when a specific theme template file is
+  called, click on the module page tab at admin/build/custom_breadcrumbs. Select the template file
+  from the list of theme templates (determined from the theme registry). Then fill in the usual
+  custom breadcrumbs information such as titles as paths. If using a php snippet for breadcrumb
+  visibility or to specify titles and paths (see below), you have access to the template variables
+  through $variables, an associative array defined by the module providing the template. See the
+  documentation in the template file for details. For example, if a template file uses the variable
+  $foo, then access to that variable would be through $variables['foo'].
 
 User Interface
 --------------
