@@ -152,11 +152,13 @@ function _custom_breadcrumbs_create_crumb($title, $original_path) {
   $original_path = preg_replace('/^\/|\/+$/', '', $original_path);
   list($identifier, $path) = explode("|", $original_path, 2);
 
-  if ($path) {
-    switch ($identifier) {
+  if (isset($path) && $path !== '') {
+    switch (trim($identifier)) {
       case '<pathauto>':
-        if (module_exists('pathauto'))
+        if (module_exists('pathauto')) {
+          module_load_include('inc', 'pathauto', 'pathauto');
           $crumb = l($title, pathauto_cleanstring($path, FALSE));
+        }
         break;
       default:
         $crumb = l($title, $original_path);
@@ -166,7 +168,7 @@ function _custom_breadcrumbs_create_crumb($title, $original_path) {
     // This may be just be a single identifier.
     switch ($identifier) {
       case '<none>':
-        $crumb = $title;
+        $crumb = check_plain($title);
         break;
       default:
         $crumb = l($title, $original_path);
