@@ -390,7 +390,7 @@ function _custom_breadcrumbs_create_crumb($title, $original_path) {
   list($identifier, $path) = explode("|", $original_path, 2);
   if (isset($path) && $path !== '') {
     $options = parse_url($path);
-    switch ($identifier) {
+    switch (trim($identifier)) {
       case '<pathauto>':
         if (module_exists('pathauto')) {
           module_load_include('inc', 'pathauto', 'pathauto');
