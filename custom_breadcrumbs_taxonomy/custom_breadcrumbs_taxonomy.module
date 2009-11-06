@@ -179,6 +179,7 @@ function custom_breadcrumbs_taxonomy_views_pre_render(&$view) {
     // Set the taxonomy breadcrumb for the view.
     if (isset($view->display) && !empty($view->display)) {
       $curpath = drupal_get_normal_path($_GET['q']);
+      $is_term_page = ((arg(0, $curpath) == 'taxonomy') && (arg(1, $curpath) == 'term'));
       foreach ($view->display as $id => $display) {
         // Identify allowed displays for breadcrumb replacement.
         if (!_custom_breadcrumbs_allowed_display($display)) continue;
@@ -220,7 +221,7 @@ function custom_breadcrumbs_taxonomy_views_pre_render(&$view) {
                 }
               }
               module_load_include('inc', 'custom_breadcrumbs_taxonomy');
-              _custom_breadcrumbs_taxonomy_set_breadcrumb($tid, $vid, TRUE, array('view' => $view), $terms);
+              _custom_breadcrumbs_taxonomy_set_breadcrumb($tid, $vid, $is_term_page, array('view' => $view), $terms);
               if (!is_null($tid)) {
                 _custom_breadcrumbs_taxonomy_recent_term($tid);
               }
@@ -239,7 +240,7 @@ function custom_breadcrumbs_taxonomy_views_pre_render(&$view) {
                 $term = custom_breadcrumbs_taxonomy_node_get_term($node);
                 if ($term) {
                   $terms = taxonomy_node_get_terms($node);
-                  _custom_breadcrumbs_taxonomy_set_breadcrumb($term->tid, $term->vid, TRUE, array('node' => $node), $terms);
+                  _custom_breadcrumbs_taxonomy_set_breadcrumb($term->tid, $term->vid, $is_term_page, array('node' => $node), $terms);
                   _custom_breadcrumbs_taxonomy_recent_term($term->tid);
                   return;
                 }

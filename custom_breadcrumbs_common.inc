@@ -81,7 +81,7 @@ function _custom_breadcrumbs_views_parse_args($arguments, $viewargs) {
   $arg_values = array('types' => array(), 'values' => array());
   foreach ($arguments as $arg_id => $argument) {
     if (!empty($viewargs)) {
-      $arg = array_pop($viewargs);
+      $arg = array_shift($viewargs);
       $arg_id_3 = drupal_substr($arg_id, 0, 3); 
       if (($arg_id_3 == 'tid') || (drupal_substr($arg_id, 0, 19) == 'term_node_tid_depth')) {
         $terms = taxonomy_terms_parse_string($arg);
