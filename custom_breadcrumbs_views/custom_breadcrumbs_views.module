@@ -17,12 +17,23 @@ module_load_include('inc', 'custom_breadcrumbs', 'custom_breadcrumbs_common');
  */
 function custom_breadcrumbs_views_cb_breadcrumb_info() {
   $breadcrumb_type_info = array();
-  $breadcrumb_type_info['views'] = array('table' => 'custom_breadcrumbs_views', 'field' => 'views_path', 'type' => 'views',  'name_constructor' => '_custom_breadcrumbs_views_breadcrumb_name');
+  $breadcrumb_type_info['views'] = array(
+    'table' => 'custom_breadcrumbs_views',
+    'field' => 'views_path',
+    'type' => 'views',
+    'name_constructor' => '_custom_breadcrumbs_views_breadcrumb_name',
+  );
   return $breadcrumb_type_info;
 }
 
 /**
  * Construct a default name to display in the admin screen.
+ *
+ * @param $breadcrumb
+ *   The breadcrumb object.
+ *
+ * @return
+ *   A text string that will be used as the breadcrumb name.
  */
 function _custom_breadcrumbs_views_breadcrumb_name($breadcrumb) {
   if (isset($breadcrumb->views_path)) {
@@ -103,7 +114,11 @@ function custom_breadcrumbs_views_views_pre_render(&$view) {
 }
 
 /**
- * Displays an edit form for a views breadcrumb.
+ * Form builder; Displays an edit form for a views breadcrumb.
+ *
+ * @ingroup forms
+ * @see custom_breadcrumbs_form_validate()
+ * @see custom_breadcrumbs_form_submit()
  */
 function custom_breadcrumbs_views_form(&$form_state, $type) {
   $form = array();
@@ -130,19 +145,19 @@ function custom_breadcrumbs_views_form(&$form_state, $type) {
     }
   }
   $form['views_path'] = array(
-    '#type' => 'select',
-    '#title' => t('Views Path'),
-    '#required' => TRUE,
-    '#options' => $options,
-    '#description' => t('The path to the view that this custom breadcrumb trail will apply to.'),
+    '#type'          => 'select',
+    '#title'         => t('Views Path'),
+    '#required'      => TRUE,
+    '#options'       => $options,
+    '#description'   => t('The path to the view that this custom breadcrumb trail will apply to.'),
     '#default_value' => isset($breadcrumb->views_path) ? $breadcrumb->views_path : NULL,
-    '#weight' => -10,
+    '#weight'        => -10,
   );
   // Store information needed to save this breadcrumb.
   $form['#module'] = 'custom_breadcrumbs_views';
   $form['#infokey'] = 'views';
   $form += custom_breadcrumbs_common_form_elements($bid, $breadcrumb);
-  $form['visibility_php']['#description'] = t('Determine whether this breadcrumb should be displayed by using a snippet of PHP to return TRUE or FALSE.');
+  $form['visibility_php']['#description'] = t('Determine whether this breadcrumb should be displayed by using a PHP snippet to return TRUE or FALSE.');
   $form['#submit'][] = 'custom_breadcrumbs_form_submit';
   $form['#validate'][] = 'custom_breadcrumbs_form_validate';
 

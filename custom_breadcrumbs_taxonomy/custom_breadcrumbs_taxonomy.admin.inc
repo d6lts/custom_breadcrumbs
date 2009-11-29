@@ -6,7 +6,13 @@
  * Administration pages for custom_breadcrumbs_taxonomy.
  */
 
-// Displays an edit form for a custom breadcrumb taxonomy record.
+/**
+ * Form builder; Displays an edit form for a custom breadcrumb taxonomy term record.
+ *
+ * @ingroup forms
+ * @see custom_breadcrumbs_form_validate()
+ * @see custom_breadcrumbs_form_submit()
+ */
 function custom_breadcrumbs_taxonomy_term_form(&$form_state, $type) {
   $form = array();
   $bid = arg(5);
@@ -26,10 +32,10 @@ function custom_breadcrumbs_taxonomy_term_form(&$form_state, $type) {
     '#title' => t('Taxonomy Term'),
     '#options' => $options,
     '#required' => TRUE,
-    '#description' => t('Select the taxonomy term to apply this breadcrumb to'), 
+    '#description' => t('Select the taxonomy term to apply this breadcrumb to'),
     '#default_value' => isset($breadcrumb->tid) ?  $breadcrumb->tid : NULL,
     '#weight' => -10,
-  );  
+  );
 
   $form += custom_breadcrumbs_common_form_elements($bid, $breadcrumb);
 
@@ -41,11 +47,11 @@ function custom_breadcrumbs_taxonomy_term_form(&$form_state, $type) {
       '#type' => 'textfield',
       '#title' => t('Path'),
       '#required' => TRUE,
-      '#description' => t('Specify the drupal path that the taxonomy term will linked to. Currently operating in taxonomy breadcrumbs mode. Deselect the <em>use taxonomy hierarchy</em> option on the !link page to specify several titles/paths for the breadcrumb.', array('!link' => l('Custom Breadcrumbs Settings', 'admin/settings/custom-breadcrumbs'))),
-      '#default_value' => $bid ? $breadcrumb->paths : NULL,
+      '#description' => t('Specify the Drupal path that the taxonomy term will be linked to. Currently operating in taxonomy breadcrumbs mode. Deselect the <em>use taxonomy hierarchy</em> option on the <a href="@link">Custom Breadcrumbs Settings</a> page if you would prefer to specify several titles/paths for the breadcrumb.', array('@link' => url('admin/settings/custom-breadcrumbs'))),
+      '#default_value' => isset($breadcrumb->paths) ? $breadcrumb->paths : NULL,
     );
-  }  
-  
+  }
+
   $form['#module'] = 'custom_breadcrumbs_taxonomy';
   $form['#infokey'] = 'taxonomy_term';
   $form['#submit'][] = 'custom_breadcrumbs_form_submit';
@@ -53,8 +59,13 @@ function custom_breadcrumbs_taxonomy_term_form(&$form_state, $type) {
   return $form;
 }
 
-
-// Displays an edit form for a custom breadcrumb taxonomy record.
+/**
+ * Form builder; Displays an edit form for a custom breadcrumb taxonomy vocabulary record.
+ *
+ * @ingroup forms
+ * @see custom_breadcrumbs_form_validate()
+ * @see custom_breadcrumbs_form_submit()
+ */
 function custom_breadcrumbs_taxonomy_vocabulary_form(&$form_state, $type) {
   $form = array();
   $bid = arg(5);
@@ -79,10 +90,10 @@ function custom_breadcrumbs_taxonomy_vocabulary_form(&$form_state, $type) {
     '#title' => t('Vocabulary'),
     '#options' => $options,
     '#required' => TRUE,
-    '#description' => t('Select taxonomy vocabulary to apply this breadcrumb to.'), 
+    '#description' => t('Select the taxonomy vocabulary to apply this breadcrumb to.'),
     '#default_value' => isset($breadcrumb->vid) ? $breadcrumb->vid : NULL,
     '#weight' => -10,
-  );  
+  );
 
   $form += custom_breadcrumbs_common_form_elements($bid, $breadcrumb);
 
@@ -94,15 +105,13 @@ function custom_breadcrumbs_taxonomy_vocabulary_form(&$form_state, $type) {
       '#type' => 'textfield',
       '#title' => t('Path'),
       '#required' => TRUE,
-      '#description' => t('Specify the drupal path that the taxonomy vocabulary will linked to. Currently operating in taxonomy breadcrumbs mode. Deselect the <em>use taxonomy hierarchy</em> option on the !link page to specify several titles/paths for the breadcrumb.', array('!link' => l('Custom Breadcrumbs Settings', 'admin/settings/custom-breadcrumbs'))),
-      '#default_value' => $bid ? $breadcrumb->paths : NULL,
+      '#description' => t('Specify the Drupal path that the taxonomy vocabulary will be linked to. Currently operating in taxonomy breadcrumbs mode. Deselect the <em>use taxonomy hierarchy</em> option on the <a href="@link">Custom Breadcrumbs Settings</a> page if you would prefer to specify several titles/paths for the breadcrumb.', array('@link' => url('admin/settings/custom-breadcrumbs'))),
+      '#default_value' => isset($breadcrumb->paths) ? $breadcrumb->paths : NULL,
     );
-  }  
+  }
   $form['#module'] = 'custom_breadcrumbs_taxonomy';
   $form['#infokey'] = 'taxonomy_vocabulary';
   $form['#submit'][] = 'custom_breadcrumbs_form_submit';
   $form['#validate'][] = 'custom_breadcrumbs_form_validate';
   return $form;
 }
-
-
