@@ -145,6 +145,8 @@ function _custom_breadcrumbs_sort_cmp($bc1, $bc2) {
  * @ingroup forms
  * @see custom_breadcrumbs_form_validate()
  * @see custom_breadcrumbs_form_submit()
+ * @see custom_breadcrumbs_form_delete()
+ * @see custom_breadcrumbs_form_cancel()
  */
 function custom_breadcrumbs_form(&$form_state, $type) {
   $form = array();
@@ -180,10 +182,21 @@ function custom_breadcrumbs_form(&$form_state, $type) {
 }
 
 function custom_breadcrumbs_form_validate($form, &$form_state) {
-  if (variable_get('custom_breadcrumbs_use_php_in_titles', FALSE)) {
+  if (!user_access('use php in custom breadcrumbs') || !variable_get('custom_breadcrumbs_use_php_in_titles', FALSE)) {
+    // Strip any PHP tags from paths and titles since they are not allowed.
+    $elements = array('titles', 'paths');
+    foreach ($elements as $element) {
+      if (strpos($form_state['values'][$element], '<?php') !== FALSE) {
+        $form_state['values'][$element] = str_replace(array('<?php', '?>'), '', $form_state['values'][$element]);
+        form_set_error($element, t('Use of PHP in !element is not permitted and will be filtered out.', array('!element' => $element)));
+      }
+    }
+  }
+  else {
+    // PHP is allowed.
     $paths = $form_state['values']['paths'];
     $titles = $form_state['values']['titles'];
-    // Check to see if paths and titles are being specified via php code.
+    // Check to see if paths and titles are being specified via PHP code.
     $php_titles = extract_php($titles);
     $php_paths = extract_php($paths);
     if (!is_null($php_titles)) {
