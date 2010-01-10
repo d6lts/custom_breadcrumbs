@@ -100,6 +100,7 @@ function custom_breadcrumbs_views_views_pre_render(&$view) {
   }
   if (isset($candidate)) {
     $objs = _custom_breadcrumbs_views_token_types($view->display[$max_id]);
+    $objs['view'] = $view;
     if (!isset($objs['node']) && isset($view->result[0]->nid)) {
       $node = node_load(array('nid' => $view->result[0]->nid));
       $objs['node'] = $node;
