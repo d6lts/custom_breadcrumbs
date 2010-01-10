@@ -225,6 +225,7 @@ function custom_breadcrumbs_form_alter(&$form, $form_state, $form_id) {
       '#type'           => 'fieldset',
       '#title'          => t('Custom Breadcrumbs'),
       '#access'         => user_access('administer custom breadcrumbs'),
+      '#group'          => 'additional_settings',
       '#collapsible'    => TRUE,
       '#collapsed'      => TRUE,
       '#weight'         => -50,
