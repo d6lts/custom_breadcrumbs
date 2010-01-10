@@ -25,7 +25,7 @@ function custom_breadcrumbs_taxonomy_term_form(&$form_state, $type) {
   else {
     drupal_set_title(t('Add Custom Breadcrumb for Taxonomy Term'));
   }
-  $options = taxonomy_form_all();
+  $options = taxonomy_form_all(TRUE);
 
   $form['tid'] = array(
     '#type' => 'select',

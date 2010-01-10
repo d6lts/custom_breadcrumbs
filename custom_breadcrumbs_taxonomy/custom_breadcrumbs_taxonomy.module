@@ -177,7 +177,7 @@ function custom_breadcrumbs_taxonomy_menu_alter(&$callbacks) {
     $file = $term_callback['file'];
     $filepath = isset($term_callback['file path']) ? $term_callback['file path'] : drupal_get_path('module', $term_callback['module']);
     $term_callback['page callback'] = 'custom_breadcrumbs_taxonomy_term_page';
-    $term_callback['page arguments'] = array_merge(array($callback, $file, $filepath, 2), $arguments);
+    $term_callback['page arguments'] = array_merge(array(2, $callback, $file, $filepath), $arguments);
     $term_callback['file'] = 'custom_breadcrumbs_taxonomy.inc';
     $term_callback['file path'] = drupal_get_path('module', 'custom_breadcrumbs_taxonomy');
   }
@@ -329,10 +329,18 @@ function custom_breadcrumbs_taxonomy_form_alter(&$form, $form_state, $form_id) {
 
     $form['settings']['custom_breadcrumbs_taxonomy']['custom_breadcrumbs_taxonomy_show_current_term'] = array(
       '#type'           => 'checkbox',
-      '#title'          => t('Show current taxonomy term in breadcrumb trail'),
+      '#title'          => t('Show current taxonomy term in breadcrumb trail for node pages'),
       '#description'    => t('If enabled, the lightest term associated with node is shown as the last breadcrumb in the breadcrumb trail. Otherwise, the only terms shown in the breadcrumb trail are parent terms (if any parents exist). The recommended setting is enabled.'),
       '#default_value'  => variable_get('custom_breadcrumbs_taxonomy_show_current_term', TRUE),
       '#weight' => 30,
+    );
+
+    $form['settings']['custom_breadcrumbs_taxonomy']['custom_breadcrumbs_taxonomy_show_current_term_term'] = array(
+      '#type'           => 'checkbox',
+      '#title'          => t('Show current taxonomy term in breadcrumb trail on the taxonomy term page'),
+      '#description'    => t('If enabled, the taxonomy term name is shown as the last breadcrumb item in the breadcrumb trail on the taxonomy term page.'),
+      '#default_value'  => variable_get('custom_breadcrumbs_taxonomy_show_current_term_term', FALSE),
+      '#weight' => 35,
     );
 
     $form['settings']['custom_breadcrumbs_taxonomy']['custom_breadcrumbs_taxonomy_include_node_title'] = array(

@@ -23,12 +23,9 @@
  * @return
  *   The return value of the original callback function.
  */
-function custom_breadcrumbs_taxonomy_term_page() {
-  $args = func_get_args();
-  $callback = array_shift($args);
-  $file = array_shift($args);
-  $filepath = array_shift($args);
-  $str_tids = array_shift($args);
+function custom_breadcrumbs_taxonomy_term_page($str_tids, $callback, $file, $filepath) {
+  $args = array_slice(func_get_args(), 4);
+
   // Use first term to generate breadcrumb trail.
   $tids = taxonomy_terms_parse_string($str_tids);
   $terms = array();
@@ -44,6 +41,7 @@ function custom_breadcrumbs_taxonomy_term_page() {
 
   return $output;
 }
+
 
 /**
  *  Helper function to set the breadcrumb using a node's taxonomy.
@@ -253,7 +251,7 @@ function custom_breadcrumbs_taxonomy_generate_breadcrumb($tid, $vid = NULL, $is_
     $term_trail = _custom_breadcrumbs_taxonomy_term_trail($tid, $is_term_page, $objs, $types);
     $trail = array_merge($trail, $term_trail);
     // Optionally remove the current TERM from end of breadcrumb trail.
-    if (!variable_get('custom_breadcrumbs_taxonomy_show_current_term', TRUE) && (count($trail) > 1) || $is_term_page) {
+    if ((!variable_get('custom_breadcrumbs_taxonomy_show_current_term', TRUE) || ($is_term_page && !variable_get('custom_breadcrumbs_taxonomy_show_current_term_term', TRUE))) && (count($trail) > 1)) {
       array_pop($trail);
     }
   }
@@ -315,10 +313,10 @@ function _custom_breadcrumbs_taxonomy_vocabulary_trail($vid, $is_term_page = FAL
   }
   if ($vocabulary = taxonomy_vocabulary_load($vid)) {
     if ($vocabulary_path != NULL) {
-      $trail = array(l(_custom_breadcrumbs_taxonomy_tt("taxonomy:vocabulary:$term->tid:name", $vocabulary->name), $vocabulary_path));
+      $trail = array(l(_custom_breadcrumbs_taxonomy_tt("taxonomy:vocabulary:$vid:name", $vocabulary->name), $vocabulary_path));
     }
     elseif (variable_get('custom_breadcrumbs_taxonomy_show_vocabulary', FALSE)) {
-      $trail = array(_custom_breadcrumbs_taxonomy_tt("taxonomy:vocabulary:$term->tid:name", $vocabulary->name));
+      $trail = array(_custom_breadcrumbs_taxonomy_tt("taxonomy:vocabulary:$vid:name", $vocabulary->name));
     }
   }
   return $trail;
