@@ -81,7 +81,7 @@ function custom_breadcrumbs_views_views_pre_render(&$view) {
   foreach ($view->display as $id => $display) {
     // Identify allowed displays for breadcrumb replacement.
     if (!_custom_breadcrumbs_allowed_display($display)) continue;
-    $viewpath = _custom_breadcrumbs_construct_view_path($display, $view->args);
+    $viewpath = _custom_breadcrumbs_construct_view_path($display);
     if (_custom_breadcrumbs_match_path($curpath, $viewpath)) {
       $loadpath = $display->display_options['path'];
       $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs_views', NULL, array('views_path' => $loadpath), $languages);

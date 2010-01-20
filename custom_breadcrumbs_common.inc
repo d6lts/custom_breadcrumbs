@@ -38,16 +38,20 @@ function _custom_breadcrumbs_match_path($curpath, $breadcrumb_path) {
  * @return $viewpath
  *   The complete path to the view.
  */
-function _custom_breadcrumbs_construct_view_path($display, $viewargs) {
+function _custom_breadcrumbs_construct_view_path($display) {
   $bits = explode('/', $display->display_options['path']);
+  $args = arg();
   foreach ($bits as $pos => $bit) {
-    if ($bit == '%' && !empty($viewargs)) {
-      $bits[$pos] = array_shift($viewargs);
+    if (!empty($args)) {
+      $arg = array_shift($args);
+      if ($bit == '%') {
+        $bits[$pos] = $arg;
+      }
     }
   }
-  if (!empty($viewargs)) {
+  if (!empty($args)) {
     // Add any additional arguments to end of path.
-    $bits = array_merge($bits, $viewargs);
+    $bits = array_merge($bits, $args);
   }
   $viewpath = implode('/', $bits);
   return $viewpath;

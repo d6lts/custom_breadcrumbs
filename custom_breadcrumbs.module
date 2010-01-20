@@ -113,26 +113,29 @@ function custom_breadcrumbs_menu() {
 }
 
 /**
- * Implementation of hook_init().
+ * Implementation of hook_preprocess().
  */
-function custom_breadcrumbs_init() {
-  if (!custom_breadcrumbs_exclude_path()) {
-    if (variable_get('custom_breadcrumbs_set_global_home_breadcrumb', FALSE)) {
-      // Use default menu structure to set the breadcrumb.
-      $trail = drupal_get_breadcrumb();
-      if (!empty($trail)) {
-        array_shift($trail);
-        $cb_home = custom_breadcrumbs_home_crumb();
-        if (!empty($cb_home)) {
-          array_unshift($trail, array_pop($cb_home));
+function custom_breadcrumbs_preprocess(&$variables, $hook) {
+  static $tried = array();
+  // Only respond to the first call for this hook.
+  if (!isset($tried[$hook])) {
+    $tried[$hook] = TRUE;
+    if (!custom_breadcrumbs_exclude_path()) {
+      if (variable_get('custom_breadcrumbs_set_global_home_breadcrumb', FALSE)) {
+        $trail = drupal_get_breadcrumb();
+        if (!empty($trail)) {
+          array_shift($trail);
+          $cb_home = custom_breadcrumbs_home_crumb();
+          if (!empty($cb_home)) {
+            array_unshift($trail, array_pop($cb_home));
+          }
+          drupal_set_breadcrumb($trail);
         }
-        drupal_set_breadcrumb($trail);
       }
-    }
-
-    if (variable_get('custom_breadcrumbs_set_menu_breadcrumb', FALSE)) {
-      // Use default menu structure to set the breadcrumb.
-      custom_breadcrumbs_set_menu_breadcrumb();
+      if (variable_get('custom_breadcrumbs_set_menu_breadcrumb', FALSE)) {
+        // Use default menu structure to set the breadcrumb.
+        custom_breadcrumbs_set_menu_breadcrumb();
+      }
     }
   }
 }

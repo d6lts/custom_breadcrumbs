@@ -67,9 +67,9 @@ function custom_breadcrumbs_paths_menu() {
 }
 
 /**
- * Implementation of hook_init().
+ * Implementation of hook_preprocess().
  */
-function custom_breadcrumbs_paths_init() {
+function custom_breadcrumbs_paths_preprocess(&$variables, $hook) {
   // Check for a match to cover module callback pages.
   // Can't do token replacement without context.
   _custom_breadcrumbs_paths_set_breadcrumb();
@@ -96,7 +96,7 @@ function custom_breadcrumbs_paths_views_pre_render(&$view) {
   foreach ($view->display as $display) {
     // We're only interested in main page views.
     if (!_custom_breadcrumbs_allowed_display($display)) continue;
-    $viewpath = _custom_breadcrumbs_construct_view_path($display, $view->args);
+    $viewpath = _custom_breadcrumbs_construct_view_path($display);
     $viewpage = $viewpage || _custom_breadcrumbs_match_path($curpath, $viewpath);
   }
   if ($viewpage) {

@@ -195,7 +195,7 @@ function custom_breadcrumbs_taxonomy_views_pre_render(&$view) {
       foreach ($view->display as $id => $display) {
         // Identify allowed displays for breadcrumb replacement.
         if (!_custom_breadcrumbs_allowed_display($display)) continue;
-        $viewpath = _custom_breadcrumbs_construct_view_path($display, $view->args);
+        $viewpath = _custom_breadcrumbs_construct_view_path($display);
         // Verify the view path matches the current path.
         if (_custom_breadcrumbs_match_path($curpath, $viewpath)) {
           // Select matching display with the greatest number of explicit arguments.
