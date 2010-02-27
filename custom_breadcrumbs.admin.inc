@@ -182,6 +182,8 @@ function custom_breadcrumbs_form(&$form_state, $type) {
 }
 
 function custom_breadcrumbs_form_validate($form, &$form_state) {
+  // Check to make sure there are an equal number of paths and titles.
+  $check = TRUE;
   if (!user_access('use php in custom breadcrumbs') || !variable_get('custom_breadcrumbs_use_php_in_titles', FALSE)) {
     // Strip any PHP tags from paths and titles since they are not allowed.
     $elements = array('titles', 'paths');
@@ -193,35 +195,19 @@ function custom_breadcrumbs_form_validate($form, &$form_state) {
     }
   }
   else {
-    // PHP is allowed.
-    $paths = $form_state['values']['paths'];
-    $titles = $form_state['values']['titles'];
-    // Check to see if paths and titles are being specified via PHP code.
-    $php_titles = extract_php($titles);
-    $php_paths = extract_php($paths);
-    if (!is_null($php_titles)) {
-      if (isset($php_titles['titles']) && isset($php_titles['paths'])) {
-        // Check to make sure they have the same number of elements
-        $title_count = count($php_titles['titles']);
-        $path_count = count($php_titles['paths']);
-      }
-      else {
-        $title_count = count($php_titles);
-      }
-    }
-    if (!isset($path_count) && !is_null($php_paths)) {
-      $path_count = count($php_paths);
+    // If PHP is used, don't validate number of paths and titles.
+    if ((strpos($form_state['values']['titles'], '<?php') !== FALSE) || 
+        (strpos($form_state['values']['paths'], '<?php') !== FALSE)) {
+      $check = FALSE;
     }
   }
-  if (!isset($path_count)) {
+  if ($check) {
     $path_count = count(explode("\n", trim($form_state['values']['paths'])));
-  }
-  if (!isset($title_count)) {
     $title_count = count(explode("\n", trim($form_state['values']['titles'])));
-  }
-  if (isset($title_count) && isset($path_count) && $title_count != $path_count) {
-    $error_field = ($title_count < $path_count) ? 'titles' : 'paths';
-    form_set_error($error_field, t('Every link path must have a matching title. There are !paths paths, and !titles titles.', array('!paths' => $path_count, '!titles' => $title_count)));
+    if ($title_count != $path_count) {
+      $error_field = ($title_count < $path_count) ? 'titles' : 'paths';
+      form_set_error($error_field, t('Every link path must have a matching title. There are !paths paths, and !titles titles.', array('!paths' => $path_count, '!titles' => $title_count)));
+    }
   }
 }
 
