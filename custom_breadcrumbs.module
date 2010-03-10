@@ -538,7 +538,7 @@ function custom_breadcrumbs_is_visible($breadcrumb, $objs = array()) {
   if (isset($breadcrumb)) {
     // Provide access to objects by standard variable names.
     foreach ($objs as $key => $obj) {
-      $$key = $obj;
+      $$key = drupal_clone($obj);
     }
     // Guard against hidden spaces.
     if (isset($breadcrumb->visibility_php) && ($trimmed = trim($breadcrumb->visibility_php)) != '' ) {
@@ -910,7 +910,7 @@ function extract_php($text, $objs = array()) {
     // Strip php tags.
     $text = str_replace(array('<?php', '?>'), '', $text);
     foreach ($objs as $key => $obj) {
-      $$key = $obj;
+      $$key = drupal_clone($obj);
     }
     ob_start();
     $output = eval($text);
