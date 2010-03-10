@@ -179,6 +179,7 @@ function  custom_breadcrumbsapi_preprocess(&$variables, $hook) {
     if (!empty($breadcrumbs)) {
       if ($breadcrumb = custom_breadcrumbs_select_breadcrumb($breadcrumbs, array('variables' => $variables))) {
         custom_breadcrumbs_set_breadcrumb($breadcrumb, array('variables' => $variables));
+        $variables['breadcrumb'] = theme('breadcrumb', drupal_get_breadcrumb());
       }
     }
   }
