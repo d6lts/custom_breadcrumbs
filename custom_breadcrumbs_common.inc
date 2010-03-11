@@ -67,8 +67,8 @@ function _custom_breadcrumbs_construct_view_path($display) {
  *    TRUE if the display should be considered for a custom breadcrumb, FALSE otherwise.
  */
 function _custom_breadcrumbs_allowed_display($display) {
-
-  if (drupal_substr($display->id, 0, 4)  == 'page' || drupal_substr($display->id, 0, 8)  == 'calendar') {
+  $allowed_display_types = array('page', 'calendar', 'image_gallery');
+  if (in_array($display->display_plugin, $allowed_display_types)) {
     if (!(isset($display->handler->view->is_attachment) && $display->handler->view->is_attachment)) {
       if (isset($display->display_options['path']) ) {
         if (module_exists('panels') && panels_get_current_page_display()) {
