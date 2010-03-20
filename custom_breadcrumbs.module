@@ -302,7 +302,9 @@ function custom_breadcrumbs_set_breadcrumb($breadcrumb, $objs = array()) {
       $title = trim($titles[$i]);
       if (($title != '') && ($title != '<none>')) {
         // Create breadcrumb only if there is a title.
-        $trail[] = _custom_breadcrumbs_create_crumb($title, trim($paths[$i]));
+        // Include optional html attributes.
+        $options = _custom_breadcrumbs_identifiers_option($i+1, $breadcrumb->bid);
+        $trail[] = _custom_breadcrumbs_create_crumb($title, trim($paths[$i]), $options);
         $location[] = array('title' => $title, 'href' => drupal_get_normal_path(trim($paths[$i])));
       }
     }
@@ -310,6 +312,37 @@ function custom_breadcrumbs_set_breadcrumb($breadcrumb, $objs = array()) {
       menu_set_active_trail($location);
     }
     drupal_set_breadcrumb($trail);
+    // Optionally save the unique breadcrumb id of the last set breadcrumb.
+    custom_breadcrumbs_unique_breadcrumb_id($breadcrumb->breadcrumb_type, $breadcrumb->bid);
+  }
+}
+
+/**
+ *  Set or get the unique breadcrumb id.
+ *
+ *  @param $type
+ *    The breadcrumb type, used to set the unique breadcrumb id.
+ *  @param $bid
+ *    The breadcrumb id, used to set the unique breadcrumb id.
+ *
+ *  @return $cbid
+ *    A string containing the unique id for this breadcrumb
+ */
+function custom_breadcrumbs_unique_breadcrumb_id($type = NULL, $bid = NULL) {
+  static $stored_breadcrumb_id;
+  if (variable_get('custom_breadcrumbs_type_class', FALSE)) {
+    if (isset($type)) {
+      $base = 'custom-breadcrumbs';
+      $cbid = $base .'-'. $type;
+      if (variable_get('custom_breadcrumbs_append_bid_class', FALSE) && isset($bid)) {
+        $cbid .= '-'. $bid;
+      }
+      $stored_breadcrumb_id = $cbid;
+    }
+    else {
+      $cbid = $stored_breadcrumb_id;
+    }
+  return $cbid;
   }
 }
 
@@ -392,7 +425,9 @@ function _custom_breadcrumbs_delete_breadcrumb($module, $key, $bid) {
 function custom_breadcrumbs_home_crumb() {
   $hometext = variable_get('custom_breadcrumb_home', t('Home'));
   if ($hometext != '') {
-    $trail = array(l($hometext, '<front>'));
+    // Add any html identifiers.
+    $options = _custom_breadcrumbs_identifiers_option();
+    $trail = array(l($hometext, '<front>', $options));
   }
   else {
     $trail = array();
@@ -407,11 +442,13 @@ function custom_breadcrumbs_home_crumb() {
  *   The human readable title to be rendered by the browser.
  * @param $original_path
  *   The desired URI and/or special identifier.
+ * @param $attr
+ *   An associative array containing the HTML attributes to apply to the anchor tag.
  *
  * @return
  *   An HTML string containing a link to the original path.
  */
-function _custom_breadcrumbs_create_crumb($title, $original_path) {
+function _custom_breadcrumbs_create_crumb($title, $original_path, $attr = array()) {
   // Decode title to properly handle special characters.
   $title = decode_entities($title);
   // Collapse double slashes to one.
@@ -421,6 +458,7 @@ function _custom_breadcrumbs_create_crumb($title, $original_path) {
   list($identifier, $path) = explode("|", $original_path, 2);
   if (isset($path) && $path !== '') {
     $options = parse_url($path);
+    $options = array_merge($options, $attr);
     switch (trim($identifier)) {
       case '<pathauto>':
         if (module_exists('pathauto')) {
@@ -435,6 +473,7 @@ function _custom_breadcrumbs_create_crumb($title, $original_path) {
   else {
     // This may be just be a single identifier.
     $options = parse_url($original_path);
+    $options = array_merge($options, $attr);
     switch ($identifier) {
       case '<none>':
         $crumb = check_plain($title);
@@ -538,7 +577,7 @@ function custom_breadcrumbs_is_visible($breadcrumb, $objs = array()) {
   if (isset($breadcrumb)) {
     // Provide access to objects by standard variable names.
     foreach ($objs as $key => $obj) {
-      $$key = drupal_clone($obj);
+      $$key = is_object($obj) ? drupal_clone($obj) : $obj;
     }
     // Guard against hidden spaces.
     if (isset($breadcrumb->visibility_php) && ($trimmed = trim($breadcrumb->visibility_php)) != '' ) {
@@ -910,7 +949,7 @@ function extract_php($text, $objs = array()) {
     // Strip php tags.
     $text = str_replace(array('<?php', '?>'), '', $text);
     foreach ($objs as $key => $obj) {
-      $$key = drupal_clone($obj);
+      $$key = is_object($obj) ? drupal_clone($obj) : $obj;
     }
     ob_start();
     $output = eval($text);
@@ -942,4 +981,35 @@ function custom_breadcrumbs_exclude_path() {
     }
   }
   return FALSE;
+}
+
+/**
+ * Helper function to add optional html identifers to breadcrumb links.
+ *
+ * @param $part
+ *   A postive integer indicating the breadcrumb segment (home crumb = 0).
+ *
+ * @param $bid
+ *   The breadcrumb id.
+ *
+ * @return
+ *   An associative array containing the HTML attributes to apply to the anchor tag.
+ */
+function _custom_breadcrumbs_identifiers_option($part = 0, $bid = NULL) {
+  $options = array('attributes' => array());
+  $classes = array();
+  $base = 'custom-breadcrumbs';
+  if (variable_get('custom_breadcrumbs_home_id', FALSE) && ($part == 0)) {
+    $options['attributes']['id'] = $base .'-home';
+  }
+  elseif (variable_get('custom_breadcrumbs_parts_class', FALSE) && ($part > 0)) {
+    $classes[] = $base .'-item-'. $part;
+  }
+  if (variable_get('custom_breadcrumbs_even_odd_class', FALSE)) {
+    $classes[] = ($part % 2 == 0) ? 'even' : 'odd';
+  }
+  if (!empty($classes)) {
+    $options['attributes']['class'] = implode(' ', $classes);
+  }
+  return $options;
 }

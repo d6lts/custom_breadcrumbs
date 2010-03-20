@@ -248,6 +248,13 @@ function custom_breadcrumbs_common_form_elements($bid, $breadcrumb) {
     '#weight'        => -50,
   );
 
+  $cbid = custom_breadcrumbs_unique_breadcrumb_id($breadcrumb->breadcrumb_type, $breadcrumb->bid);
+  if (isset($cbid)) {
+    $form['classid'] = array(
+      '#value'       => '<strong>'. t('The CSS class name for this breadcrumb is !name', array('!name' => $cbid)) .'</strong>',
+    );
+  }
+
   $multilingual = _custom_breadcrumbs_multilingual();
   if ($multilingual) {
     $form['language'] = array(
@@ -448,6 +455,52 @@ function custom_breadcrumbs_admin_settings() {
     '#title'         => t('Do not set custom breadcrumbs on the following paths'),
     '#default_value' => variable_get('custom_breadcrumbs_exclude_list', $default),
     '#description'   => t("A comma delimited set of paths to exclude from custom breadcrumbs. The '*' character can be used as a wildcard."),
+  );
+
+  $form['adv_settings']['custom_breadcrumbs_identifiers'] = array(
+    '#type'          => 'fieldset',
+    '#title'         => t('HTML element identifiers'),
+    '#description'   => t("Enabling one or more of these options will provide html identifiers (class or id) for theming custom breadcrumbs links. Style rules can then be defined in the styles.css file located in the site's theme directory."),
+    '#collapsible'   => TRUE,
+    '#collapsed'     => FALSE,
+  );
+
+  $form['adv_settings']['custom_breadcrumbs_identifiers']['cb_identifier_options'] = array(
+    '#type'          => 'fieldset',
+    '#collapsible'   => FALSE,
+  );
+
+  $form['adv_settings']['custom_breadcrumbs_identifiers']['cb_identifier_options']['custom_breadcrumbs_home_id'] = array(
+    '#type'          => 'checkbox',
+    '#title'         => t("Add a custom-breadcrumbs-home ID attribute to the home breadcrumb item."),
+    '#default_value' => variable_get('custom_breadcrumbs_home_id', FALSE),
+  );
+
+  $form['adv_settings']['custom_breadcrumbs_identifiers']['cb_identifier_options']['custom_breadcrumbs_parts_class'] = array(
+    '#type'          => 'checkbox',
+    '#title'         => t("Add a numbered class attribute for each breadcrumb item."),
+    '#description'   => t("If enabled, a custom-breadcrumbs-item-N class attribute will be assigned for each item, where N designates the item number, starting with the first item after the home breadcrumb."),
+    '#default_value' => variable_get('custom_breadcrumbs_parts_class', FALSE),
+  );
+
+  $form['adv_settings']['custom_breadcrumbs_identifiers']['cb_identifier_options']['custom_breadcrumbs_even_odd_class'] = array(
+    '#type'          => 'checkbox',
+    '#title'         => t("Add even and odd classes to breadcrumb items."),
+    '#default_value' => variable_get('custom_breadcrumbs_even_odd_class', FALSE),
+  );
+
+  $form['adv_settings']['custom_breadcrumbs_identifiers']['cb_identifier_options']['custom_breadcrumbs_type_class'] = array(
+    '#type'          => 'checkbox',
+    '#title'         => t("Store an identifier for breadcrumb theming."),
+    '#description'   => t("If enabled, the breadcrumb class 'custom-breadcrumbs-<em>type</em>' (where <em>type</em> is module, node, panels, path, views, taxonomy_term, taxonomy_vocabulary, taxonomy, etc.) can be retrieved and used in the breadcrumb theme override. The function <strong>custom_breadcrumbs_unique_breadcrumb_id()</strong> will return a string containing the id name."),
+    '#default_value' => variable_get('custom_breadcrumbs_type_class', FALSE),
+  );
+
+  $form['adv_settings']['custom_breadcrumbs_identifiers']['cb_identifier_options']['custom_breadcrumbs_append_bid_class'] = array(
+    '#type'          => 'checkbox',
+    '#title'         => t("Append a unique breadcrumb id number to the custom-breadcrumbs-<em>type</em> identifier."),
+    '#description'   => t("If this option and 'Store an identifier for breadcrumb theming' are both enabled, the identifer will be custom-breadcrumbs-<em>type</em>-<em>id</em>, where id is the unique breadcrumb id number."),
+    '#default_value' => variable_get('custom_breadcrumbs_append_bid_class', FALSE),
   );
 
   $form['adv_settings']['module_weights'] = array(

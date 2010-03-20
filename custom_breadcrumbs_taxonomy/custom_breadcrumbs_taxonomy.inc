@@ -42,7 +42,6 @@ function custom_breadcrumbs_taxonomy_term_page($str_tids, $callback, $file, $fil
   return $output;
 }
 
-
 /**
  *  Helper function to set the breadcrumb using a node's taxonomy.
  *
@@ -67,6 +66,8 @@ function _custom_breadcrumbs_taxonomy_set_breadcrumb($tid, $vid = NULL, $is_term
       $breadcrumb[] = $objs['node']->title;
     }
     drupal_set_breadcrumb($breadcrumb);
+    // Optionally save the unique breadcrumb id of the last set breadcrumb.
+    custom_breadcrumbs_unique_breadcrumb_id('taxonomy');
   }
   else {
     global $language;
@@ -243,12 +244,12 @@ function custom_breadcrumbs_taxonomy_generate_breadcrumb($tid, $vid = NULL, $is_
   $trail = _custom_breadcrumbs_taxonomy_home_trail();
 
   if (!is_null($vocabid)) {
-    $vocab_trail = _custom_breadcrumbs_taxonomy_vocabulary_trail($vocabid, $is_term_page, $objs, $types);
+    $vocab_trail = _custom_breadcrumbs_taxonomy_vocabulary_trail($vocabid, $is_term_page, $objs, $types, count($trail));
     $trail = array_merge($trail, $vocab_trail);
   }
 
   if (!is_null($tid)) {
-    $term_trail = _custom_breadcrumbs_taxonomy_term_trail($tid, $is_term_page, $objs, $types);
+    $term_trail = _custom_breadcrumbs_taxonomy_term_trail($tid, $is_term_page, $objs, $types, count($trail));
     $trail = array_merge($trail, $term_trail);
     // Optionally remove the current TERM from end of breadcrumb trail.
     if ((!variable_get('custom_breadcrumbs_taxonomy_show_current_term', TRUE) || ($is_term_page && !variable_get('custom_breadcrumbs_taxonomy_show_current_term_term', TRUE))) && (count($trail) > 1)) {
@@ -299,24 +300,27 @@ function _custom_breadcrumbs_taxonomy_home_trail() {
  * @return
  *   The breadcrumb trail.
  */
-function _custom_breadcrumbs_taxonomy_vocabulary_trail($vid, $is_term_page = FALSE, $objs = array(), $types = array('global' => NULL)) {
+function _custom_breadcrumbs_taxonomy_vocabulary_trail($vid, $is_term_page = FALSE, $objs = array(), $types = array('global' => NULL), $part = 1) {
   // Generate the VOCABULARY breadcrumb.
   $trail = array();
   // Check to see if a vocabulary breadcrumb exists.
   $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs_taxonomy', 'custom_breadcrumbs_taxonomy_vocabulary', array('vid' => $vid));
   $vocabulary_path = NULL;
+  $bid = NULL;
   if ($breadcrumb = custom_breadcrumbs_select_breadcrumb($breadcrumbs, $objs)) {
     $vocabulary_path = $breadcrumb->paths;
+    $bid = $breadcrumb->bid;
     if (module_exists('token')) {
       $vocabulary_path = token_replace_multiple($vocabulary_path, $types);
     }
   }
   if ($vocabulary = taxonomy_vocabulary_load($vid)) {
     if ($vocabulary_path != NULL) {
-      $trail = array(l(_custom_breadcrumbs_taxonomy_tt("taxonomy:vocabulary:$vid:name", $vocabulary->name), $vocabulary_path));
+      $options = _custom_breadcrumbs_identifiers_option($part, $bid);
+      $trail = array(l(_custom_breadcrumbs_taxonomy_tt("taxonomy:vocabulary:$term->tid:name", $vocabulary->name), $vocabulary_path, $options));
     }
     elseif (variable_get('custom_breadcrumbs_taxonomy_show_vocabulary', FALSE)) {
-      $trail = array(_custom_breadcrumbs_taxonomy_tt("taxonomy:vocabulary:$vid:name", $vocabulary->name));
+      $trail = array(_custom_breadcrumbs_taxonomy_tt("taxonomy:vocabulary:$term->tid:name", $vocabulary->name));
     }
   }
   return $trail;
@@ -337,15 +341,17 @@ function _custom_breadcrumbs_taxonomy_vocabulary_trail($vid, $is_term_page = FAL
  * @return
  *   The breadcrumb trail.
  */
-function _custom_breadcrumbs_taxonomy_term_trail($tid, $is_term_page = FALSE, $objs = array(), $types = array('global' => NULL)) {
+function _custom_breadcrumbs_taxonomy_term_trail($tid, $is_term_page = FALSE, $objs = array(), $types = array('global' => NULL), $part = 1) {
   // Generate the TERM breadcrumb.
   $trail = array();
   $parent_terms = array_reverse(taxonomy_get_parents_all($tid));
   foreach ($parent_terms as $parent_term) {
     $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs_taxonomy', 'custom_breadcrumbs_taxonomy_term', array('tid' => $parent_term->tid));
     $term_path = NULL;
+    $bid = NULL;
     if ($breadcrumb = custom_breadcrumbs_select_breadcrumb($breadcrumbs, $objs)) {
       $term_path = $breadcrumb->paths;
+      $bid = $breadcrumb->bid;
       if (module_exists('token')) {
         $term_path = token_replace_multiple($term_path, $types);
       }
@@ -353,13 +359,16 @@ function _custom_breadcrumbs_taxonomy_term_trail($tid, $is_term_page = FALSE, $o
     if ($term_path == NULL) {
       $term_path = taxonomy_term_path(taxonomy_get_term($parent_term->tid));
     }
+
     // Do not create links to own self if we are on a taxonomy/term page.
     if ($is_term_page && $parent_term->tid == $tid) {
       $trail[] = _custom_breadcrumbs_taxonomy_tt("taxonomy:term:$parent_term->tid:name", $parent_term->name);
     }
     else {
-      $trail[] = l(_custom_breadcrumbs_taxonomy_tt("taxonomy:term:$parent_term->tid:name", $parent_term->name), $term_path);
+      $options = _custom_breadcrumbs_identifiers_option($part, $bid);
+      $trail[] = l(_custom_breadcrumbs_taxonomy_tt("taxonomy:term:$parent_term->tid:name", $parent_term->name), $term_path, $options);
     }
+    ++$part;
   }
   return $trail;
 }
