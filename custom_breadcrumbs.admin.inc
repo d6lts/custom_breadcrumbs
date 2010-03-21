@@ -492,7 +492,7 @@ function custom_breadcrumbs_admin_settings() {
   $form['adv_settings']['custom_breadcrumbs_identifiers']['cb_identifier_options']['custom_breadcrumbs_type_class'] = array(
     '#type'          => 'checkbox',
     '#title'         => t("Store an identifier for breadcrumb theming."),
-    '#description'   => t("If enabled, the breadcrumb class 'custom-breadcrumbs-<em>type</em>' (where <em>type</em> is module, node, panels, path, views, taxonomy_term, taxonomy_vocabulary, taxonomy, etc.) can be retrieved and used in the breadcrumb theme override. The function <strong>custom_breadcrumbs_unique_breadcrumb_id()</strong> will return a string containing the id name."),
+    '#description'   => t("If enabled, the breadcrumb class 'custom-breadcrumbs-<em>type</em>' (where <em>type</em> is the breadcrumb type) can be retrieved and used in the breadcrumb theme override. The function <strong>custom_breadcrumbs_unique_breadcrumb_id()</strong> will return a string containing the class name."),
     '#default_value' => variable_get('custom_breadcrumbs_type_class', FALSE),
   );
 
