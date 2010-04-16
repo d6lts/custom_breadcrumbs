@@ -35,7 +35,9 @@ function custom_breadcrumbs_taxonomy_term_page($str_tids, $callback, $file, $fil
       $terms[$term->tid] = $term;
     }
   }
-  require_once($filepath .'/'. $file);
+  if (is_file($filepath .'/'. $file)) {
+    require_once($filepath .'/'. $file);
+  }
   $output = call_user_func_array($callback, $args);
   _custom_breadcrumbs_taxonomy_set_breadcrumb($tids['tids'][0], NULL, TRUE, array(), $terms);
 
@@ -63,7 +65,7 @@ function _custom_breadcrumbs_taxonomy_set_breadcrumb($tid, $vid = NULL, $is_term
       _custom_breadcrumbs_taxonomy_recent_term($tid);
     }
     if (variable_get('custom_breadcrumbs_taxonomy_include_node_title', FALSE) && isset($objs['node'])) {
-      $breadcrumb[] = $objs['node']->title;
+      $breadcrumb[] = check_plain($objs['node']->title);
     }
     drupal_set_breadcrumb($breadcrumb);
     // Optionally save the unique breadcrumb id of the last set breadcrumb.
@@ -320,7 +322,7 @@ function _custom_breadcrumbs_taxonomy_vocabulary_trail($vid, $is_term_page = FAL
       $trail = array(l(_custom_breadcrumbs_taxonomy_tt("taxonomy:vocabulary:$term->tid:name", $vocabulary->name), $vocabulary_path, $options));
     }
     elseif (variable_get('custom_breadcrumbs_taxonomy_show_vocabulary', FALSE)) {
-      $trail = array(_custom_breadcrumbs_taxonomy_tt("taxonomy:vocabulary:$term->tid:name", $vocabulary->name));
+      $trail = array(check_plain(_custom_breadcrumbs_taxonomy_tt("taxonomy:vocabulary:$term->tid:name", $vocabulary->name)));
     }
   }
   return $trail;
@@ -362,7 +364,7 @@ function _custom_breadcrumbs_taxonomy_term_trail($tid, $is_term_page = FALSE, $o
 
     // Do not create links to own self if we are on a taxonomy/term page.
     if ($is_term_page && $parent_term->tid == $tid) {
-      $trail[] = _custom_breadcrumbs_taxonomy_tt("taxonomy:term:$parent_term->tid:name", $parent_term->name);
+      $trail[] = check_plain(_custom_breadcrumbs_taxonomy_tt("taxonomy:term:$parent_term->tid:name", $parent_term->name));
     }
     else {
       $options = _custom_breadcrumbs_identifiers_option($part, $bid);
