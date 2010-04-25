@@ -345,6 +345,33 @@ path, views or taxonomy) and id is the breadcrumb id number.
 See http://drupal.org/node/643796#comment-2532998 for more information on this
 feature.
 
+Special Identifiers
+-------------------
+In Custom Breadcrumbs 2.0, Special identifiers are now provided as a separate,
+optional module - custom_breadcrumbs_identifiers. At present, this module
+provides the following identifiers:
+
+<pathauto>       - will clean any path using the current pathauto module
+                    settings, if that module is installed.
+<none>           - can be used as a path to have a breadcrumb element that is
+                   not hyperlinked.
+<book-hierarchy> - Provides crumbs for each parent node of a book page.
+<page-title>     - Provides a plain text crumb using the page title.
+
+Additional special identifiers can be developed and added by contributed
+modules that implement hook_cb_identifier_list(), to provide a description of
+the identifer, and hook_cb_identifier_values(), to prepare the appropriate
+crumb items. See the custom_breadcrumbs_identifiers.module for examples of
+how to do this.
+
+Identifiers should be added to the paths area in the following format:
+identifier|path. To be recognized, the identifier must be enclosed in angular
+brackets, and proceed any part of the path:
+
+For example: <pathauto>|[ogname-raw]
+
+Note that not all identifiers require the use of |path.
+
 Authors
 -------
 bennybobw, dbabbage, Michelle, MGN

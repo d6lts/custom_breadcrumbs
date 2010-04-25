@@ -177,6 +177,18 @@ function custom_breadcrumbs_update_6202() {
   return $ret;
 }
 
+/**
+ * Enable custom_breadcrumbs_identifiers for legacy.
+ */
+function custom_breadcrumbs_update_6203() {
+  module_enable(array('custom_breadcrumbs_identifiers'));
+  $ret[] = array(
+    'success' => module_exists('custom_breadcrumbs_identifiers'),
+    'query' => 'Custom_breadcrumbs_identifiers was enabled for legacy reasons. Please disable it, if you do not use special identifiers in your breadcrumb settings.',
+  );
+  return $ret;
+}
+
 function custom_breadcrumbs_uninstall() {
   drupal_uninstall_schema('custom_breadcrumbs');
 
