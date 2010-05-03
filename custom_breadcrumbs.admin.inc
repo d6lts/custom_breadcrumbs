@@ -6,7 +6,7 @@
  */
 
 /**
- *  Lists all current custom breadcrumbs, and provides a link to the edit page.
+ * Lists all current custom breadcrumbs and provides a link to the edit page.
  */
 function custom_breadcrumbs_page() {
   $custom_breadcrumbs_sort = variable_get('custom_breadcrumbs_sort', array(
@@ -97,7 +97,7 @@ function custom_breadcrumbs_page() {
 }
 
 /**
- * Helper function for usort to sort two custom_breadcrumbs objects by name, type, or language.
+ * Sorts two custom_breadcrumbs objects by name, type, or language.
  *
  * Each column can be independently sorted as asc or desc.
  *
@@ -140,7 +140,10 @@ function _custom_breadcrumbs_sort_cmp($bc1, $bc2) {
 }
 
 /**
- * Form builder; Provide an edit form for a custom breadcrumb record.
+ * Form builder to edit a custom breadcrumb record.
+ *
+ * @param $type
+ *   The type of custom breadcrumb to edit.
  *
  * @ingroup forms
  * @see custom_breadcrumbs_form_validate()
@@ -181,6 +184,12 @@ function custom_breadcrumbs_form(&$form_state, $type) {
   return $form;
 }
 
+/**
+ * Form validation handler for custom_breadcrumbs_form().
+ *
+ * @see custom_breadcrumbs_form()
+ * @see custom_breadcrumbs_form_submit()
+ */
 function custom_breadcrumbs_form_validate($form, &$form_state) {
   // Check to make sure there are an equal number of paths and titles.
   $check = TRUE;
@@ -211,6 +220,12 @@ function custom_breadcrumbs_form_validate($form, &$form_state) {
   }
 }
 
+/**
+ * Form submission handler for custom_breadcrumbs_form().
+ *
+ * @see custom_breadcrumbs_form()
+ * @see custom_breadcrumbs_form_validate()
+ */
 function custom_breadcrumbs_form_submit($form, &$form_state) {
   $breadcrumb = (object)$form_state['values'];
   _custom_breadcrumbs_save_breadcrumb($form['#module'], $form['#infokey'], $breadcrumb);
@@ -227,12 +242,15 @@ function custom_breadcrumbs_form_cancel($form, &$form_state) {
 }
 
 /**
- * Helper function to provides form elements commonly used by custom breadcrumbs submodules.
+ * Provides form elements commonly used by custom breadcrumbs submodules.
  *
  * @param $bid
  *   The breadcrumb id.
  * @param $breadcrumb;
  *   The breadcrumb object.
+ *
+ * @return $form
+ *   A form array with common custom breadcrumb elements.
  */
 function custom_breadcrumbs_common_form_elements($bid, $breadcrumb) {
   // TODO: consider removing the $bid parameter since its part of the breadcrumb object.
@@ -529,6 +547,11 @@ function custom_breadcrumbs_admin_settings() {
   return system_settings_form($form);
 }
 
+/**
+ * Form submission handler for custom_breadcrumbs_admin_settings().
+ *
+ * @see custom_breadcrumbs_admin_settings()
+ */
 function custom_breadcrumbs_admin_settings_submit($form, &$form_state) {
   if (!empty($form['adv_settings']['module_weights']['table']) && $form_state['values']['custom_breadcrumbs_adjust_module_weights']) {
     // Set the initial weight of the lightest module to zero.
@@ -566,9 +589,8 @@ function custom_breadcrumbs_admin_settings_submit($form, &$form_state) {
 }
 
 /**
- * Form builder; List and manage custom breadcrumb module weights.
+ * Lists and manages custom breadcrumb module weights.
  *
- * @ingroup forms
  * @see theme_custom_breadcrumbs_module_weight()
  * @see custom_breadcrumbs_admin_settings_submit()
  */
@@ -592,7 +614,7 @@ function custom_breadcrumbs_module_weight() {
 }
 
 /**
- * Theme the module weights as a sortable list.
+ * Returns HTML for the module weights as a sortable list.
  *
  * @ingroup themeable
  * @see custom_breadcrumbs_module_weight()
@@ -619,14 +641,14 @@ function theme_custom_breadcrumbs_module_weight($form) {
 }
 
 /**
- * Check whether the administration interface should show multilingual features.
+ * Checks whether the administration interface should show multilingual features.
  */
 function _custom_breadcrumbs_multilingual() {
   return module_exists('locale');
 }
 
 /**
- * List custom_breadcrumbs administration filters that can be applied.
+ * Lists custom_breadcrumbs administration filters that can be applied.
  */
 function custom_breadcrumbs_filters() {
   $filters = array();
@@ -717,7 +739,9 @@ function custom_breadcrumbs_filter_form() {
 }
 
 /**
- * Process result from custom_breadcrumbs administration filter form.
+ * Form submission handler for custom_breadcrumbs_filter_form().
+ *
+ * @see custom_breadcrumbs_filter_form()
  */
 function custom_breadcrumbs_filter_form_submit($form, &$form_state) {
   $op = $form_state['values']['op'];
@@ -748,7 +772,7 @@ function custom_breadcrumbs_filter_form_submit($form, &$form_state) {
 }
 
 /**
- * Theme custom_breadcrumbs filter form.
+ * Returns HTML for the custom_breadcrumbs filter form.
  *
  * @ingroup themeable
  */
@@ -761,7 +785,7 @@ function theme_custom_breadcrumbs_filter_form($form) {
 }
 
 /**
- * Theme custom_breadcrumbs filter selector.
+ * Returns HTML for the custom_breadcrumbs filter selector.
  *
  * @ingroup themeable
  */
@@ -796,7 +820,7 @@ function theme_custom_breadcrumbs_filters($form) {
 }
 
 /**
- * Provide a simple breadcrumb table for the node edit form.
+ * Provides a simple breadcrumb table for the node edit form.
  *
  * @param $breadcrumbs
  *   An array of breadcrumbs that apply to the node.

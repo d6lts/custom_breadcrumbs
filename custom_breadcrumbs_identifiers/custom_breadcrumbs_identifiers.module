@@ -7,7 +7,7 @@
  */
 
 /**
- * Implementation of hook_cb_identifier_list().
+ * Implements hook_cb_identifier_list().
  *
  * @return
  *   An array of text strings describing special identifier behavoir.
@@ -27,7 +27,7 @@ function custom_breadcrumbs_identifiers_cb_identifier_list() {
 }
 
 /**
- * Implementation of hook_cb_identifier_values().
+ * Implements hook_cb_identifier_values().
  *
  * This function prepares an array of crumb items to replace an identifier.
  * The identifier should be a string starting with '<' and ending with '>'.

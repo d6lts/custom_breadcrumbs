@@ -7,7 +7,7 @@
  */
 
 /**
- * Implementation of hook_install().
+ * Implements hook_install().
  */
 function custom_breadcrumbs_taxonomy_install() {
   // Create tables.
@@ -53,7 +53,7 @@ function custom_breadcrumbs_taxonomy_install() {
 }
 
 /**
- * Implementation of hook_uninstall().
+ * Implements hook_uninstall().
  */
 function custom_breadcrumbs_taxonomy_uninstall() {
   // Remove tables.
@@ -71,7 +71,7 @@ function custom_breadcrumbs_taxonomy_uninstall() {
 }
 
 /**
- * Implementation of hook_schema().
+ * Implements hook_schema().
  */
 function custom_breadcrumbs_taxonomy_schema() {
   $schema['custom_breadcrumbs_taxonomy_term'] = array(
@@ -189,7 +189,7 @@ function custom_breadcrumbs_taxonomy_schema() {
 }
 
 /**
- * Set weight of custom_breadcrumbs_taxonomy to be greater than taxonomy, views, and custom_breadcrumbs.
+ * Sets weight of custom_breadcrumbs_taxonomy to be greater than taxonomy, views, and custom_breadcrumbs.
  */
 function custom_breadcrumbs_taxonomy_update_6000() {
   $ret = array();
@@ -202,7 +202,7 @@ function custom_breadcrumbs_taxonomy_update_6000() {
 }
 
 /**
- * Add name field for improved organization of breadcrumbs
+ * Adds name field for improved organization of breadcrumbs
  * Remove set_active_menu field because it is no longer used.
  */
 function custom_breadcrumbs_taxonomy_update_6200() {

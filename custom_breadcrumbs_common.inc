@@ -7,7 +7,7 @@
  */
 
 /**
- * Helper function to determine if two paths match, allowing for wildcards and aliases.
+ * Determines if two paths match, allowing for wildcards and aliases.
  *
  * @param $curpath
  *   The current Drupal path.
@@ -28,7 +28,7 @@ function _custom_breadcrumbs_match_path($curpath, $breadcrumb_path) {
 }
 
 /**
- * Helper function to construct the view path replacing wildcards with arguments.
+ * Constructs the view path replacing wildcards with arguments.
  *
  * @param $display
  *   The view $display object.
@@ -58,13 +58,13 @@ function _custom_breadcrumbs_construct_view_path($display) {
 }
 
 /**
- *  Helper function to specify allowed views displays for breadcrumb placement.
+ *  Determines if a view display is appropriate for assigning a custom breadcrumb.
  *
  * @param $display
  *   The view $display object.
  *
  * @return
- *    TRUE if the display should be considered for a custom breadcrumb, FALSE otherwise.
+ *   TRUE if the display should be considered for a custom breadcrumb, FALSE otherwise.
  */
 function _custom_breadcrumbs_allowed_display($display) {
   $allowed_display_types = array('page', 'calendar', 'image_gallery');
@@ -82,7 +82,7 @@ function _custom_breadcrumbs_allowed_display($display) {
 }
 
 /**
- *  Helper function to obtain the appropriate type and value of each view argument.
+ *  Returns the appropriate type and value of each view argument.
  *
  * @param $display_argument_ids
  *   An array of ids for each argument of the view.
@@ -121,7 +121,7 @@ function _custom_breadcrumbs_views_parse_args($arguments, $viewargs) {
 }
 
 /**
- *  Helper function to obtain the appropriate objects for token type replacement for this view.
+ * Obtains the appropriate objects for token type replacement for a view display.
  *
  * @param $display
  *   The view $display object.
@@ -154,10 +154,11 @@ function _custom_breadcrumbs_views_token_types($display) {
 }
 
 /**
- *  Helper function to extract the views display option arguments array from the display.
+ * Extracts the views display option arguments array from the display.
  *
  * @param $display
  *   The view $display object.
+ *
  * @return $arguments
  *   The view display option arguments array.
  */

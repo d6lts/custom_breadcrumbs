@@ -7,7 +7,7 @@
  */
 
 /**
- * Set a taxonomy breadcrumb and call the original taxonomy/term/% callback.
+ * Sets a taxonomy breadcrumb and calls the original taxonomy/term/% callback.
  *
  * @param $callback
  *   A callback function as defined in hook_menu().
@@ -45,7 +45,7 @@ function custom_breadcrumbs_taxonomy_term_page($str_tids, $callback, $file, $fil
 }
 
 /**
- *  Helper function to set the breadcrumb using a node's taxonomy.
+ * Sets the breadcrumb using a node's taxonomy.
  *
  * @param $tid
  *   A taxonomy id.
@@ -106,7 +106,7 @@ function _custom_breadcrumbs_taxonomy_set_breadcrumb($tid, $vid = NULL, $is_term
 }
 
 /**
- * Return the previous selected term or the lightest term for a given node.
+ * Returns the previous selected term or the lightest term for a given node.
  *
  * @param $node
  *   The node object.
@@ -125,7 +125,7 @@ function custom_breadcrumbs_taxonomy_node_get_term($node) {
 }
 
 /**
- * Return the most recently selected term for a given node.
+ * Returns the most recently selected term for a given node.
  *
  * @param $node
  *   The node object.
@@ -142,13 +142,13 @@ function custom_breadcrumbs_taxonomy_node_get_recent_term($node) {
 }
 
 /**
- * Helper function to set or return the previous selected term id.
+ * Sets or returns the previous selected term id.
  *
  * @param $tid
  *   An optional term id to store in the session variable to establish a term history.
  *
  * @return
- *   If this function is called without a term id, then it will return the previously 
+ *   If this function is called without a term id, then it will return the previously
  *   selected taxonomy term id, retrieved from the session variable.
  */
 function _custom_breadcrumbs_taxonomy_recent_term($tid = NULL) {
@@ -161,11 +161,12 @@ function _custom_breadcrumbs_taxonomy_recent_term($tid = NULL) {
 }
 
 /**
- * Return the lightest term for a given node. If the term has parents, then
- * the lightest parent's weight is used for the term weight. And if the parent
- * has multiple child terms at different depths, the deepest child term will be
- * returned. If the child terms have the same depth, then the lightest child term
- * is returned.
+ * Returns the lightest term for a given node.
+ *
+ * If the term has parents, then the lightest parent's weight is used for the
+ * term weight. And if the parent has multiple child terms at different depths,
+ * the deepest child term will be returned. If the child terms have the same
+ * depth, then the lightest child term is returned.
  *
  * @param $node
  *   The node object.
@@ -219,7 +220,7 @@ function custom_breadcrumbs_taxonomy_node_get_lightest_term($node) {
 }
 
 /**
- * Generate a breadcrumb from the taxonomy hierarchy of the term id or vocab id.
+ * Generates a breadcrumb from the taxonomy hierarchy of the term id or vocab id.
  * This will only be called if custom_breadcrumbs_taxonomy_use_hierarchy has been enabled.
  *
  * @param $tid
@@ -262,15 +263,14 @@ function custom_breadcrumbs_taxonomy_generate_breadcrumb($tid, $vid = NULL, $is_
 }
 
 /**
- * Helper function for when i18ntaxonomy module is not installed.
+ * Translates configurable string when i18ntaxonomy module is installed.
  */
-
 function _custom_breadcrumbs_taxonomy_tt($string_id, $default, $language = NULL) {
   return function_exists('tt') ? tt($string_id, $default, $language) : $default;
 }
 
 /**
- * Helper function to generate the home breadcrumb trail.
+ * Generates the home breadcrumb trail.
  *
  * @return
  *   The breadcrumb trail.
@@ -288,7 +288,7 @@ function _custom_breadcrumbs_taxonomy_home_trail() {
 }
 
 /**
- * Helper function to generate the vocabulary trail.
+ * Generates the vocabulary trail.
  *
  * @param $vid
  *   A taxonomy vocabulary id.
@@ -298,6 +298,8 @@ function _custom_breadcrumbs_taxonomy_home_trail() {
  *   An optional array of objects to be used to determine breadcrumb visibility and for token replacement.
  * @param $types
  *   An array of token types to be used in token replacement.
+ * @param $part
+ *   A postive integer indicating the breadcrumb segment (home crumb = 0).
  *
  * @return
  *   The breadcrumb trail.
@@ -334,7 +336,7 @@ function _custom_breadcrumbs_taxonomy_vocabulary_trail($vid, $is_term_page = FAL
 }
 
 /**
- * Helper function to generate the taxonomy term trail.
+ * Generates the taxonomy term trail.
  *
  * @param $tid
  *   A taxonomy term id.
@@ -344,6 +346,8 @@ function _custom_breadcrumbs_taxonomy_vocabulary_trail($vid, $is_term_page = FAL
  *   An optional array of objects to be used to determine breadcrumb visibility and for token replacement.
  * @param $types
  *   An array of token types to be used in token replacement.
+ * @param $part
+ *   A postive integer indicating the breadcrumb segment (home crumb = 0).
  *
  * @return
  *   The breadcrumb trail.
