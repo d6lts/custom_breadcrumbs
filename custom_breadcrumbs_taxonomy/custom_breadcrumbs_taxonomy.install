@@ -197,7 +197,7 @@ function custom_breadcrumbs_taxonomy_update_6000() {
   $views_weight = (int) db_result(db_query("SELECT weight FROM {system} WHERE name = 'views'"));
   $cb_weight = (int) db_result(db_query("SELECT weight FROM {system} WHERE name = 'custom_breadcrumbs'"));
   $cb_tax_weight = max($tax_weight, $views_weight, $cb_weight) + 2;
-  db_query("UPDATE {system} SET weight = %d WHERE name = 'custom_breadcrumbs_taxonomy'", $cb_tax_weight);
+  $ret[] = update_sql("UPDATE {system} SET weight = ". $cb_tax_weight ." WHERE name = 'custom_breadcrumbs_taxonomy'");
   return $ret;
 }
 
