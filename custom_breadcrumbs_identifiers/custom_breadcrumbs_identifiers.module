@@ -15,7 +15,7 @@
 function custom_breadcrumbs_identifiers_cb_identifier_list() {
   $identifiers = array();
 
-  $identifiers['<none>'] = t('This will result in a plain text crumb. This identifier should not be used with the pipe (|) symbol.');
+  $identifiers['<none>'] = t('Produces a plain text crumb. This identifier should not be used with the pipe (|) symbol.');
   if (module_exists('pathauto')) {
     $identifiers['<pathauto>'] = t('Cleans the given path using your pathauto replacement rules.');
   }
@@ -23,6 +23,7 @@ function custom_breadcrumbs_identifiers_cb_identifier_list() {
   // Additional identifiers can be added here.
   $identifiers['<book-hierarchy>'] =  t('Provides crumbs for each parent node of a book page. Whatever is placed in the corresponding position of the title area will be ignored. It should not be used with the pipe (|) symbol.');
   $identifiers['<page-title>'] = t('Provides a plain text crumb using the page title. Whatever is placed in the corresponding position of the title area will be ignored. It should not be used with the pipe (|) symbol.');
+  $identifiers['<menu-parent-trail>'] = t('Produces crumbs for each parent item for the given path. The title information for this line will be ignored because the menu link titles are used. If a path is not provided following the pipe (|) symbol, the current path with be used.');
   return $identifiers;
 }
 
@@ -109,6 +110,57 @@ function custom_breadcrumbs_identifiers_cb_identifier_values($identifier, $obj) 
             'title' => $node->book['title'],
           );
         }
+      }
+      break;
+
+    // Support for showing a paths parent menu link items as crumbs.
+    case '<menu-parent-trail>':
+      $title = $obj['title'];
+      $path = ($obj['path'] != '') ? $obj['path'] : $_GET['q'];
+      $attributes = $obj['attributes'];
+      // Search for both alias and normal path.
+      $normal_path = drupal_get_normal_path($path);
+
+      $query = "SELECT * FROM {menu_links} WHERE link_path IN ('%s', '%s')";
+      $menu_item = db_fetch_object(db_query_range($query, $normal_path, $path, 0, 1));
+
+      if ($menu_item) {
+        // Parent ids of menu item.
+        $pids = array(
+          $menu_item->plid,
+          $menu_item->p1, $menu_item->p2, $menu_item->p3,
+          $menu_item->p4, $menu_item->p5, $menu_item->p6,
+          $menu_item->p7, $menu_item->p8, $menu_item->p9,
+        );
+        $pids = array_unique(array_filter($pids));
+
+        // Remove mlid.
+        $mlid_key = array_search($menu_item->mlid, $pids);
+        if ($mlid_key !== FALSE) unset($pids[$mlid_key]);
+
+        // Return empty if no parents given.
+        if (!count($pids)) return array();
+
+        // Build the replacement string.
+        $s = implode(', ', array_fill(0, count($pids), "'%s'"));
+        // Query parent items.
+        $query = 'SELECT * FROM {menu_links} WHERE mlid IN ('. $s .')';
+        $result = db_query($query, $pids);
+        $trail = array();
+
+        while ($item = db_fetch_object($result)) {
+          $i = array_search($item->mlid, $pids);
+          $trail[$i] = array(
+            'title' => $item->link_title,
+            'href' => $item->link_path,
+            'crumb' => l($item->link_title, $item->link_path, $attributes),
+          );
+        }
+        return $trail;
+      }
+      // Return an empty array if no menu entry is given.
+      else {
+        return array();
       }
       break;
   }
