@@ -323,7 +323,7 @@ function _custom_breadcrumbs_taxonomy_vocabulary_trail($vid, $is_term_page = FAL
   }
   if ($title == NULL) {
     $vocabulary = taxonomy_vocabulary_load($vid);
-    $title = _custom_breadcrumbs_taxonomy_tt("taxonomy:vocabulary:$term->tid:name", $vocabulary->name);
+    $title = _custom_breadcrumbs_taxonomy_tt("taxonomy:vocabulary:$vid:name", $vocabulary->name);
   }
   if ($vocabulary_path != NULL) {
     $options = _custom_breadcrumbs_identifiers_option($part, $bid);
