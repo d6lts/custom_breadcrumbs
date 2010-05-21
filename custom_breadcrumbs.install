@@ -7,12 +7,8 @@
  */
 
 /**
- * Implementation of hook_install().
+ * Implements hook_schema().
  */
-function custom_breadcrumbs_install() {
-  drupal_install_schema('custom_breadcrumbs');
-}
-
 function custom_breadcrumbs_schema() {
   $schema['custom_breadcrumb'] = array(
     'description' => 'Stores custom breadcrumb trail overrides.',
@@ -55,73 +51,14 @@ function custom_breadcrumbs_schema() {
   return $schema;
 }
 
-
-// Update old-style tokens from early versions of token.module.
-// Most users aren't using them, but we might as well handle them
-// properly.
-
-function custom_breadcrumbs_update_1() {
-  $stuff = array(
-    '%author_id'      => '[author-uid]',
-    '%author_name'    => '[author-name]',
-    '%user_id'        => '[user-id]',
-    '%user_name'      => '[user-name]',
-    '%node_id'        => '[nid]',
-    '%node_type'      => '[type]',
-    '%node_type_name' => '[type-name]',
-    '%top_term'       => '[term]',
-    '%top_tname'      => '[term-id]',
-    '%created_d'      => '[dd]',
-    '%created_D'      => '[ddd]',
-    '%created_j'      => '[d]',
-    '%created_l'      => '[day]',
-    '%created_F'      => '[month]',
-    '%created_m'      => '[mm]',
-    '%created_M'      => '[mon]',
-    '%created_n'      => '[m]',
-    '%created_y'      => '[yy]',
-    '%created_Y'      => '[yyyy]',
-  );
-
-  $search = array_keys($stuff);
-  $replace = array_values($stuff);
-
-  $result = db_query("SELECT * FROM {custom_breadcrumb} cb");
-  while ($crumb = db_fetch_object($result)) {
-    $crumb->titles = str_replace($search, $replace, $crumb->titles);
-    $crumb->paths = str_replace($search, $replace, $crumb->paths);
-    custom_breadcrumbs_save_breadcrumb($crumb);
-  }
-
-  return array(t('Custom Breadcrumb replacement strings updated for use with Token module.'));
-}
-
-function custom_breadcrumbs_update_2() {
-  $ret = array();
-  switch ($GLOBALS['db_type']) {
-    case 'mysql':
-    case 'mysqli':
-      $ret[] = update_sql("ALTER TABLE {custom_breadcrumb} ADD visibility_php text NOT NULL default ''");
-      break;
-    case 'pgsql':
-      db_add_column($ret, 'custom_breadcrumb', 'visibility_php', 'text', array('not null' => TRUE, 'default' => "''"));
-      break;
-  }
-  return $ret;
-}
-
 // Add the menu flag.
 function custom_breadcrumbs_update_6001() {
-  $ret = array();
-  db_add_field($ret, 'custom_breadcrumb', 'set_active_menu', array('type' => 'int', 'default' => 1, 'NOT NULL' => TRUE));
-  return $ret;
+  db_add_field('custom_breadcrumb', 'set_active_menu', array('type' => 'int', 'default' => 1, 'NOT NULL' => TRUE));
 }
 
 // Remove the menu flag.
 function custom_breadcrumbs_update_6101() {
-  $ret = array();
-  db_drop_field($ret, 'custom_breadcrumb', 'set_active_menu');
-  return $ret;
+  db_drop_field('custom_breadcrumb', 'set_active_menu');
 }
 
 function custom_breadcrumbs_uninstall() {

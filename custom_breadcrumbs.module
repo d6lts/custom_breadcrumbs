@@ -7,31 +7,29 @@
  */
 
 /**
- * Implement hook_menu().
+ * Implements hook_menu().
  */
 function custom_breadcrumbs_menu() {
   $items = array();
 
-  $items['admin/build/custom_breadcrumbs'] = array(
+  $items['admin/structure/custom_breadcrumbs'] = array(
     'title' => 'Custom breadcrumbs',
     'description' => 'Add custom breadcrumb trails for content types.',
     'page callback' => 'custom_breadcrumbs_page',
-    'access callback' => 'user_access',
     'access arguments' => array('administer custom breadcrumbs'),
     'file' => 'custom_breadcrumbs.admin.inc',
   );
 
-  $items['admin/build/custom_breadcrumbs/add'] = array(
+  $items['admin/structure/custom_breadcrumbs/add'] = array(
     'title' => 'Add custom breadcrumb',
     'type' => MENU_CALLBACK,
     'page callback' => 'drupal_get_form',
     'page arguments' => array('custom_breadcrumbs_form'),
-    'access callback' => 'user_access',
     'access arguments' => array('administer custom breadcrumbs'),
     'file' => 'custom_breadcrumbs.admin.inc',
   );
 
-  $items['admin/build/custom_breadcrumbs/edit'] = array(
+  $items['admin/structure/custom_breadcrumbs/edit'] = array(
     'title' => 'Edit custom breadcrumb',
     'type' => MENU_CALLBACK,
     'page callback' => 'drupal_get_form',
@@ -51,21 +49,21 @@ function custom_breadcrumbs_permission() {
   return array('administer custom breadcrumbs' => array(
                  'title' => 'Administer Custom Breadcrumbs', 
                  'description' => 'Configure the Custom Breadcrumbs Modules'),
-               'use php in custom breadcrumbs'=> array(
+               'use php in custom breadcrumbs' => array(
                  'title' => 'Use PHP in Custom Breadcrumbs', 
                  'description' => 'Control Breadcrumb Visibility with PHP code'),
               );
 }
 
 /**
- * Implement hook_theme().
+ * Implements hook_theme().
  */
 function custom_breadcrumbs_theme() {
   return array('custom_breadcrumbs_help_identifiers' => array('arguments' => array()));
 }
 
 /**
- * Implement hook_node_view().
+ * Implements hook_node_view().
  */
 function custom_breadcrumbs_node_view($node, $build_mode) {
   if ($build_mode == 'full' && ($breadcrumb = _custom_breadcrumbs_load_for_type($node))) {
@@ -74,7 +72,7 @@ function custom_breadcrumbs_node_view($node, $build_mode) {
 
     $trail = array(l(t('Home'), '<front>'));
     for ($i = 0; $i < count($titles); $i++) {
-      $data = array('node' =>$node);
+      $data = array('node' => $node);
       $title = token_replace(trim($titles[$i]), $data);
       $path = token_replace(trim($paths[$i]), $data);
       if (($title != '') && ($title != '<none>')) {
@@ -167,7 +165,7 @@ function _custom_breadcrumbs_create_crumb($title, $original_path) {
     // This may be just be a single identifier.
     switch ($identifier) {
       case '<none>':
-        $crumb = $title;
+        $crumb = check_plain($title);
         break;
       default:
         $crumb = l($title, $original_path);
@@ -198,5 +196,5 @@ function theme_custom_breadcrumbs_help_identifiers() {
     $rows[] = $row;
   }
 
-  return theme('table', $headers, $rows);
+  return theme('table', array('header' => $headers, 'rows' => $rows));
 }

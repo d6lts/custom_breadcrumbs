@@ -7,7 +7,7 @@
  */
 
 /**
- *  Lists all current custom breadcrumbs, and provides a link to the edit page.
+ * Lists all current custom breadcrumbs, and provides a link to the edit page.
  */
 function custom_breadcrumbs_page() {
   $breadcrumbs = _custom_breadcrumbs_load_all_breadcrumbs(TRUE);
@@ -17,26 +17,26 @@ function custom_breadcrumbs_page() {
   $rows = array();
   foreach ($breadcrumbs as $breadcrumb) {
     $row = array();
-    $row[] = $breadcrumb->node_type . (!empty($breadcrumb->visibility_php) ? t(' with PHP snippet') : '');
-    $row[] =  l(t('edit'), 'admin/build/custom_breadcrumbs/edit/'. $breadcrumb->bid);
+    $row[] = $breadcrumb->node_type . (!empty($breadcrumb->visibility_php) ? ' ' . t('with PHP snippet') : '');
+    $row[] = l(t('edit'), 'admin/structure/custom_breadcrumbs/edit/' . $breadcrumb->bid);
     $rows[] = $row;
   }
   if (count($rows) == 0) {
     $rows[] = array(array('data' => t('No custom breadcrumbs have been defined.'), 'colspan' => 2));
   }
 
-  $rows[] = array(array('data' => l(t('Add a new custom breadcrumb'), 'admin/build/custom_breadcrumbs/add'), 'colspan' => 2));
+  $rows[] = array(array('data' => l(t('Add a new custom breadcrumb'), 'admin/structure/custom_breadcrumbs/add'), 'colspan' => 2));
 
   $build = array();
-  $build['breadcrumb_table'] = array('#markup' => theme('table', $header, $rows));
+  $build['breadcrumb_table'] = array('#markup' => theme('table', array('header' => $header, 'rows' => $rows)));
 
   return $build;
 }
 
 /**
- * Display an edit form for a custom breadcrumb record.
+ * Displays an edit form for a custom breadcrumb record.
  */
-function custom_breadcrumbs_form() {
+function custom_breadcrumbs_form($form, &$form_state) {
   $bid = arg(4);
   if (isset($bid)) {
     $breadcrumb = _custom_breadcrumbs_load_breadcrumb($bid);
@@ -85,20 +85,19 @@ function custom_breadcrumbs_form() {
     '#default_value' => isset($breadcrumb->paths) ? $breadcrumb->paths : NULL,
   );
 
-  $form['help'] = array(
-    '#type' => 'fieldset',
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-    '#title' => t('Placeholder tokens'),
-    '#description' => t("The following placeholder tokens can be used in both paths and titles. When used in a path or title, they will be replaced with the appropriate values."),
-  );
+  if (module_exists('token')) {
+    $form['help'] = array(
+      '#type' => 'fieldset',
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+      '#title' => t('Placeholder tokens'),
+      '#description' => t("The following placeholder tokens can be used in both paths and titles. When used in a path or title, they will be replaced with the appropriate values."),
+    );
 
-// There is no token_help in core, but token_info has all the information in it.
-// Probably just need to wait until a token_help is available - or write our own?
-//    $form['help']['tokens'] = array(
-//      '#markup' => theme('token_help', 'node'),
-//    );
-
+    $form['help']['tokens'] = array(
+      '#markup' => theme('token_tree', array('token_types' => 'all', 'click_insert' => FALSE)),
+    );
+  }
   $form['help2'] = array(
     '#type' => 'fieldset',
     '#collapsible' => TRUE,
@@ -135,10 +134,10 @@ function custom_breadcrumbs_form_validate($form, &$form_state) {
 function custom_breadcrumbs_form_submit($form, &$form_state) {
   $breadcrumb = (object)$form_state['values'];
   custom_breadcrumbs_save_breadcrumb($breadcrumb);
-  $form_state['redirect'] = 'admin/build/custom_breadcrumbs';
+  $form_state['redirect'] = 'admin/structure/custom_breadcrumbs';
 }
 
 function custom_breadcrumbs_form_delete($form, &$form_state) {
   _custom_breadcrumbs_delete_breadcrumb($form_state['values']['bid']);
-  $form_state['redirect'] = 'admin/build/custom_breadcrumbs';
+  $form_state['redirect'] = 'admin/structure/custom_breadcrumbs';
 }
