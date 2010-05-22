@@ -292,10 +292,10 @@ http://example.com/#lang-prefix#/admin/settings/custom-breadcrumbs.
 Use PHP in breadcrumb titles and paths
 --------------------------------------
 If this advanced option is enabled at admin/settings/custom-breadcrumbs, then
-users given 'use php in custom breadcrumbs' permission can include php code
-snippets in the titles and/or paths fields of the add breadcrumb form. Be
-careful when enabling this option, as the incorrect use of php can break your
-site.
+users given 'use php in custom breadcrumbs' permission can include small php
+code snippets (less than 250 characters)in the titles and/or paths fields of
+the add breadcrumb form. Be careful when enabling this option, as the incorrect
+use of php can break your site.
 
 There are a couple of ways to use php in breadcrumbs and titles. One way is to
 return an array of breadcrumb titles in the titles text field and a
@@ -326,6 +326,11 @@ array is not returned, then the module defaults to the standard operation of
 using each line of the titles and paths text fields to define a part of the
 breadcrumb.
 
+For longer code snippets (greater than 250 characters), you can save your code
+snippet in an include file and use a php require_once statement in the titles
+and/or paths section of your custom breadcrumb to include and evaluate your
+code. See http://drupal.org/node/654766 for an example of this.
+
 Add CSS classes to custom breadcrumb elements
 ---------------------------------------------
 
@@ -351,12 +356,23 @@ In Custom Breadcrumbs 2.0, Special identifiers are now provided as a separate,
 optional module - custom_breadcrumbs_identifiers. At present, this module
 provides the following identifiers:
 
-<pathauto>       - will clean any path using the current pathauto module
-                    settings, if that module is installed.
-<none>           - can be used as a path to have a breadcrumb element that is
-                   not hyperlinked.
-<book-hierarchy> - Provides crumbs for each parent node of a book page.
-<page-title>     - Provides a plain text crumb using the page title.
+<none>              - Produces a plain text crumb. This identifier should not
+                      be used with the pipe (|) symbol.
+<pathauto>          - Cleans the given path using your pathauto replacement
+                      rules.
+<book-hierarchy>    - Provides crumbs for each parent node of a book page.
+                      Whatever is placed in the corresponding position of the
+                      title area will be ignored. It should not be used with
+                      the pipe (|) symbol.
+<page-title>        - Provides a plain text crumb using the page title. Whatever
+                      is placed in the corresponding position of the title area
+                      will be ignored. It should not be used with the pipe (|)
+                      symbol.
+<menu-parent-trail> - Produces crumbs for each parent item for the given path.
+                      The title information for this line will be ignored
+                      because the menu link titles are used. If a path is not
+                      provided following the pipe (|) symbol, the current path
+                      with be used.
 
 Additional special identifiers can be developed and added by contributed
 modules that implement hook_cb_identifier_list(), to provide a description of
