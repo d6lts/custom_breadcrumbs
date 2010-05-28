@@ -68,7 +68,7 @@ function custom_breadcrumbs_menu() {
   $items = array();
   $items['admin/build/custom_breadcrumbs'] = array(
     'title'            => 'Custom Breadcrumbs',
-    'description'      => 'Custom breadcrumbs',
+    'description'      => 'Customize the breadcrumb trail for pages on your site.',
     'page callback'    => 'custom_breadcrumbs_page',
     'access arguments' => array('administer custom breadcrumbs'),
     'file'             => 'custom_breadcrumbs.admin.inc',
@@ -103,6 +103,7 @@ function custom_breadcrumbs_menu() {
 
   $items['admin/settings/custom-breadcrumbs'] = array(
     'title'            => 'Custom Breadcrumb Settings',
+    'description'      => 'Manage sitewide configuration settings to customize the breadcrumb trail.',
     'page callback'    => 'drupal_get_form',
     'page arguments'   => array('custom_breadcrumbs_admin_settings'),
     'access arguments' => array('administer custom breadcrumbs'),
@@ -116,9 +117,10 @@ function custom_breadcrumbs_menu() {
  * Implements hook_preprocess().
  */
 function custom_breadcrumbs_preprocess(&$variables, $hook) {
-  static $success;
+  static $tried = array();
   // Only respond to the first call for this hook.
-  if (!isset($success)) {
+  if (!isset($tried[$hook])) {
+    $tried[$hook] = TRUE;
     if (!custom_breadcrumbs_exclude_path()) {
       if (variable_get('custom_breadcrumbs_set_global_home_breadcrumb', FALSE)) {
         $trail = drupal_get_breadcrumb();
@@ -131,16 +133,20 @@ function custom_breadcrumbs_preprocess(&$variables, $hook) {
           }
           drupal_set_breadcrumb($trail);
           $variables['breadcrumb'] = theme('breadcrumb', drupal_get_breadcrumb());
-          $success = TRUE;
         }
       }
-      if (variable_get('custom_breadcrumbs_set_menu_breadcrumb', FALSE)) {
-        // Use default menu structure to set the breadcrumb.
-        if (custom_breadcrumbs_set_menu_breadcrumb()) {
-          $variables['breadcrumb'] = theme('breadcrumb', drupal_get_breadcrumb());
-          $success = TRUE;
-        }
-      }
+    }
+  }
+}
+
+/**
+ * Implements hook_init().
+ */
+function custom_breadcrumbs_init() {
+  if (variable_get('custom_breadcrumbs_set_menu_breadcrumb', FALSE)) {
+    // Use default menu structure to set the breadcrumb.
+    if (custom_breadcrumbs_set_menu_breadcrumb()) {
+      $variables['breadcrumb'] = theme('breadcrumb', drupal_get_breadcrumb());
     }
   }
 }
@@ -611,6 +617,7 @@ function theme_custom_breadcrumbs_help_identifiers()  {
  *    otherwise a single breadcrumb object is be returned.
  */
 function custom_breadcrumbs_load_breadcrumbs($module, $table = NULL, $param = array(), $languages = array()) {
+  static $breadcrumbs_cache = array();
   $breadcrumbs = array();
   $bc_info = module_invoke($module, 'cb_breadcrumb_info');
   foreach ($bc_info as $info) {
@@ -634,13 +641,21 @@ function custom_breadcrumbs_load_breadcrumbs($module, $table = NULL, $param = ar
         $sql .= "language IN (".  db_placeholders($languages, 'text') .") ORDER BY language ASC";
         $args = array_merge($args, $languages);
       }
-      $result = db_query($sql, $args);
-      while ($breadcrumb = db_fetch_object($result)) {
-        if (!isset($breadcrumb->name)) {
-          $breadcrumb->name = (isset($info['name_constructor'])) ? $info['name_constructor']($breadcrumb) : $breadcrumb->$info['field'];
+
+      $ckey = "{$info['table']}-{$cond}-" . implode('_', $languages);
+      if (isset($breadcrumbs_cache[$ckey])) {
+        $breadcrumbs = $breadcrumbs_cache[$ckey];
+      }
+      else {
+        $result = db_query($sql, $args);
+        while ($breadcrumb = db_fetch_object($result)) {
+          if (!isset($breadcrumb->name)) {
+            $breadcrumb->name = (isset($info['name_constructor'])) ? $info['name_constructor']($breadcrumb) : $breadcrumb->$info['field'];
+          }
+          $breadcrumb->breadcrumb_type = $info['type'];
+          $breadcrumbs[] = $breadcrumb;
         }
-        $breadcrumb->breadcrumb_type = $info['type'];
-        $breadcrumbs[] = $breadcrumb;
+        $breadcrumbs_cache[$ckey] = $breadcrumbs;
       }
     }
   }
@@ -706,10 +721,15 @@ function _custom_breadcrumbs_load_all_breadcrumbs($refresh = FALSE) {
  * This function uses the same approach as in the menu_breadcrumb module.
  */
 function custom_breadcrumbs_set_menu_breadcrumb() {
+  static $menu_id_cache = array();
   $menu_item = menu_get_item();
-  $menu_link = menu_link_load(db_result(db_query("SELECT mlid FROM {menu_links} WHERE link_path = '%s'", $menu_item['href'])));
+  $ckey = $menu_item['href'];
+  if (!isset($menu_id_cache[$ckey])) {
+    $menu_id_cache[$ckey] = db_result(db_query("SELECT mlid FROM {menu_links} WHERE link_path = '%s'", $menu_item['href']));
+  }
+  $menu_link = menu_link_load($menu_id_cache[$ckey]);
   $use_menu = $menu_link['menu_name'];
-  $menus =  variable_get('custom_breadcrumbs_menu_list', array() );
+  $menus =  variable_get('custom_breadcrumbs_menu_list', array());
   if (in_array($use_menu, $menus)) {
     menu_set_active_menu_name($use_menu);
     return TRUE;
