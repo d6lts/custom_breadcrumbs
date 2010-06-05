@@ -104,11 +104,8 @@ function custom_breadcrumbs_identifiers_cb_identifier_values($identifier, $obj) 
           $crumb_items = array_reverse($crumb_items);
         }
         if (empty($crumb_items)) {
-          // Provide a plain text crumb using the book title.
-          $crumb_items[] = array(
-            'crumb' => check_plain($node->book['title']),
-            'title' => $node->book['title'],
-          );
+          // Return an empty array.
+          $crumb_items[] = array();
         }
       }
       break;
