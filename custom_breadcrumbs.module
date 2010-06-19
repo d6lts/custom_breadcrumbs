@@ -353,7 +353,7 @@ function _custom_breadcrumbs_get_breadcrumb($breadcrumb, $objs, &$locations) {
     if ($item['crumb']) {
       $trail[] = $item['crumb'];
     }
-    if ($set_active_trail) {  // TODO: only do this if $item['href'] is set?
+    if (variable_get('custom_breadcrumbs_force_active_trail', FALSE)) {
       $locations[] = array('title' => $item['title'], 'href' => drupal_get_normal_path(trim($item['href'])));
     }
   }
