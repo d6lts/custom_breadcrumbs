@@ -53,7 +53,7 @@ function custom_breadcrumbs_identifiers_cb_identifier_values($identifier, $obj) 
       $crumb_items[] = $crumb_item;
       break;
     case '<page-title>':
-      $title = check_plain(drupal_get_title());
+      $title = filter_xss(drupal_get_title());
       $crumb_item = array(
         'crumb' => $title,
         'title' => $title,
