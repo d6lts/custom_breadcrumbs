@@ -599,9 +599,9 @@ function custom_breadcrumbs_module_weight() {
   $modules = module_implements('cb_breadcrumb_info');
   $form = array('#tree' => TRUE);
   $module_id = 0;
-  foreach ($modules as $module) {
-    $weight = _custom_breadcrumbs_get_module_weight($module);
-    $info = drupal_parse_info_file(drupal_get_path('module', $module) .'/'. $module .'.info');
+  $weights = _custom_breadcrumbs_get_module_weight($modules);
+  foreach ($weights as $module => $weight) {
+    $info = drupal_parse_info_file(drupal_get_path('module', $module) . '/' . $module . '.info');
     $form[$module_id]['#weight'] = $weight;
     $form[$module_id]['#module'] = $module;
     $form[$module_id]['name'] = array('#value' => check_plain($info['name']));

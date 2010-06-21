@@ -1026,17 +1026,22 @@ function _custom_breadcrumbs_menu_stack($link = FALSE) {
 }
 
 /**
- * Retrieves the module weight.
+ * Retrieves active module weights from the database.
  *
- * @param $name
- *   The module name.
+ * @param $names
+ *   An array of module names.
  *
  * @return
- *   The module weight.
+ *   An array of module weightsm indexed by module name and ordered by weight.
  */
-function _custom_breadcrumbs_get_module_weight($name) {
-  $weight = (int) db_result(db_query("SELECT weight FROM {system} WHERE name = '%s'", $name));
-  return $weight;
+function _custom_breadcrumbs_get_module_weight($names) {
+  $weights = array();
+  $results = db_query("SELECT name, weight FROM {system} WHERE name IN (" . db_placeholders($names, 'text') . ") AND status = 1 ORDER BY weight ASC", $names);
+  while ($row = db_fetch_object($results)) {
+    $weights[$row->name] = (int) $row->weight;
+  }
+
+  return $weights;
 }
 
 /**

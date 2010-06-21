@@ -504,7 +504,7 @@ function _custom_breadcrumbs_taxonomy_allowed_node_type($nodetype) {
 function custom_breadcrumbs_taxonomy_enable() {
   // Sets weight of custom_breadcrumbs_taxonomy to be greater than taxonomy, views, and custom_breadcrumbs.
   $max_weight = custom_breadcrumbs_taxonomy_minimum_module_weight();
-  $current_weight =  _custom_breadcrumbs_get_module_weight('custom_breadcrumbs_taxonomy');
+  $current_weight =  _custom_breadcrumbs_get_module_weight(array('custom_breadcrumbs_taxonomy'));
   if ($current_weight < $max_weight) {
     drupal_set_message(t('Increasing the weight of custom_breadcrumbs_taxonomy for use with other modules.'));
     db_query("UPDATE {system} SET weight = %d WHERE name = 'custom_breadcrumbs_taxonomy'", $max_weight);
@@ -519,9 +519,7 @@ function custom_breadcrumbs_taxonomy_enable() {
  */
 function custom_breadcrumbs_taxonomy_minimum_module_weight() {
   $modules = array('taxonomy', 'views', 'page_manager', 'custom_breadcrumbs');
-  foreach ($modules as $module) {
-    $weight[] = _custom_breadcrumbs_get_module_weight($module);
-  }
-  $max_weight = max($weight);
+  $weights = _custom_breadcrumbs_get_module_weight($modules);
+  $max_weight = array_pop($weights);
   return $max_weight + 1;
 }
