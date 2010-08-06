@@ -255,7 +255,7 @@ function custom_breadcrumbs_taxonomy_generate_breadcrumb($tid, $vid = NULL, $is_
     $term_trail = _custom_breadcrumbs_taxonomy_term_trail($tid, $is_term_page, $objs, $types, count($trail));
     $trail = array_merge($trail, $term_trail);
     // Optionally remove the current TERM from end of breadcrumb trail.
-    if ((!variable_get('custom_breadcrumbs_taxonomy_show_current_term', TRUE) || ($is_term_page && !variable_get('custom_breadcrumbs_taxonomy_show_current_term_term', TRUE))) && (count($trail) > 1)) {
+    if ((!variable_get('custom_breadcrumbs_taxonomy_show_current_term', TRUE) || ($is_term_page && !variable_get('custom_breadcrumbs_taxonomy_show_current_term_term', FALSE))) && (count($trail) > 1)) {
       array_pop($trail);
     }
   }

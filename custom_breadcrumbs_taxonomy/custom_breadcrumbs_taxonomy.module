@@ -518,7 +518,7 @@ function custom_breadcrumbs_taxonomy_enable() {
  * @see custom_breadcrumbs_admin_settings_submit().
  */
 function custom_breadcrumbs_taxonomy_minimum_module_weight() {
-  $modules = array('taxonomy', 'views', 'page_manager', 'custom_breadcrumbs');
+  $modules = array('taxonomy', 'views', 'page_manager', 'custom_breadcrumbs', 'i18ntaxonomy');
   $weights = _custom_breadcrumbs_get_module_weight($modules);
   $max_weight = array_pop($weights);
   return $max_weight + 1;
