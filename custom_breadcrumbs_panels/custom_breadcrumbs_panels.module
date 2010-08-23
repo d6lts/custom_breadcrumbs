@@ -71,6 +71,35 @@ function custom_breadcrumbs_panels_menu() {
 }
 
 /**
+ * Implements hook_nodeapi().
+ */
+function custom_breadcrumbs_panels_nodeapi($node, $op, $teaser, $page) {
+  static $module_weights = array();
+  if ($op == 'alter' && empty($teaser) && !empty($page) && $node->type == 'panel') {
+    // Loop through content objects and call hook_nodeapi for custom_breadcrumbs
+    // and its submodules for each node object.
+    $display = panels_load_display($node->panels_node['did']);
+    $contents = $display->content;
+    foreach ((array)$contents as $content) {
+      if (isset($content->configuration['nid'])) {
+        $node_context = node_load($content->configuration['nid']);
+        if (empty($module_weights)) {
+          $modules = module_implements('cb_breadcrumb_info');
+          $module_weights = _custom_breadcrumbs_get_module_weight($modules);
+          unset($module_weights['custom_breadcrumbs_panels']);
+        }
+        foreach ($module_weights as $module_name => $weight) {
+          $func = $module_name . '_nodeapi';
+          if (function_exists($func)) {
+            $func($node_context, 'alter', array(), array(1));
+          }
+        }
+      }
+    }
+  }
+}
+
+/**
  * Implements hook_ctools_render_alter().
  */
 function custom_breadcrumbs_panels_ctools_render_alter($info, $page, $args, $contexts, $task, $subtask) {
@@ -86,6 +115,7 @@ function custom_breadcrumbs_panels_ctools_render_alter($info, $page, $args, $con
       if (empty($module_weights)) {
         $modules = module_implements('cb_breadcrumb_info');
         $module_weights = _custom_breadcrumbs_get_module_weight($modules);
+        unset($module_weights['custom_breadcrumbs_panels']);
       }
       foreach ($module_weights as $module_name => $weight) {
         $func = $module_name . '_nodeapi';

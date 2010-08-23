@@ -7,6 +7,8 @@
  * for submodules to add custom breadcrumbs for other types of pages.
  */
 
+define('CUSTOM_BREADCRUMBS_TYPE_FIELDS_WEIGHT', 30);
+define('CUSTOM_BREADCRUMBS_SHOW_FORM_TABLE_DEFAULT', 1);
 /**
  * Implements hook_cb_breadcrumb_info().
  *
@@ -214,7 +216,10 @@ function custom_breadcrumbs_form_alter(&$form, $form_state, $form_id) {
     // Call custom_breadcrumbs_nodeapi to provide a custom_breadcrumb for this comment.
     custom_breadcrumbs_nodeapi($node, 'alter', array(), array(1));
   }
-  elseif (user_access('administer custom breadcrumbs') && isset($form['type']) && isset($form['#node']) && $form['type']['#value'] .'_node_form' == $form_id) {
+  elseif (variable_get('custom_breadcrumbs_show_form_table_' . $form['#node']->type, CUSTOM_BREADCRUMBS_SHOW_FORM_TABLE_DEFAULT) &&
+          user_access('administer custom breadcrumbs') &&
+          isset($form['type']) &&
+          isset($form['#node']) && $form['type']['#value'] . '_node_form' == $form_id) {
     // Provide a custom breadcrumbs fieldset for node edit forms.
     $node = $form['#node'];
     // Load all custom breadcrumbs for this node type.
@@ -242,10 +247,37 @@ function custom_breadcrumbs_form_alter(&$form, $form_state, $form_id) {
       '#group'          => 'additional_settings',
       '#collapsible'    => TRUE,
       '#collapsed'      => TRUE,
-      '#weight'         => -50,
+      '#weight'         => (function_exists('content_extra_field_weight') && isset($form['type'])) ? content_extra_field_weight($form['type']['#value'], 'custom_breadcrumbs') : CUSTOM_BREADCRUMBS_TYPE_FIELDS_WEIGHT,
     );
     $form['custom_breadcrumbs']['breadcrumb_table'] = array('#value' => $output, );
   }
+  if (user_access('administer custom breadcrumbs') && ($form_id == 'node_type_form')) {
+    $form['custom_breadcrumbs'] = array(
+      '#type'        => 'fieldset',
+      '#title'       => t('Custom Breadcrumbs'),
+      '#collapsible' => TRUE,
+      '#collapsed'   => TRUE,
+      '#weight'      => (function_exists('content_extra_field_weight') && isset($form['type'])) ? content_extra_field_weight($form['type']['#value'], 'custom_breadcrumbs') : CUSTOM_BREADCRUMBS_TYPE_FIELDS_WEIGHT,
+    );
+    $form['custom_breadcrumbs']['custom_breadcrumbs_show_form_table'] = array(
+      '#type'          => 'checkbox',
+      '#title'         => t('Display defined custom breadcrumbs on node edit form'),
+      '#description'   => t('Access is limited to users with administer custom breadcrumbs permission.'),
+      '#default_value' => variable_get('custom_breadcrumbs_show_form_table_'. $form['#node_type']->type, CUSTOM_BREADCRUMBS_TYPE_SHOW_FORM_TABLE),
+    );
+  }
+}
+
+/**
+ * Implements hook_content_extra_fields().
+ */
+function custom_breadcrumbs_content_extra_fields($type_name) {
+  $fields['custom_breadcrumbs'] = array(
+    'label' => t('Custom Breadcrumbs'),
+    'description' => t('Custom Breadcrumbs module form.'),
+    'weight' => CUSTOM_BREADCRUMBS_TYPE_FIELDS_WEIGHT,
+  );
+  return $fields;
 }
 
 /**
@@ -624,25 +656,26 @@ function custom_breadcrumbs_load_breadcrumbs($module, $table = NULL, $param = ar
     if (!isset($table) || ($info['table'] == $table)) {
       $args = array();
       $cond = array();
+      $cond_string = array();
       $sql = "SELECT * FROM {". $info['table'] ."}";
       if ($p = !empty($param)) {
         $sql .= " WHERE ";
         foreach ($param as $key => $value) {
           $cond[] = db_escape_string($key) ." = '%s'";
           $args[] = $value;
+          $cond_string[] = $key . '_' . $value;
         }
-        $cond = implode(' AND ', $cond);
-        if ($cond != '') {
-          $sql .= $cond;
+        if (!empty($cond)) {
+          $sql .= implode(' AND ', $cond);
         }
       }
       if (!empty($languages)) {
         $sql .= ($p) ? " AND " : " WHERE ";
-        $sql .= "language IN (".  db_placeholders($languages, 'text') .") ORDER BY language ASC";
+        $sql .= "language IN (" . db_placeholders($languages, 'text') . ") ORDER BY language ASC";
         $args = array_merge($args, $languages);
       }
 
-      $ckey = "{$info['table']}-{$cond}-" . implode('_', $languages);
+      $ckey = "{$info['table']}-{" . implode('_', $cond_string) . "}-" . implode('_', $languages);
       if (isset($breadcrumbs_cache[$ckey])) {
         $breadcrumbs = $breadcrumbs_cache[$ckey];
       }
