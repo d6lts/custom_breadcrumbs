@@ -290,7 +290,7 @@ function custom_breadcrumbs_common_form_elements($bid, $breadcrumb) {
     '#type'          => 'textarea',
     '#title'         => t('Breadcrumb visibility'),
     '#access'        => user_access('use php in custom breadcrumbs'),
-    '#description'   => t('Determine whether this breadcrumb should be displayed by using a PHP snippet to return TRUE or FALSE. Note that this code has access to the $node variable, and can check its type or any other property.'),
+    '#description'   => t('Determine whether this breadcrumb should be displayed by using a PHP snippet to return TRUE or FALSE. Note that this code has access to the $node variable, and can check its type or any other property. Do not use opening and closing php tags.'),
     '#default_value' => isset($breadcrumb->visibility_php) ? $breadcrumb->visibility_php : '',
   );
 
