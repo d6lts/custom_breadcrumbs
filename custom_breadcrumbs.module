@@ -216,7 +216,8 @@ function custom_breadcrumbs_form_alter(&$form, $form_state, $form_id) {
     // Call custom_breadcrumbs_nodeapi to provide a custom_breadcrumb for this comment.
     custom_breadcrumbs_nodeapi($node, 'alter', array(), array(1));
   }
-  elseif (variable_get('custom_breadcrumbs_show_form_table_' . $form['#node']->type, CUSTOM_BREADCRUMBS_SHOW_FORM_TABLE_DEFAULT) &&
+  elseif (isset($form['#node']->type) &&
+          variable_get('custom_breadcrumbs_show_form_table_' . $form['#node']->type, CUSTOM_BREADCRUMBS_SHOW_FORM_TABLE_DEFAULT) &&
           user_access('administer custom breadcrumbs') &&
           isset($form['type']) &&
           isset($form['#node']) && $form['type']['#value'] . '_node_form' == $form_id) {
