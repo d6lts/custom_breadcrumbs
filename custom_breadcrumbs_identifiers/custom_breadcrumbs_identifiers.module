@@ -65,7 +65,12 @@ function custom_breadcrumbs_identifiers_cb_identifier_values($identifier, $obj) 
       $options = array_merge($options, $obj['attributes']);
       if (module_exists('pathauto')) {
         module_load_include('inc', 'pathauto', 'pathauto');
-        $crumb = l($obj['title'], pathauto_cleanstring($options['path'], FALSE), $options);
+        $patharray = explode('/', $options['path']);
+        foreach ($patharray as $k => $v) {
+          $patharray[$k] = pathauto_cleanstring($v);
+        }
+        $options['path'] = implode('/', $patharray);
+        $crumb = l($obj['title'], $options['path'], $options);
       }
       else {
         $crumb = l($obj['title'], $options['path'], $options);
