@@ -168,8 +168,7 @@ function custom_breadcrumbs_taxonomy_nodeapi($node, $op, $teaser, $page) {
  */
 function custom_breadcrumbs_taxonomy_menu_alter(&$callbacks) {
   // This will not work if views or panels has overriden taxonomy/term/%
-  if (isset($callbacks['taxonomy/term/%']) && ($callbacks['taxonomy/term/%']['page callback'] != 'views_page')
-    && ($callbacks['taxonomy/term/%']['page callback'] != 'page_manager_term_view')) {
+  if (isset($callbacks['taxonomy/term/%']) && ($callbacks['taxonomy/term/%']['page callback'] != 'views_page')) {
     $term_callback = &$callbacks['taxonomy/term/%'];
     $callback = $term_callback['page callback'];
     $arguments = $term_callback['page arguments'];
