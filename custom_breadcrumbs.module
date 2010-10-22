@@ -141,7 +141,7 @@ function custom_breadcrumbs_preprocess_page(&$variables) {
  */
 function custom_breadcrumbs_init() {
   if (variable_get('custom_breadcrumbs_set_menu_breadcrumb', FALSE)) {
-    // Use default menu structure to set the breadcrumb.
+    // Use selected menu structure to set the breadcrumb.
     if (custom_breadcrumbs_set_menu_breadcrumb()) {
       $variables['breadcrumb'] = theme('breadcrumb', drupal_get_breadcrumb());
     }
@@ -755,14 +755,21 @@ function custom_breadcrumbs_set_menu_breadcrumb() {
   $menu_item = menu_get_item();
   $ckey = $menu_item['href'];
   if (!isset($menu_id_cache[$ckey])) {
-    $menu_id_cache[$ckey] = db_result(db_query("SELECT mlid FROM {menu_links} WHERE link_path = '%s'", $menu_item['href']));
+    $result = db_query("SELECT mlid, menu_name FROM {menu_links} WHERE link_path = '%s'", $menu_item['href']);
+    $menu_link_menus = array();
+    while ($menu_link = db_fetch_array($result)) {
+      $menu_link_menus[$menu_link['mlid']] = $menu_link['menu_name'];
+    }
+    $menu_id_cache[$ckey] = $menu_link_menus;
   }
-  $menu_link = menu_link_load($menu_id_cache[$ckey]);
-  $use_menu = $menu_link['menu_name'];
-  $menus =  variable_get('custom_breadcrumbs_menu_list', array());
-  if (in_array($use_menu, $menus)) {
-    menu_set_active_menu_name($use_menu);
-    return TRUE;
+  $menu_links = $menu_id_cache[$ckey];
+  $use_menus = variable_get('custom_breadcrumbs_menu_list', array());
+
+  foreach ($menu_links as $mlid => $menu_name) {
+    if (in_array($menu_name, $use_menus)) {
+      menu_set_active_menu_name($menu_name);
+      return TRUE;
+    }
   }
 }
 
