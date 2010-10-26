@@ -86,8 +86,8 @@ Breadcrumb Visibility
 Users given 'use php in custom breadcrumbs' permission can include a php code
 snippet that returns TRUE or FALSE to control whether or not the breadcrumb is
 displayed. Note that this code has access to the $node variable, and can check
-its type or any other
-property.
+its type or any other property. Tokens should not be used in the visibility
+code snippet, since they will not be replaced.
 
 Special Identifiers
 -------------------
@@ -169,7 +169,11 @@ variety of situations:
   to the selected language. To use '*' as a wildcard, go to custom breadcrumbs
   configuration page at /admin/settings/custom-breadcrumbs and select the
   'Use wildcard pattern matching in paths' option in the advanced settings
-  section.
+  section. When this option is enabled, the breadcrumb that best matches the
+  path will be selected. The best match is determined by the depth at which
+  the first wildcard appears. For example, if the path is path/to/some/content
+  and breadcrumbs have been defined for path/to/* and path/to/some/*, the
+  latter will be chosen as the best match.
 
 + custom_breadcrumbs_taxonomy provides custom breadcrumbs on taxonomy term
   pages, views, and for nodes that are assigned a taxonomy vocabulary or term.
@@ -180,11 +184,11 @@ variety of situations:
   be generated similarly to the taxonomy_breadcrumb module. Otherwise,
   breadcrumb generation will be according to the standard custom breadcrumbs
   approach.
-	     
+
   In taxonomy breadcrumb mode, the breadcrumb trail is automatically
   constructed based on the taxonomy term hierarchy:
   [HOME] >> [VOCABULARY] >> TERM >> [TERM] >> [TITLE]. In this mode the
-  breadcrumb titles are the term and vocabulary names. The paths these  titles
+  breadcrumb titles are the term and vocabulary names. The paths these titles
   are linked to can be assigned via the Term and Vocabulary tabs at
   admin/build/custom_breadcrumbs. Providing a path for a vocabulary will enable
   the [VOCABULARY] portion of the breadcrumb.  The path for a term can
@@ -192,7 +196,9 @@ variety of situations:
   (where tid is a number, the taxonomy term id) will be used. Select the types
   of nodes to include or exclude at the custom breadcrumbs configuration
   settings page. The option to add the node title at the end of the breadcrumb
-  trail can also be enabled on that page.
+  trail can also be enabled on that page. There is also an option to append
+  the current taxonomy term to the breadcrumb on taxonomy term pages
+  (defined to be any page with drupal path */taxonomy/term/*).
 
   In the standard custom breadcrumbs mode, you can provide the titles and paths
   for constructing the breadcrumb trail on nodes that have defined taxonomy

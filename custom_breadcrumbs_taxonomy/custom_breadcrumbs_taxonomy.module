@@ -189,7 +189,12 @@ function custom_breadcrumbs_taxonomy_views_pre_render(&$view) {
     // Set the taxonomy breadcrumb for the view.
     if (isset($view->display) && !empty($view->display)) {
       $curpath = drupal_get_normal_path($_GET['q']);
-      $is_term_page = ((arg(0, $curpath) == 'taxonomy') && (arg(1, $curpath) == 'term'));
+      // A taxonomy term page is any page with path a component 'taxonomy' followed by 'term'.
+      $arg_values = arg(NULL, $curpath);
+      $is_term_page = FALSE;
+      if (($key = array_search('taxonomy', $arg_values)) !== FALSE) {
+        $is_term_page = (isset($arg_values[$key + 1]) && $arg_values[$key + 1] == 'term');
+      }
       foreach ($view->display as $id => $display) {
         // Identify allowed displays for breadcrumb replacement.
         if (!_custom_breadcrumbs_allowed_display($display)) continue;

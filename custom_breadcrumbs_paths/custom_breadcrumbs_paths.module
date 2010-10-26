@@ -131,23 +131,31 @@ function _custom_breadcrumbs_paths_set_breadcrumb($objs = array(), $priority = 1
         if ((!$matchpath) || _custom_breadcrumbs_paths_page_match($breadcrumb)) {
           if (custom_breadcrumbs_is_visible($breadcrumb, $objs)) {
             if ($matchpath) {
-              $num = substr_count($breadcrumb->specific_path, '*');
-              if (!isset($min) || (isset($min) && ($num < $min))) {
-                  $min = $num;
-                  $min_id = $id;
+              // Assume a longer path match is a better fit than a prior shorter match.
+              if (($pos = strrpos($breadcrumb->specific_path, '*')) !== FALSE) {
+                if (!isset($max) || (isset($max) && ($pos > $max))) {
+                  $max = $pos;
+                  $max_id = $id;
+                }
               }
-              if ($num == 0) break;
+              else {
+                // No wildcards in this breadcrumb, so its a direct match.
+                $max_id = $id;
+                // Don't check any others once a visible breadcrumb is found.
+                break;
+              }
             }
             else {
-              $min_id = $id;
+              // Wildcards are not allowed, so this must be a direct match.
+              $max_id = $id;
               // Don't check any others once a visible breadcrumb is found.
               break;
             }
           }
         }
       }
-      if (isset($min_id)) {
-        custom_breadcrumbs_set_breadcrumb($breadcrumbs[$min_id], $objs);
+      if (isset($max_id)) {
+        custom_breadcrumbs_set_breadcrumb($breadcrumbs[$max_id], $objs);
         $success = $priority;
         return TRUE;
       }
