@@ -430,7 +430,7 @@ function _custom_breadcrumbs_get_trail_items($breadcrumb, $titles, $paths) {
  * @param $bid
  *   The breadcrumb id, used to set the unique breadcrumb id.
  *
- * @return $cbid
+ * @return
  *   A string containing the unique id for this breadcrumb.
  */
 function custom_breadcrumbs_unique_breadcrumb_id($type = NULL, $bid = NULL) {
@@ -438,16 +438,13 @@ function custom_breadcrumbs_unique_breadcrumb_id($type = NULL, $bid = NULL) {
   if (variable_get('custom_breadcrumbs_type_class', FALSE)) {
     if (isset($type)) {
       $base = 'custom-breadcrumbs';
-      $cbid = $base .'-'. $type;
+      $cbid = $base . '-' . $type;
       if (variable_get('custom_breadcrumbs_append_bid_class', FALSE) && isset($bid)) {
-        $cbid .= '-'. $bid;
+        $cbid .= '-' . $bid;
       }
       $stored_breadcrumb_id = $cbid;
     }
-    else {
-      $cbid = $stored_breadcrumb_id;
-    }
-  return $cbid;
+    if (isset($stored_breadcrumb_id)) return $stored_breadcrumb_id;
   }
 }
 
