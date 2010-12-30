@@ -208,13 +208,13 @@ function _custom_breadcrumbs_paths_page_match($breadcrumb) {
   if (isset($_REQUEST['q'])) {
     if (isset($breadcrumb->language) && $breadcrumb->language != '') {
       // Check for a match on the prefixed path.
-      $path = $breadcrumb->language .'/'. $breadcrumb->specific_path;
+      $path = $breadcrumb->language . '/' . $breadcrumb->specific_path;
       $page_match = _custom_breadcrumbs_match_path($_REQUEST['q'], $path);
     }
     else {
       // Append the current language if the breadcrumb language is 'All'.
       global $language;
-      $path = $language->language .'/'. $breadcrumb->specific_path;
+      $path = $language->language . '/' . $breadcrumb->specific_path;
       $page_match = _custom_breadcrumbs_match_path($_REQUEST['q'], $path);
     }
     if (!$page_match) {
@@ -267,7 +267,7 @@ function custom_breadcrumbs_paths_form(&$form_state, $type) {
   }
   $description = t('The Drupal path that this custom breadcrumb trail will apply to.');
   if (variable_get('custom_breadcrumbs_paths_allow_wildcards', FALSE)) {
-    $description .= ' '. t("The '*' character can be used as a wildcard to set a custom breadcrumb for all matching paths. For example, foo/bar* could be used to match every page with a path beginning with foo/bar. Do not include language prefixes in the path. This will be handled automatically according to the selected language.");
+    $description .= ' ' . t("The '*' character can be used as a wildcard to set a custom breadcrumb for all matching paths. For example, foo/bar* could be used to match every page with a path beginning with foo/bar. Do not include language prefixes in the path. This will be handled automatically according to the selected language.");
   }
   $form['specific_path'] = array(
     '#type'          => 'textfield',

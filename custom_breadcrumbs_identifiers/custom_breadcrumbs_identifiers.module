@@ -46,13 +46,27 @@ function custom_breadcrumbs_identifiers_cb_identifier_values($identifier, $obj) 
   $crumb_items = NULL;
   switch ($identifier) {
     case '<none>':
+      $title = check_plain($obj['title']);
+      // Optionally wrap plain text crumb in span tag with class identifiers.
+      if (variable_get('custom_breadcrumbs_none_span', FALSE)) {
+        $class = 'custom-breadcrumbs-none';
+        $attributes = $obj['attributes']['attributes']; 
+        if (!empty($attributes['class'])) {
+          $attributes['class'] .= ' ' . $class;
+        }
+        else {
+          $attributes['class'] = $class;
+        }
+        $title = '<span' . drupal_attributes($attributes) . '>' . $title . '</span>';
+      }
       $crumb_item = array(
-        'crumb' => check_plain($obj['title']),
+        'crumb' => $title,
         'title' => $obj['title'],
       );
       $crumb_items[] = $crumb_item;
       break;
     case '<page-title>':
+      // Decode title to properly handle special characters.
       $title = filter_xss(drupal_get_title());
       $crumb_item = array(
         'crumb' => $title,
@@ -146,7 +160,7 @@ function custom_breadcrumbs_identifiers_cb_identifier_values($identifier, $obj) 
         // Build the replacement string.
         $s = implode(', ', array_fill(0, count($pids), "'%s'"));
         // Query parent items.
-        $query = 'SELECT * FROM {menu_links} WHERE mlid IN ('. $s .')';
+        $query = 'SELECT * FROM {menu_links} WHERE mlid IN (' . $s . ')';
         $result = db_query($query, $pids);
         $trail = array();
 
@@ -168,3 +182,20 @@ function custom_breadcrumbs_identifiers_cb_identifier_values($identifier, $obj) 
   }
   return $crumb_items;
 }
+
+/**
+ * Implements hook_form_alter().
+ */
+function custom_breadcrumbs_identifiers_form_alter(&$form, $form_state, $form_id) {
+  if ($form_id == 'custom_breadcrumbs_admin_settings') {
+    $form['adv_settings']['custom_breadcrumbs_identifiers']['cb_identifier_options']['custom_breadcrumbs_none_span'] = array(
+      '#type'          => 'checkbox',
+      '#title'         => t("Wrap plain text breadcrumbs in &lt;span&gt; tags."),
+      '#description'   => t("If enabled, breadcrumbs that use &lt;none&gt; for the link will be wrapped in &lt;span&gt; tags with the custom-breadcrumbs-none class identifier and any other applicable classes."),
+      '#default_value' => variable_get('custom_breadcrumbs_none_span', FALSE),
+    );
+  }
+}
+
+
+

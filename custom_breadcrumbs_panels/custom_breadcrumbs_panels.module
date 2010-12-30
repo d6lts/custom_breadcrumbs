@@ -143,7 +143,7 @@ function custom_breadcrumbs_panels_ctools_render_alter($info, $page, $args, $con
     global $language;
     $languages = array('language' => $language->language, 'all' => '');
     // Check to see if the panel ID matches any custom_breadcrumb panel_id.
-    $id = isset($subtask['name']) ? 'page-'. $subtask['name'] : $task['name'];
+    $id = isset($subtask['name']) ? 'page-' . $subtask['name'] : $task['name'];
     $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs_panels', NULL, array('panel_id' => $id), $languages);
     if (!empty($breadcrumbs)) {
       if ($breadcrumb = custom_breadcrumbs_select_breadcrumb($breadcrumbs, array('panel' => $info))) {

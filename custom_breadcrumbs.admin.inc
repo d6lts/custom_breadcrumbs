@@ -168,13 +168,13 @@ function custom_breadcrumbs_form(&$form_state, $type) {
     $options[$type] = $name;
   }
   $form['node_type'] = array(
-    '#type' => 'select',
-    '#title' => t('Node type'),
-    '#required' => TRUE,
-    '#options' => $options,
-    '#description' => t('The node type this custom breadcrumb trail will apply to.'),
+    '#type'          => 'select',
+    '#title'         => t('Node type'),
+    '#required'      => TRUE,
+    '#options'       => $options,
+    '#description'   => t('The node type this custom breadcrumb trail will apply to.'),
     '#default_value' => isset($breadcrumb->node_type) ? $breadcrumb->node_type : NULL,
-    '#weight' => -10,
+    '#weight'        => -10,
   );
   // Store information needed to save this breadcrumb.
   $form['#module'] = 'custom_breadcrumbs';

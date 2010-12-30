@@ -35,8 +35,8 @@ function custom_breadcrumbs_taxonomy_term_page($str_tids, $callback, $file, $fil
       $terms[$term->tid] = $term;
     }
   }
-  if (is_file($filepath .'/'. $file)) {
-    require_once($filepath .'/'. $file);
+  if (is_file($filepath . '/' . $file)) {
+    require_once($filepath . '/' . $file);
   }
   $output = call_user_func_array($callback, $args);
   _custom_breadcrumbs_taxonomy_set_breadcrumb($tids['tids'][0], NULL, TRUE, array(), $terms);

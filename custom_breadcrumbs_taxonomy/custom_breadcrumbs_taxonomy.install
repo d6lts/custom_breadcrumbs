@@ -64,6 +64,7 @@ function custom_breadcrumbs_taxonomy_uninstall() {
   variable_del('custom_breadcrumbs_taxonomy_append_breadcrumb');
   variable_del('custom_breadcrumbs_taxonomy_show_vocabulary');
   variable_del('custom_breadcrumbs_taxonomy_show_current_term');
+  variable_del('custom_breadcrumbs_taxonomy_show_current_term_term');
   variable_del('custom_breadcrumbs_taxonomy_include_node_title');
   variable_del('custom_breadcrumbs_taxonomy_include_nodes');
   variable_del('custom_breadcrumbs_taxonomy_node_types');
