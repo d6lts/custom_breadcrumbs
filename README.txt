@@ -122,10 +122,13 @@ Summary
 * Fill in the required information for the breadcrumb (varies depending on 
   breadcrumb type, see below).
 * For the titles, put each "crumb" one line after another (There is no need to
-  put in "home"):
+  put in "home")
+* (optional) For each crumb title you can specify a title attribute ("tooltip")
+  to add to the link. Separate the crumb title and the title attribute with a
+  pipe (|) symbol:
 
   Item 1
-  SubItem A
+  SubItem A|Title attribute for SubItemA (optional)
   SuperSubItem X
 
 * For the paths, put the path to each crumb starting after the domain name.
@@ -278,7 +281,10 @@ HOME breadcrumb
 ---------------
 The text to display at beginning of the breadcrumb trail can be assigned from
 the custom breadcrumb configuration settings page. Typically this is Home or
-your site name. You can leave it blank to have no home breadcrumb. There is
+your site name. You can leave it blank to have no home breadcrumb. As with
+normal crumb titles, you can optionally specify a title attribute ("tooltip")
+for the crumb. Just separate the crumb text and the title attribute text with a
+pipe (|) symbol (i.e. Home crumb text|attribute title text). There is
 also an advanced setting to set the Home breadcrumb text on ALL pages, not
 just those with defined custom breadcrumbs. You can also use this feature to
 remove the home breadcrumb on all pages on the site - just enable the advanced
@@ -294,6 +300,8 @@ using the i18n module. Just put this in your settings.php:
 
 Then you can change it for each language at
 http://example.com/#lang-prefix#/admin/settings/custom-breadcrumbs.
+
+See http://drupal.org/node/313272 for additional information.
 
 Use PHP in breadcrumb titles and paths
 --------------------------------------

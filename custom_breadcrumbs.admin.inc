@@ -294,7 +294,7 @@ function custom_breadcrumbs_common_form_elements($bid, $breadcrumb) {
     '#default_value' => isset($breadcrumb->visibility_php) ? $breadcrumb->visibility_php : '',
   );
 
- $description = t('A list of titles for the breadcrumb links, one on each line.');
+ $description = t('A list of titles for the breadcrumb links, one on each line. For each crumb title you can also specify a title attribute to add to the link. Separate the crumb title and the title attribute with a pipe (|) symbol.');
   if (variable_get('custom_breadcrumbs_use_php_in_titles', FALSE) && user_access('use php in custom breadcrumbs')) {
     $description .= ' '. t("Or, you can enter a small PHP code snippet (less than 250 characters) returning either an array of text strings for the breadcrumb titles, with one title per array element, or an associative array with elements 'titles' and 'paths' each containing an array of text strings for the breadcrumb titles and paths, respectively. Include the snippet between %php. Use with caution since incorrect PHP code can break your Drupal site. Token replacement will occur after any PHP is evaluated.", array('%php' => '<?php ?>'));
   } 
@@ -384,7 +384,7 @@ function custom_breadcrumbs_admin_settings() {
     '#type'          => 'textfield',
     '#title'         => t('Home breadcrumb text'),
     '#default_value' => variable_get('custom_breadcrumb_home', t('Home')),
-    '#description'   => t('This text will be displayed as the first item of the breadcrumb trail. Typically Home or your site name. Leave blank to have no home breadcrumb.'),
+    '#description'   => t('This text will be displayed as the first item of the breadcrumb trail. Typically Home or your site name. Leave blank to have no home breadcrumb. You can also specify a title attribute (tooltip text) to add to the link. Just separate the crumb text and the title attribute text with a pipe (|) symbol (i.e. Home crumb text|attribute title text).'),
   );
 
   $form['settings']['custom_breadcrumbs_menu_structure'] = array(

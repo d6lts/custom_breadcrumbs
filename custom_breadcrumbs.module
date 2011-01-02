@@ -529,7 +529,14 @@ function custom_breadcrumbs_home_crumb() {
   if ($hometext != '') {
     // Add any html identifiers.
     $options = _custom_breadcrumbs_identifiers_option();
-    $trail = array(l($hometext, '<front>', $options));
+    // Decode title to properly handle special characters.
+    $original_title = decode_entities($hometext);
+    // Extract title attribute, if present.
+    list($title, $title_attr) = explode("|", $original_title, 2);
+    if (isset($title_attr)) {
+      $options['attributes']['title'] = $title_attr;
+    }
+    $trail = array(l($title, '<front>', $options));
   }
   else {
     $trail = array();
@@ -556,7 +563,12 @@ function _custom_breadcrumbs_create_crumb_items($title, $original_path, $attribu
   $crumbs = array();
 
   // Decode title to properly handle special characters.
-  $title = decode_entities($title);
+  $original_title = decode_entities($title);
+  // Extract title attribute, if present.
+  list($title, $title_attr) = explode("|", $original_title, 2);
+  if (isset($title_attr)) {
+    $attributes['attributes']['title'] = $title_attr;
+  }
   // Collapse double slashes to one.
   $original_path = preg_replace('/\/+/', '/', $original_path);
   // Removing leading and trailing slashes.
