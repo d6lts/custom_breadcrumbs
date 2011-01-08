@@ -61,18 +61,17 @@ function custom_breadcrumbs_page() {
   // Add an arrow indicating sort direction.
   $image = array($order => theme('tablesort_indicator', $sort[$order]));
 
-  $header = array(); 
+  $headers = array(); 
   foreach ($columns as $key => $title) {
     $options = array('attributes' => array('title' => t('sort by @s', array('@s' => $title))));
-    $options['query'] = 'order='. $key .'&sort='. $sort[$key];
+    $options['query'] = 'order=' . $key . '&sort=' . $sort[$key];
     if (isset($image[$key])) {
       $options['html'] = TRUE;
       $title .= $image[$key];
     }
-    $header[$key] = array('data' => l($title, $path, $options));
+    $headers[] = array('data' => l($title, $path, $options));
   }
-  $header[$order]['class'] = 'active';
-  $header['operations'] = t('Operations');
+  $headers[] = t('Operations');
   $rows = array();
   foreach ($breadcrumbs as $breadcrumb) {
     $row = array();
@@ -92,7 +91,7 @@ function custom_breadcrumbs_page() {
   }
 
   $output =  drupal_get_form('custom_breadcrumbs_filter_form'); 
-  $output .= theme('table', $header, $rows);
+  $output .= theme('table', $headers, $rows);
   return $output;
 }
 
@@ -265,8 +264,9 @@ function custom_breadcrumbs_common_form_elements($bid, $breadcrumb) {
     '#description'   => t('This name will only appear when listing custom breadcrumbs. If left blank, a name for this breadcrumb will be generated for you.'),
     '#weight'        => -50,
   );
-
-  $cbid = custom_breadcrumbs_unique_breadcrumb_id($breadcrumb->breadcrumb_type, $breadcrumb->bid);
+  if (isset($breadcrumb)) {
+    $cbid = custom_breadcrumbs_unique_breadcrumb_id($breadcrumb->breadcrumb_type, $breadcrumb->bid);
+  }
   if (isset($cbid)) {
     $form['classid'] = array(
       '#value'       => '<strong>'. t('The CSS class name for this breadcrumb is !name', array('!name' => $cbid)) .'</strong>',
