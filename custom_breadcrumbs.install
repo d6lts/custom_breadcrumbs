@@ -211,4 +211,9 @@ function custom_breadcrumbs_uninstall() {
   variable_del('custom_breadcrumbs_menu_list');
   variable_del('custom_breadcrumbs_append_bid_class');
   variable_del('custom_breadcrumbs_type_class');
+  variable_del('custom_breadcrumbs_even_odd_class');
+  variable_del('custom_breadcrumbs_exclude_list');
+  variable_del('custom_breadcrumbs_home_id');
+  variable_del('custom_breadcrumbs_none_span');
+  variable_del('custom_breadcrumbs_parts_class');
 }

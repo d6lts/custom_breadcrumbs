@@ -69,6 +69,7 @@ function custom_breadcrumbs_taxonomy_uninstall() {
   variable_del('custom_breadcrumbs_taxonomy_include_nodes');
   variable_del('custom_breadcrumbs_taxonomy_node_types');
   variable_del('custom_breadcrumbs_taxonomy_views');
+  variable_del('custom_breadcrumbs_taxonomy_result_nodes');
 }
 
 /**
