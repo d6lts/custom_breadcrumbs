@@ -73,9 +73,9 @@ function custom_breadcrumbs_node_view($node, $build_mode) {
     $trail = array(l(t('Home'), '<front>'));
     for ($i = 0; $i < count($titles); $i++) {
       $data = array('node' => $node);
-      $title = token_replace(trim($titles[$i]), $data);
-      $path = token_replace(trim($paths[$i]), $data);
+      $title = token_replace(trim($titles[$i]), $data, array('clear'=>TRUE));
       if (($title != '') && ($title != '<none>')) {
+        $path = token_replace(trim($paths[$i]), $data, array('clear'=>TRUE));
         // Create breadcrumb only if there is a title.
         $trail[] = _custom_breadcrumbs_create_crumb($title, $path);
       }
@@ -149,7 +149,8 @@ function _custom_breadcrumbs_create_crumb($title, $original_path) {
   $original_path = preg_replace('/\/+/', '/', $original_path);
   // Removing leading and trailing slashes.
   $original_path = preg_replace('/^\/|\/+$/', '', $original_path);
-  list($identifier, $path) = explode("|", $original_path, 2);
+  // Supress "Undefined Offset" error.
+  @list($identifier, $path) = explode("|", $original_path, 2);
 
   if ($path) {
     switch ($identifier) {
