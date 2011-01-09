@@ -60,7 +60,3 @@ function custom_breadcrumbs_update_6001() {
 function custom_breadcrumbs_update_6101() {
   db_drop_field('custom_breadcrumb', 'set_active_menu');
 }
-
-function custom_breadcrumbs_uninstall() {
-  drupal_uninstall_schema('custom_breadcrumbs');
-}

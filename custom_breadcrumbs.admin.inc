@@ -105,7 +105,7 @@ function custom_breadcrumbs_form($form, &$form_state) {
     '#title' => t('Special identifiers'),
     '#description' => t("The following identifiers can be used to achieve a special behavior. Identifiers should be added to the paths area in the following format:  identifier|path.<br />For example: %pathauto_id|[ogname-raw]", array('%pathauto_id' => '<pathauto>')),
   );
-  $form['help2']['tokens'] = array('#theme' => 'custom_breadcrumbs_help_identifiers');
+  $form['help2']['tokens'] = array('#markup' => theme('custom_breadcrumbs_help_identifiers'));
 
   $form['buttons']['submit'] = array(
     '#type' => 'submit',
