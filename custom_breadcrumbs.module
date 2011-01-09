@@ -181,8 +181,18 @@ function _custom_breadcrumbs_create_crumb($title, $original_path) {
   if ($path) {
     switch ($identifier) {
       case '<pathauto>':
-        if (module_exists('pathauto'))
-          $crumb = l($title, pathauto_cleanstring($path, FALSE));
+        if (module_exists('pathauto')) {
+          module_load_include('inc', 'pathauto', 'pathauto');
+          $patharray = explode('/', $path);
+          foreach ($patharray as $k => $v) {
+            $patharray[$k] = pathauto_cleanstring($v);
+          }
+          $path = implode('/', $patharray);
+          $crumb = l($title, $path);
+        }
+        else {
+          $crumb = l($title, $path);
+        }
         break;
       default:
         $crumb = l($title, $original_path);
