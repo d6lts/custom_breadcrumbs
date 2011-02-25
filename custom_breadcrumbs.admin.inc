@@ -1,5 +1,4 @@
 <?php
-// $Id$
 /**
  * @file
  * Admin page callback file for the custom_breadcrumbs module.

@@ -1,4 +1,3 @@
-; $Id$
 name = Custom Breadcrumbs Identifiers
 package = Custom Breadcrumbs
 description = Provides special identifiers for custom breadcrumbs.

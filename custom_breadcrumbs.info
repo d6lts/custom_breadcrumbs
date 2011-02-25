@@ -1,4 +1,3 @@
-; $Id$
 name = Custom Breadcrumbs
 package = Custom Breadcrumbs
 description = Allows administrators to define custom breadcrumb trails for node types.

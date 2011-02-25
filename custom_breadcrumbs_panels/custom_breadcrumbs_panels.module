@@ -1,5 +1,4 @@
 <?php
-// $Id$
 /**
  * @file
  * Provide custom breadcrumbs for panels pages.
