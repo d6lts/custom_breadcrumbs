@@ -531,11 +531,11 @@ function custom_breadcrumbs_home_crumb() {
     // Decode title to properly handle special characters.
     $original_title = decode_entities($hometext);
     // Extract title attribute, if present.
-    list($title, $title_attr) = explode("|", $original_title, 2);
-    if (isset($title_attr)) {
-      $options['attributes']['title'] = $title_attr;
+    $title_parts = explode("|", $original_title, 2);
+    if (isset($title_parts[1])) {
+      $options['attributes']['title'] = $title_parts[1];
     }
-    $trail = array(l($title, '<front>', $options));
+    $trail = array(l($title_parts[0], '<front>', $options));
   }
   else {
     $trail = array();
@@ -564,18 +564,21 @@ function _custom_breadcrumbs_create_crumb_items($title, $original_path, $attribu
   // Decode title to properly handle special characters.
   $original_title = decode_entities($title);
   // Extract title attribute, if present.
-  list($title, $title_attr) = explode("|", $original_title, 2);
-  if (isset($title_attr)) {
-    $attributes['attributes']['title'] = $title_attr;
+  $title_parts = explode("|", $original_title, 2);
+  $title = $title_parts[0];
+  if (isset($title_parts[1])) {
+    $attributes['attributes']['title'] = $title_parts[1];
   }
   // Collapse double slashes to one.
   $original_path = preg_replace('/\/+/', '/', $original_path);
   // Removing leading and trailing slashes.
   $original_path = preg_replace('/^\/|\/+$/', '', $original_path);
-  list($identifier, $path) = explode("|", $original_path, 2);
-  $identifier = trim($identifier);
-  // Replace identifiers provided by modules implementing hook_cb_identifier_values.
+  $path_parts =  explode("|", $original_path, 2);
   $values = NULL;
+  // Assume an identifier is present since there are some identifiers that don't use the pipe operator.
+  $identifier = trim($path_parts[0]);
+  $path = isset($path_parts[1]) ? $path_parts[1] : NULL;
+  // Replace identifiers provided by modules implementing hook_cb_identifier_values.
   $obj = array('title' => $title, 'path' => $path, 'attributes' => $attributes);
   foreach (module_implements('cb_identifier_values') as $module) {
     $values = module_invoke($module, 'cb_identifier_values', $identifier, $obj);
