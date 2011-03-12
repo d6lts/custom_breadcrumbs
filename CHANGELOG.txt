@@ -1,5 +1,9 @@
-#1020808 by MGN: Fixes E_NOTICE because of list() usage.#901366 by MGN: New 
-feature allows a title attribute (tooltip text) to be specified for each crumb.
+Issue #1089844 by MGN: Make the use of most recent term optional for cb_taxonomy.
+Issue #1022632 by MGN: Make use of session variables optional for anonymous users.
+Issue #1021238 by MGN: Fix problems with breadcrumb caching for anonymous users.
+#1020808 by MGN: Fixes E_NOTICE because of list() usage.
+#901366 by MGN: New feature allows a title attribute (tooltip text) to be
+specified for each crumb.
 * by MGN: Fixing minor formatting inconsistencies and deleting persistent 
 variables when uninstalling.
 #1002568 by awolfey and MGN: New feature provides option to Wrap <none> in span 

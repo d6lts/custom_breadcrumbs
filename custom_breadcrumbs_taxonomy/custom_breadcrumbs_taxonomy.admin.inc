@@ -36,6 +36,7 @@ function custom_breadcrumbs_taxonomy_term_form(&$form_state, $type) {
     '#weight' => -10,
   );
 
+  module_load_include('inc', 'custom_breadcrumbs', 'custom_breadcrumbs_common');
   $form += custom_breadcrumbs_common_form_elements($bid, $breadcrumb);
 
   $taxonomy_breadcrumbs_mode = variable_get('custom_breadcrumbs_taxonomy_use_hierarchy', TRUE);
@@ -100,6 +101,7 @@ function custom_breadcrumbs_taxonomy_vocabulary_form(&$form_state, $type) {
     '#weight' => -10,
   );
 
+  module_load_include('inc', 'custom_breadcrumbs', 'custom_breadcrumbs_common');
   $form += custom_breadcrumbs_common_form_elements($bid, $breadcrumb);
 
   $taxonomy_breadcrumbs_mode = variable_get('custom_breadcrumbs_taxonomy_use_hierarchy', TRUE);

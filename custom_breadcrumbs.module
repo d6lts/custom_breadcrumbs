@@ -313,6 +313,7 @@ function custom_breadcrumbs_set_breadcrumb($breadcrumb, $objs = array()) {
     drupal_set_breadcrumb($trail);
     // Optionally save the unique breadcrumb id of the last set breadcrumb.
     custom_breadcrumbs_unique_breadcrumb_id($breadcrumb->breadcrumb_type, $breadcrumb->bid);
+    return TRUE;
   }
 }
 
