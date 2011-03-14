@@ -1,3 +1,4 @@
+Issue #1049558 by AlexisWilke: Fixes E_NOTICE error.
 Issue #1058290 by fivefrank: Do not show Custom Breadcrumbs for Taxonomy form
 when adding a taxonomy term or vocabulary.
 Issue #1089844 by MGN: Make the use of most recent term optional for cb_taxonomy.

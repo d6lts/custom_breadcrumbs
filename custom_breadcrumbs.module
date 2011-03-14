@@ -258,7 +258,7 @@ function custom_breadcrumbs_form_alter(&$form, $form_state, $form_id) {
       '#type'          => 'checkbox',
       '#title'         => t('Display defined custom breadcrumbs on node edit form'),
       '#description'   => t('Access is limited to users with administer custom breadcrumbs permission.'),
-      '#default_value' => variable_get('custom_breadcrumbs_show_form_table_' . $form['#node_type']->type, CUSTOM_BREADCRUMBS_TYPE_SHOW_FORM_TABLE),
+      '#default_value' => variable_get('custom_breadcrumbs_show_form_table_' . $form['#node_type']->type, CUSTOM_BREADCRUMBS_SHOW_FORM_TABLE_DEFAULT),
     );
   }
 }
