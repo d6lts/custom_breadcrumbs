@@ -452,29 +452,31 @@ function custom_breadcrumbs_taxonomy_form_alter(&$form, $form_state, $form_id) {
  * Implements hook_form_alter().
  */
 function custom_breadcrumbs_taxonomy_form_taxonomy_form_vocabulary_alter(&$form, &$form_state) {
-  // Load all custom breadcrumbs for this vid.
-  $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs_taxonomy', 'custom_breadcrumbs_taxonomy_vocabulary', array('vid' => $form['vid']['#value']));
-  $output = NULL;
-  if (count($breadcrumbs) > 0) {
-    $output = '<p>' . t('Custom breadcrumbs have been created for this vocabulary. Use the !link to add additional breadcrumbs. Or follow the links in the table below to edit or delete existing custom breadcrumbs.', array('!link' => l('Custom Breadcrumbs Administration Page', 'admin/build/custom_breadcrumbs'))) . '</p>';
+  if (isset($form['vid']['#value']) && !(isset($_POST['op']) && $_POST['op'] == t('Delete')) || isset($_POST['confirm'])) {
+    // Load all custom breadcrumbs for this vid.
+    $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs_taxonomy', 'custom_breadcrumbs_taxonomy_vocabulary', array('vid' => $form['vid']['#value']));
+    $output = NULL;
+    if (count($breadcrumbs) > 0) {
+      $output = '<p>' . t('Custom breadcrumbs have been created for this vocabulary. Use the !link to add additional breadcrumbs. Or follow the links in the table below to edit or delete existing custom breadcrumbs.', array('!link' => l('Custom Breadcrumbs Administration Page', 'admin/build/custom_breadcrumbs'))) . '</p>';
+    }
+    // Show a table of custom breadcrumbs with links to the edit form.
+    $output .= custom_breadcrumbs_simple_breadcrumb_table($breadcrumbs);
+    $form['custom_breadcrumbs_taxonomy_vocabulary'] = array(
+      '#type'           => 'fieldset',
+      '#title'          => t('Custom Breadcrumbs for Taxonomy'),
+      '#collapsible'    => TRUE,
+      '#collapsed'      => TRUE,
+      '#weight'         => -50,
+    );
+    $form['custom_breadcrumbs_taxonomy_vocabulary']['breadcrumb_table'] = array('#value' => $output, );
   }
-  // Show a table of custom breadcrumbs with links to the edit form.
-  $output .= custom_breadcrumbs_simple_breadcrumb_table($breadcrumbs);
-  $form['custom_breadcrumbs_taxonomy_vocabulary'] = array(
-    '#type'           => 'fieldset',
-    '#title'          => t('Custom Breadcrumbs for Taxonomy'),
-    '#collapsible'    => TRUE,
-    '#collapsed'      => TRUE,
-    '#weight'         => -50,
-  );
-  $form['custom_breadcrumbs_taxonomy_vocabulary']['breadcrumb_table'] = array('#value' => $output, );
 }
 
 /**
  * Implements hook_form_FORM_ID_alter().
  */
 function custom_breadcrumbs_taxonomy_form_taxonomy_form_term_alter(&$form, &$form_state) {
-  if (!(isset($_POST['op']) && $_POST['op'] == t('Delete')) || isset($_POST['confirm'])) {
+  if (isset($form['tid']['#value']) && !(isset($_POST['op']) && $_POST['op'] == t('Delete')) || isset($_POST['confirm'])) {
     // Load all custom breadcrumbs for this tid.
     $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs_taxonomy', 'custom_breadcrumbs_taxonomy_term', array('tid' => $form['tid']['#value']));
     $output = NULL;
