@@ -1,3 +1,5 @@
+Issue #839222 by roderik: Fixes bug in setting the correct weight of
+the custom_breadcrumbs_taxonomy module.
 Issue #1049558 by AlexisWilke: Fixes E_NOTICE error.
 Issue #1058290 by fivefrank: Do not show Custom Breadcrumbs for Taxonomy form
 when adding a taxonomy term or vocabulary.
