@@ -1,3 +1,6 @@
+Issue #480774 (revisited) by roderik and MGN: Fixes bug in failing to include
+the custom_breadcrumbs.admin.inc to provide the simple_breadcrumb_table in
+custom_breadcrumbs_taxonomy module.
 Issue #839222 by roderik: Fixes bug in setting the correct weight of
 the custom_breadcrumbs_taxonomy module.
 Issue #1049558 by AlexisWilke: Fixes E_NOTICE error.

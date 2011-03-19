@@ -460,6 +460,7 @@ function custom_breadcrumbs_taxonomy_form_taxonomy_form_vocabulary_alter(&$form,
       $output = '<p>' . t('Custom breadcrumbs have been created for this vocabulary. Use the !link to add additional breadcrumbs. Or follow the links in the table below to edit or delete existing custom breadcrumbs.', array('!link' => l('Custom Breadcrumbs Administration Page', 'admin/build/custom_breadcrumbs'))) . '</p>';
     }
     // Show a table of custom breadcrumbs with links to the edit form.
+    module_load_include('inc', 'custom_breadcrumbs', 'custom_breadcrumbs.admin');
     $output .= custom_breadcrumbs_simple_breadcrumb_table($breadcrumbs);
     $form['custom_breadcrumbs_taxonomy_vocabulary'] = array(
       '#type'           => 'fieldset',
@@ -484,6 +485,7 @@ function custom_breadcrumbs_taxonomy_form_taxonomy_form_term_alter(&$form, &$for
       $output = '<p>' . t('Custom breadcrumbs have been created for this term. Use the <a href="@link">Custom Breadcrumbs Administration Page</a> to add additional breadcrumbs. Or follow the links in the table below to edit or delete existing custom breadcrumbs.', array('@link' => url('admin/build/custom_breadcrumbs'))) . '</p>';
     }
     // Show a table of custom breadcrumbs with links to the edit form.
+    module_load_include('inc', 'custom_breadcrumbs', 'custom_breadcrumbs.admin');
     $output .= custom_breadcrumbs_simple_breadcrumb_table($breadcrumbs);
     $form['custom_breadcrumbs_taxonomy_term'] = array(
       '#type'           => 'fieldset',
