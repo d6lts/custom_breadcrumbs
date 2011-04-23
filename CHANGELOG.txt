@@ -1,3 +1,6 @@
+Issue #1119910 by stella: Fixes bug resulting in stale menu breadcrumb.
+Issue #1054830 by rv0 and MGN: Removed incorrect line from hook_init.
+Issue #1071978 by MGN: New feature to append page title on all custom breadcrumbs.
 Issue #480774 (revisited) by roderik and MGN: Fixes bug in failing to include
 the custom_breadcrumbs.admin.inc to provide the simple_breadcrumb_table in
 custom_breadcrumbs_taxonomy module.
