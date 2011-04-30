@@ -1,3 +1,4 @@
+Issue #1130618 by luigisa: Fixes bug in stripping out language prefix on path breadcrumbs.
 Issue #1119910 by stella: Fixes bug resulting in stale menu breadcrumb.
 Issue #1054830 by rv0 and MGN: Removed incorrect line from hook_init.
 Issue #1071978 by MGN: New feature to append page title on all custom breadcrumbs.
