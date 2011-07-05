@@ -5,23 +5,23 @@
  * Common helper functions used by custom breadcrumbs submodules.
  */
 
-/**
- * Determines if two paths match, allowing for wildcards and aliases.
+/** * Determines if two paths match, allowing for wildcards and aliases.
  *
  * @param $curpath
  *   The current Drupal path.
- * @param $breadcrumb_path 
+ * @param $breadcrumb_path
  *   The path that the breadcrumb applies to.
  *
  * @return
  *    TRUE (1) if the paths match, FALSE (0) otherwise.
  */
 function _custom_breadcrumbs_match_path($curpath, $breadcrumb_path) {
+ 
   $path = drupal_get_path_alias($curpath);
   // Compare with the internal and path alias (if any).
   $page_match = drupal_match_path(drupal_strtolower($path), drupal_strtolower($breadcrumb_path));
   if ($path != $curpath) {
-   $page_match = $page_match || drupal_match_path(drupal_strtolower($curpath), drupal_strtolower($breadcrumb_path));
+    $page_match = $page_match || drupal_match_path(drupal_strtolower($curpath), drupal_strtolower($breadcrumb_path));
   }
   return $page_match;
 }
@@ -38,6 +38,7 @@ function _custom_breadcrumbs_match_path($curpath, $breadcrumb_path) {
  *   The complete path to the view.
  */
 function _custom_breadcrumbs_construct_view_path($display) {
+  // @todo changes needed for D7?
   $bits = explode('/', $display->display_options['path']);
   $args = arg();
   foreach ($bits as $pos => $bit) {
@@ -66,6 +67,7 @@ function _custom_breadcrumbs_construct_view_path($display) {
  *   TRUE if the display should be considered for a custom breadcrumb, FALSE otherwise.
  */
 function _custom_breadcrumbs_allowed_display($display) {
+  // @todo Changes needed for D7?
   $allowed_display_types = array('page', 'calendar', 'image_gallery');
   if (in_array($display->display_plugin, $allowed_display_types)) {
     if (!(isset($display->handler->view->is_attachment) && $display->handler->view->is_attachment)) {
@@ -89,11 +91,15 @@ function _custom_breadcrumbs_allowed_display($display) {
  *   The $display->handler->view->args array.
  *
  * @return $arg_values
- *   An associative array of two elements, 'types' and 'values', each an array with elements 
+ *   An associative array of two elements, 'types' and 'values', each an array with elements
  *   corresponding to the views arguments.
  */
 function _custom_breadcrumbs_views_parse_args($arguments, $viewargs) {
-  $arg_values = array('types' => array(), 'values' => array());
+  // @todo Changes needed for D7?
+  $arg_values = array(
+    'types' => array(),
+    'values' => array(),
+  );
   foreach ($arguments as $arg_id => $argument) {
     if (!empty($viewargs)) {
       $arg = array_shift($viewargs);
@@ -129,6 +135,7 @@ function _custom_breadcrumbs_views_parse_args($arguments, $viewargs) {
  *   An associate array of objects to use for token replacement.
  */
 function _custom_breadcrumbs_views_token_types($display) {
+  // @todo Changes needed for D7?
   $objs = array();
   // Check to see if the current display has overriden the default arguments.
   $arguments = _custom_breadcrumbs_views_display_arguments($display);
@@ -138,13 +145,13 @@ function _custom_breadcrumbs_views_token_types($display) {
     foreach ($arg_values['types'] as $key => $type) {
       switch ($type) {
         case 'tid':
-          $objs['taxonomy'] = taxonomy_get_term($arg_values['values'][$key]);
+          $objs['taxonomy'] = taxonomy_term_load($arg_values['values'][$key]);
           break;
         case 'nid':
-          $objs['node'] = node_load(array('nid' => $arg_values['values'][$key]));
+          $objs['node'] = node_load($arg_values['values'][$key]);
           break;
         case 'uid':
-          $objs['user'] = user_load(array('uid' => $arg_values['values'][$key]));
+          $objs['user'] = user_load($arg_values['values'][$key]);
           break;
       }
     }
@@ -162,9 +169,10 @@ function _custom_breadcrumbs_views_token_types($display) {
  *   The view display option arguments array.
  */
 function _custom_breadcrumbs_views_display_arguments($display) {
+  // @todo Changes for D7?
   $arguments = NULL;
   if (isset($display->handler->view->display[$display->id]->display_options['arguments'])) {
-    $arguments = $display->handler->view->display[$display->id]->display_options['arguments'];
+    $arguments =$display->handler->view->display[$display->id]->display_options['arguments'];
   }
   if (!isset($arguments) && isset($display->handler->view->display['default']->display_options['arguments'])) {
     $arguments = $display->handler->view->display['default']->display_options['arguments'];

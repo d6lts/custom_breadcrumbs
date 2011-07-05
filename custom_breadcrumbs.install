@@ -6,13 +6,6 @@
  */
 
 /**
- * Implements hook_install().
- */
-function custom_breadcrumbs_install() {
-  drupal_install_schema('custom_breadcrumbs');
-}
-
-/**
  * Implements hook_schema().
  */
 function custom_breadcrumbs_schema() {
@@ -74,10 +67,34 @@ function custom_breadcrumbs_schema() {
   return $schema;
 }
 
-// Update old-style tokens from early versions of token.module.
-// Most users aren't using them, but we might as well handle them
-// properly.
+/**
+ * Implements hook_uninstall().
+ */
+function custom_breadcrumbs_uninstall() {
 
+  // Remove persistent variables.
+  variable_del('custom_breadcrumbs_sort');
+  variable_del('custom_breadcrumb_home');
+  variable_del('custom_breadcrumbs_set_global_home_breadcrumb');
+  variable_del('custom_breadcrumbs_set_menu_breadcrumb');
+  variable_del('custom_breadcrumbs_force_active_trail');
+  variable_del('custom_breadcrumbs_menu_theme');
+  variable_del('custom_breadcrumbs_adjust_module_weights');
+  variable_del('custom_breadcrumbs_use_php_in_titles');
+  variable_del('custom_breadcrumbs_use_exclude_list');
+  variable_del('custom_breadcrumbs_menu_list');
+  variable_del('custom_breadcrumbs_append_bid_class');
+  variable_del('custom_breadcrumbs_type_class');
+  variable_del('custom_breadcrumbs_even_odd_class');
+  variable_del('custom_breadcrumbs_exclude_list');
+  variable_del('custom_breadcrumbs_home_id');
+  variable_del('custom_breadcrumbs_none_span');
+  variable_del('custom_breadcrumbs_parts_class');
+}
+
+/**
+ * Update old-style tokens from early versions of token.module.
+ */
 function custom_breadcrumbs_update_1() {
   $stuff = array(
     '%author_id'      => '[author-uid]',
@@ -104,79 +121,75 @@ function custom_breadcrumbs_update_1() {
   $search = array_keys($stuff);
   $replace = array_values($stuff);
 
-  $result = db_query("SELECT * FROM {custom_breadcrumb}");
-  while ($crumb = db_fetch_object($result)) {
+  $result = db_query("SELECT * FROM {custom_breadcrumb}")->execute();
+  foreach ($result as $crumb) {
     $crumb->titles = str_replace($search, $replace, $crumb->titles);
     $crumb->paths = str_replace($search, $replace, $crumb->paths);
     _custom_breadcrumbs_save_breadcrumb('custom_breadcrumb', $crumb);
   }
 
-  return array('success' => TRUE, 'query' => 'Custom Breadcrumb replacement strings updated for use with Token module.');
+  return t('Custom Breadcrumb replacement strings updated for use with Token module.');
 }
-
-function custom_breadcrumbs_update_2() {
-  $ret = array();
-  switch ($GLOBALS['db_type']) {
-    case 'mysql':
-    case 'mysqli':
-      $ret[] = update_sql("ALTER TABLE {custom_breadcrumb} ADD visibility_php text NOT NULL default ''");
-      break;
-    case 'pgsql':
-      db_add_column($ret, 'custom_breadcrumb', 'visibility_php', 'text', array('not null' => TRUE, 'default' => "''"));
-      break;
-  }
-  return $ret;
-}
-
-// Ensure this module's weight is larger than other modules, like views, so custom breadcrumbs page callback is used.
-function custom_breadcrumbs_update_3() {
-  $ret[] = update_sql("UPDATE {system} SET weight = 12 WHERE name = 'custom_breadcrumbs'");
-  return $ret;
-}
-
-// Add the menu flag.
-function custom_breadcrumbs_update_6001() {
-  $ret = array();
-  db_add_field($ret, 'custom_breadcrumb', 'set_active_menu', array('type' => 'int', 'default' => 1, 'NOT NULL' => TRUE));
-  return $ret;
-}
-
 
 /**
- * Removes set_active_menu field because it is no longer used.
+ * Add a visibility_php field.
+ */
+function custom_breadcrumbs_update_2() {
+  db_add_column('custom_breadcrumb', 'visibility_php', 'text', array('not null' => TRUE, 'default' => "''"));
+  return t('Added a visibility_php field to the custom_breadcrumb database table.');
+}
+
+/**
+ * Ensure this module's weight is larger than other modules, like views, so custom breadcrumbs page callback is used.
+ */
+function custom_breadcrumbs_update_3() {
+  db_update('system')
+    ->fields(array('weight' => 12))
+    ->condition('type', 'module')
+    ->condition('name', 'custom_breadcrumbs')
+    ->execute();
+  return t('Adjusted the custom_ breadcrumbs module weight.');
+}
+
+/**
+ * Add the menu flag.
+ */
+function custom_breadcrumbs_update_6001() {
+  db_add_field('custom_breadcrumb', 'set_active_menu', array('type' => 'int', 'default' => 1, 'NOT NULL' => TRUE));
+  return t('Added set_active_menu flag to custom_breadcrumb database table.');
+}
+
+/**
+ * Remove the set_active_menu field because it is no longer used.
  */
 function custom_breadcrumbs_update_6101() {
-  $ret = array();
-  db_drop_field($ret, 'custom_breadcrumb', 'set_active_menu');
-  return $ret;
+  db_drop_field('custom_breadcrumb', 'set_active_menu');
+  return t('Removed the set_active_menu field from custom breadcrumb database table because it is no longer used.');
 }
 
 /**
  * Adds language support to breadcrumbs.
  */
 function custom_breadcrumbs_update_6200() {
-  $ret = array();
-  db_add_field($ret, 'custom_breadcrumb', 'language', array('type' => 'varchar', 'length' => 12, 'not null' => TRUE, 'default' => ''));
-  return $ret;
+  db_add_field('custom_breadcrumb', 'language', array('type' => 'varchar', 'length' => 12, 'not null' => TRUE, 'default' => ''));
+  return t('Added language field to custom_breadcrumb database table.');
 }
 
 /**
  * Adds indices to custom_breadcrumb table to improve performance.
  */
 function custom_breadcrumbs_update_6201() {
-  $ret = array();
-  db_add_index($ret, 'custom_breadcrumb', 'language', array('language'));
-  db_add_index($ret, 'custom_breadcrumb', 'node_language', array('node_type', 'language'));
-  return $ret;
+  db_add_index('custom_breadcrumb', 'language', array('language'));
+  db_add_index('custom_breadcrumb', 'node_language', array('node_type', 'language'));
+  return t('Added indices to custom_breadcrumb table to improve performance.');
 }
 
 /**
  * Adds name field for improved organization of breadcrumbs
  */
 function custom_breadcrumbs_update_6202() {
-  $ret = array();
-  db_add_field($ret, 'custom_breadcrumb', 'name', array('type' => 'varchar', 'length' => 128, 'NOT NULL' => FALSE, 'description' => 'An optional name for the custom breadcrumb.'));
-  return $ret;
+  db_add_field('custom_breadcrumb', 'name', array('type' => 'varchar', 'length' => 128, 'NOT NULL' => FALSE, 'description' => 'An optional name for the custom breadcrumb.'));
+  return t('Added name field for improved organization of custom breadcrumbs.');
 }
 
 /**
@@ -184,35 +197,5 @@ function custom_breadcrumbs_update_6202() {
  */
 function custom_breadcrumbs_update_6203() {
   module_enable(array('custom_breadcrumbs_identifiers'));
-  $ret[] = array(
-    'success' => module_exists('custom_breadcrumbs_identifiers'),
-    'query' => 'Custom_breadcrumbs_identifiers was enabled for legacy reasons. Please disable it, if you do not use special identifiers in your breadcrumb settings.',
-  );
-  return $ret;
-}
-
-/**
- * Implements hook_uninstall().
- */
-function custom_breadcrumbs_uninstall() {
-  drupal_uninstall_schema('custom_breadcrumbs');
-
-  // Remove persistent variables.
-  variable_del('custom_breadcrumbs_sort');
-  variable_del('custom_breadcrumb_home');
-  variable_del('custom_breadcrumbs_set_global_home_breadcrumb');
-  variable_del('custom_breadcrumbs_set_menu_breadcrumb');
-  variable_del('custom_breadcrumbs_force_active_trail');
-  variable_del('custom_breadcrumbs_menu_theme');
-  variable_del('custom_breadcrumbs_adjust_module_weights');
-  variable_del('custom_breadcrumbs_use_php_in_titles');
-  variable_del('custom_breadcrumbs_use_exclude_list');
-  variable_del('custom_breadcrumbs_menu_list');
-  variable_del('custom_breadcrumbs_append_bid_class');
-  variable_del('custom_breadcrumbs_type_class');
-  variable_del('custom_breadcrumbs_even_odd_class');
-  variable_del('custom_breadcrumbs_exclude_list');
-  variable_del('custom_breadcrumbs_home_id');
-  variable_del('custom_breadcrumbs_none_span');
-  variable_del('custom_breadcrumbs_parts_class');
+  return t('Custom_breadcrumbs_identifiers was enabled for legacy reasons. Please disable it if you do not need special identifiers in your breadcrumb settings.');
 }

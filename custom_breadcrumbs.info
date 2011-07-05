@@ -1,7 +1,10 @@
 name = Custom Breadcrumbs
 package = Custom Breadcrumbs
 description = Allows administrators to define custom breadcrumb trails for node types.
-core = 6.x
+core = 7.x
+configure = admin/config/user-interface/custom-breadcrumbs
 
-
-
+files[] = custom_breadcrumbs.admin.inc
+files[] = custom_breadcrumbs.install
+files[] = custom_breadcrumbs.module
+files[] = custom_breadcrumbs_common.inc

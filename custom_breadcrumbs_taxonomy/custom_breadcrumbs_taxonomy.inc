@@ -6,41 +6,24 @@
  */
 
 /**
- * Sets a taxonomy breadcrumb and calls the original taxonomy/term/% callback.
- *
- * @param $callback
- *   A callback function as defined in hook_menu().
- * @param $file
- *   A callback file as defined in hook_menu().
- * @param $filepath
- *   A callback file path as defined in hook_menu().
- * @param $str_tids
- *   A term selector string, e.g. "1,3,8" or "4+9".
- * @param ...
- *   Additional arguments to pass on to the callback.
- *
- * @return
- *   The return value of the original callback function.
+ * Finds all terms associated with a node.
+ * This is a D7 Replacement for Drupal 6 taxonomy_node_get_terms.
  */
-function custom_breadcrumbs_taxonomy_term_page($str_tids, $callback, $file, $filepath) {
-  $args = array_slice(func_get_args(), 4);
-
-  // Use first term to generate breadcrumb trail.
-  $tids = taxonomy_terms_parse_string($str_tids);
-  $terms = array();
-  foreach ($tids['tids'] as $tid) {
-    $term = taxonomy_get_term($tid);
-    if ($term) {
-      $terms[$term->tid] = $term;
+function custom_breadcrumbs_taxonomy_node_get_terms($node, $key = 'tid') {
+  static $terms;
+  if (!isset($terms[$node->vid][$key])) {
+    $query = db_select('taxonomy_index', 'r');
+    $t_alias = $query->join('taxonomy_term_data', 't', 'r.tid = t.tid');
+    $v_alias = $query->join('taxonomy_vocabulary', 'v', 't.vid = v.vid');
+    $query->fields( $t_alias );
+    $query->condition("r.nid", $node->nid);
+    $result = $query->execute();
+    $terms[$node->vid][$key] = array();
+    foreach ($result as $term) {
+      $terms[$node->vid][$key][$term->$key] = $term;
     }
   }
-  if (is_file($filepath . '/' . $file)) {
-    require_once($filepath . '/' . $file);
-  }
-  $output = call_user_func_array($callback, $args);
-  _custom_breadcrumbs_taxonomy_set_breadcrumb($tids['tids'][0], NULL, TRUE, array(), $terms);
-
-  return $output;
+  return $terms[$node->vid][$key];
 }
 
 /**
@@ -75,7 +58,10 @@ function _custom_breadcrumbs_taxonomy_set_breadcrumb($tid, $vid = NULL, $is_term
   }
   else {
     global $language;
-    $languages = array('language' => $language->language, 'all' => '');
+    $languages = array(
+      'language' => $language->language,
+      'all' => '',
+    );
     // Check each term to see if it has a custom breadcrumb.
     $vids = array();
     if (!empty($terms)) {
@@ -140,10 +126,10 @@ function custom_breadcrumbs_taxonomy_node_get_term($node) {
  *   The previously selected taxonomy term object that also belongs to the node.
  */
 function custom_breadcrumbs_taxonomy_node_get_recent_term($node) {
-  $terms = taxonomy_node_get_terms($node);
+  $terms = custom_breadcrumbs_taxonomy_node_get_terms($node);
   $tid = _custom_breadcrumbs_taxonomy_recent_term();
   if (is_array($terms) && !empty($terms) && !is_null($tid)) {
-    return (isset($terms[$tid])) ? taxonomy_get_term($tid) : NULL;
+    return (isset($terms[$tid])) ? taxonomy_term_load($tid) : NULL;
   }
 }
 
@@ -185,15 +171,17 @@ function _custom_breadcrumbs_taxonomy_recent_term($tid = NULL) {
  *   The taxonomy term object.
  */
 function custom_breadcrumbs_taxonomy_node_get_lightest_term($node) {
-  $terms = taxonomy_node_get_terms($node);
+  $terms = custom_breadcrumbs_taxonomy_node_get_terms($node);
   if (!empty($terms)) {
     if (count($terms) > 1) {
       foreach ($terms as $term) {
-        // Only consider terms in the lightest vocabulary. 
+        // Only consider terms in the lightest vocabulary.
         if (!isset($vid)) {
           $vid = $term->vid;
         }
-        elseif ($term->vid != $vid) continue;
+        elseif ($term->vid != $vid) {
+          continue;
+        }
         // If the term has parents, the weight of the term is the weight of the lightest parent.
         $parents = taxonomy_get_parents_all($term->tid);
         $depth = count($parents);
@@ -246,15 +234,18 @@ function custom_breadcrumbs_taxonomy_node_get_lightest_term($node) {
  *   The breadcrumb trail.
  */
 function custom_breadcrumbs_taxonomy_generate_breadcrumb($tid, $vid = NULL, $is_term_page = FALSE, $objs = NULL) {
-  $term = (is_null($tid)) ? NULL : taxonomy_get_term($tid);
-  $vocabid = (!is_null($vid)) ? $vid : (is_null($term) ? NULL : $term->vid);
-  $types = NULL;
-  if (module_exists('token')) {
-    $objs['taxonomy'] = $term;
-    $types = custom_breadcrumbs_token_types($objs);
+  if ($is_term_page && isset($objs['taxonomy'])) {
+    $term = $objs['taxonomy'];
   }
+  else {
+    $term = (is_null($tid)) ? NULL : taxonomy_term_load($tid);
+    $objs['taxonomy'] = $term;
+  }
+  $vocabid = (!is_null($vid)) ? $vid : (is_null($term) ? NULL : $term->vid);
+  $types = custom_breadcrumbs_token_types($objs);
+
   $trail = array();
-    
+
   if (!in_array($vocabid, variable_get('custom_breadcrumbs_taxonomy_excluded_vocabs', array()))) {
     $trail = _custom_breadcrumbs_taxonomy_home_trail();
 
@@ -276,8 +267,7 @@ function custom_breadcrumbs_taxonomy_generate_breadcrumb($tid, $vid = NULL, $is_
 }
 
 /**
- * Translates configurable string when i18ntaxonomy module is installed.
- */
+ * Translates configurable string when i18ntaxonomy module is installed. */
 function _custom_breadcrumbs_taxonomy_tt($string_id, $default, $language = NULL) {
   return function_exists('tt') ? tt($string_id, $default, $language) : $default;
 }
@@ -329,10 +319,8 @@ function _custom_breadcrumbs_taxonomy_vocabulary_trail($vid, $is_term_page = FAL
     $vocabulary_path = $breadcrumb->paths;
     $title = $breadcrumb->titles;
     $bid = $breadcrumb->bid;
-    if (module_exists('token')) {
-      $vocabulary_path = token_replace_multiple($vocabulary_path, $types);
-      $title = token_replace_multiple($title, $types);
-    }
+    $vocabulary_path = token_replace($vocabulary_path, $types, array('clear' => TRUE));
+    $title = token_replace($title, $types, array('clear' => TRUE));
   }
   if ($title == NULL) {
     $vocabulary = taxonomy_vocabulary_load($vid);
@@ -378,16 +366,15 @@ function _custom_breadcrumbs_taxonomy_term_trail($tid, $is_term_page = FALSE, $o
       $term_path = $breadcrumb->paths;
       $title = $breadcrumb->titles;
       $bid = $breadcrumb->bid;
-      if (module_exists('token')) {
-        $term_path = token_replace_multiple($term_path, $types);
-        $title = token_replace_multiple($title, $types);
-      }
+      $term_path = token_replace($term_path, $types, array('clear' => TRUE));
+      $title = token_replace($title, $types,  array('clear' => TRUE));
     }
     if ($title == NULL) {
       $title = _custom_breadcrumbs_taxonomy_tt("taxonomy:term:$parent_term->tid:name", $parent_term->name);
     }
     if ($term_path == NULL) {
-      $term_path = taxonomy_term_path(taxonomy_get_term($parent_term->tid));
+      $uri = entity_uri('taxonomy_term', $parent_term);
+      $term_path = $uri['path'];
     }
 
     // Do not create links to own self if we are on a taxonomy/term page.
@@ -408,7 +395,7 @@ function _custom_breadcrumbs_taxonomy_term_trail($tid, $is_term_page = FALSE, $o
  */
 function custom_breadcrumbs_taxonomy_set_session() {
   global $user;
-  if (variable_get('custom_breadcrumbs_taxonomy_session', FALSE) && !(($user->uid==0) && variable_get('custom_breadcrumbs_taxonomy_no_anon_sessions', TRUE))) {
+  if (variable_get('custom_breadcrumbs_taxonomy_session', FALSE) && !(($user->uid == 0) && variable_get('custom_breadcrumbs_taxonomy_no_anon_sessions', TRUE))) {
     $_SESSION['custom_breadcrumbs_taxonomy_set'] = TRUE;
   }
 }
