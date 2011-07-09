@@ -50,7 +50,7 @@ function custom_breadcrumbs_taxonomy_term_form($form, &$form_state, $type) {
     '#default_value' => isset($breadcrumb->tid) ?  $breadcrumb->tid : '',
     '#weight' => -10,
   );
-  module_load_include('inc', 'custom_breadcrumbs', 'custom_breadcrumbs_common');
+  module_load_include('inc', 'custom_breadcrumbs', 'custom_breadcrumbs.admin');
   $form += custom_breadcrumbs_common_form_elements($bid, $breadcrumb);
   $taxonomy_breadcrumbs_mode = variable_get('custom_breadcrumbs_taxonomy_use_hierarchy', TRUE);
   if ($taxonomy_breadcrumbs_mode) {
@@ -117,7 +117,7 @@ function custom_breadcrumbs_taxonomy_vocabulary_form($form, &$form_state, $type)
     '#weight' => -10,
   );
 
-  module_load_include('inc', 'custom_breadcrumbs', 'custom_breadcrumbs_common');
+  module_load_include('inc', 'custom_breadcrumbs', 'custom_breadcrumbs.admin');
   $form += custom_breadcrumbs_common_form_elements($bid, $breadcrumb);
 
   $taxonomy_breadcrumbs_mode = variable_get('custom_breadcrumbs_taxonomy_use_hierarchy', TRUE);

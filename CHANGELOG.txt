@@ -1,3 +1,4 @@
-Issue #857956 Initial port of custom breadcrumbs 6.x-2.x branch to 7.x-2.x.
+Issue #857956 by MGN: Initial port of custom breadcrumbs 6.x-2.x branch to 7.x-2.x.
 Includes custom_breadcrumbs, custom_breadcrumbs_paths and custom_breadcrumbs_taxonomy.
 Other modules to follow.
+Issue #1213018 by MGN: Fixes incorrect loading of include file in custom_breadcrumbs_taxonomy.
