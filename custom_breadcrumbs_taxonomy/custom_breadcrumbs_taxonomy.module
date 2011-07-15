@@ -508,7 +508,8 @@ function custom_breadcrumbs_taxonomy_cb_node_form_table($node) {
   if (_custom_breadcrumbs_taxonomy_allowed_node_type($node->type)) {
     if (!variable_get('custom_breadcrumbs_taxonomy_use_hierarchy', TRUE)) {
       // Check each term to see if it has a custom breadcrumb.
-      $terms = taxonomy_node_get_terms($node);
+      module_load_include('inc', 'custom_breadcrumbs_taxonomy');
+      $terms = custom_breadcrumbs_taxonomy_node_get_terms($node);
       foreach ($terms as $term) {
         $more = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs_taxonomy', 'custom_breadcrumbs_taxonomy_term', array('tid' => $term->tid));
         if (!empty($more)) {

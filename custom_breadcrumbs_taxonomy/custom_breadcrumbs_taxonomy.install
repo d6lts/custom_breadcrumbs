@@ -20,6 +20,7 @@ function custom_breadcrumbs_taxonomy_install() {
         ->fields(array(
           'paths' => $breadcrumb->path,
           'tid' => $breadcrumb->tid,
+          'visibility_php' => '',
           ))
         ->execute();
       ++$found;
@@ -31,6 +32,7 @@ function custom_breadcrumbs_taxonomy_install() {
         ->fields(array(
           'paths' => $breadcrumb->path,
           'vid' => $breadcrumb->vid,
+          'visibility_php' => '',
           ))
         ->execute();
       ++$found;

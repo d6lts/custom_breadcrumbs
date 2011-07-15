@@ -241,7 +241,7 @@ function custom_breadcrumbs_form_node_form_alter(&$form, $form_state) {
       $form['custom_breadcrumbs']['breadcrumb_table'] = array('#markup' => $table);
     }
     else {
-      $output = '<p>' . t('Custom breadcrumbs have not been created for this %type page. Use the <a href="@link">Custom Breadcrumbs Administration Page</a> to create a breadcrumbs.', array('%type' => $node->type, '@link' => url('admin/structure/custom_breadcrumbs'))) . '</p>';
+      $output = '<p>' . t('Custom breadcrumbs have not been created for this %type page. Use the <a href="@link">Custom Breadcrumbs Administration Page</a> to create a breadcrumb.', array('%type' => $node->type, '@link' => url('admin/structure/custom_breadcrumbs'))) . '</p>';
       $form['custom_breadcrumbs']['help_text'] = array('#markup' => $output);
     }
  
@@ -633,7 +633,7 @@ function _custom_breadcrumbs_create_crumb_items($title, $original_path, $attribu
       $path = $original_path;
     }
     if ($path != '<none>') {
-      $options = parse_url($path);
+      $options = drupal_parse_url($path);
       $options = array_merge($options, $attributes);
       $crumbs[] = array(
         'crumb' => l($title, $options['path'], $options),
