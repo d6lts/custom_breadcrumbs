@@ -1,10 +1,10 @@
-name = Custom Breadcrumbs for Panels
-package = Custom Breadcrumbs
+name = Custom breadcrumbs for panels
+package = Custom breadcrumbs
 dependencies[] = custom_breadcrumbs
 dependencies[] = panels
 dependencies[] = ctools
 dependencies[] = page_manager
-description = Provides Custom Breadcrumbs for panels pages.
+description = Provides custom breadcrumbs for panels pages.
 core = 7.x
 configure = admin/config/user-interface/custom-breadcrumbs
 

@@ -1,5 +1,5 @@
-name = Custom Breadcrumbs Identifiers
-package = Custom Breadcrumbs
+name = Custom breadcrumbs identifiers
+package = Custom breadcrumbs
 description = Provides special identifiers for custom breadcrumbs.
 dependencies[] = custom_breadcrumbs
 core = 7.x

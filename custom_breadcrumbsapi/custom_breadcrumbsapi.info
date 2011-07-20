@@ -1,5 +1,5 @@
-name = Custom Breadcrumbs API
-package = Custom Breadcrumbs
+name = Custom breadcrumbs API
+package = Custom breadcrumbs
 dependencies[] = custom_breadcrumbs
 description = Provides a simple API to set breadcrumbs on module pages not served by other custom breadcrumbs submodules.
 core = 7.x

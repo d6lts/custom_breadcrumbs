@@ -1,6 +1,6 @@
-name = Custom Breadcrumbs for Taxonomy
+name = Custom breadcrumbs for taxonomy
 description = "Enables taxonomy based breadcrumbs and allows for node assosciations with taxonomy terms."
-package = Custom Breadcrumbs
+package = Custom breadcrumbs
 dependencies[] = custom_breadcrumbs
 dependencies[] = taxonomy
 core = 7.x

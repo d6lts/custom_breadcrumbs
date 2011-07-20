@@ -390,7 +390,7 @@ function custom_breadcrumbs_common_form_elements($bid, $breadcrumb) {
  * @see system_settings_form()
  */
 function custom_breadcrumbs_admin_settings($form, &$form_state) {
-  drupal_set_title(t('Custom Breadcrumbs Configuration'));
+  drupal_set_title(t('Custom breadcrumbs configuration'));
 
   $form['settings'] = array(
     '#type' => 'fieldset',

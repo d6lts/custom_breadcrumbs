@@ -60,7 +60,7 @@ function custom_breadcrumbs_theme() {
 function custom_breadcrumbs_menu() {
   $items = array();
   $items['admin/structure/custom_breadcrumbs'] = array(
-    'title' => 'Custom Breadcrumbs',
+    'title' => 'Custom breadcrumbs',
     'description' => 'Customize the breadcrumb trail for pages on your site.',
     'page callback' => 'custom_breadcrumbs_page',
     'access arguments' => array('administer custom breadcrumbs'),
@@ -95,7 +95,7 @@ function custom_breadcrumbs_menu() {
   );
  
   $items['admin/config/user-interface/custom-breadcrumbs'] = array(
-    'title' => 'Custom Breadcrumb Settings',
+    'title' => 'Custom breadcrumbs settings',
     'description' => 'Manage sitewide configuration settings to customize the breadcrumb trail.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('custom_breadcrumbs_admin_settings'),
@@ -481,9 +481,11 @@ function custom_breadcrumbs_token_types($objs = array()) {
   if (!isset($objs['user'])) {
     global $user;
     if ($user->uid) {
-      $account = user_load($user->uid);
+      $objs['user'] = user_load($user->uid);
     }
-    $objs['user'] = $account;
+    else {
+      $objs['user'] = $user;
+    }
   }
   $objs['global'] = NULL;
 
