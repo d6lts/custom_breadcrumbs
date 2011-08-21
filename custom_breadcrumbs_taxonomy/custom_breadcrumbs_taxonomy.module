@@ -246,7 +246,7 @@ function custom_breadcrumbs_taxonomy_views_pre_render(&$view) {
                 module_load_include('inc', 'custom_breadcrumbs_taxonomy');
                 $term = custom_breadcrumbs_taxonomy_node_get_term($node);
                 if ($term) {
-                  $terms = taxonomy_node_get_terms($node);
+                  $terms = custom_breadcrumbs_taxonomy_node_get_terms($node);
                   _custom_breadcrumbs_taxonomy_set_breadcrumb($term->tid, $term->vid, $is_term_page, array('node' => $node), $terms);
                   _custom_breadcrumbs_taxonomy_recent_term($term->tid);
                   return;
