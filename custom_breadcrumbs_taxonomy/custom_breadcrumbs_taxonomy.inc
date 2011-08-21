@@ -41,7 +41,9 @@ function custom_breadcrumbs_taxonomy_node_get_terms($node, $key = 'tid') {
  *   An array of taxonomy terms to use (potentially) to construct the breadcrumb.
  */
 function _custom_breadcrumbs_taxonomy_set_breadcrumb($tid, $vid = NULL, $is_term_page = FALSE, $objs = array(), $terms = array()) {
-  unset($_SESSION['custom_breadcrumbs_taxonomy_set']);
+  if (isset($_SESSION['custom_breadcrumbs_taxonomy_set'])) {
+    unset($_SESSION['custom_breadcrumbs_taxonomy_set']);
+  }
   if (variable_get('custom_breadcrumbs_taxonomy_use_hierarchy', TRUE) && (!custom_breadcrumbs_exclude_path())) {
     $breadcrumb = custom_breadcrumbs_taxonomy_generate_breadcrumb($tid, $vid, $is_term_page, $objs);
     if ($is_term_page) {

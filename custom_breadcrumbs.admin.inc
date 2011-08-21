@@ -563,15 +563,9 @@ function custom_breadcrumbs_admin_settings($form, &$form_state) {
   $form['adv_settings']['module_weights'] = array(
     '#type' => 'fieldset',
     '#title' => t('Module weights'),
-    '#description' => t('If enabled, the relative module weights can be adjusted in the table below. Modules with lighter weights will provide custom breadcrumbs that can be modified, or overriden, by heavier modules.'),
+    '#description' => t('The relative module weights can be adjusted in the table below. Modules with lighter weights will provide custom breadcrumbs that can be modified, or overriden, by heavier modules.'),
     '#collapsible' => TRUE,
     '#collapsed' => FALSE,
-  );
-
-  $form['adv_settings']['module_weights']['custom_breadcrumbs_adjust_module_weights'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Adjust module weights'),
-    '#default_value' => FALSE,
   );
 
   $form['adv_settings']['module_weights']['table'] = custom_breadcrumbs_module_weight();
@@ -592,7 +586,7 @@ function custom_breadcrumbs_admin_settings($form, &$form_state) {
  * @see custom_breadcrumbs_admin_settings()
  */
 function custom_breadcrumbs_admin_settings_submit($form, &$form_state) {
-  if (!empty($form['adv_settings']['module_weights']['table']) && $form_state['values']['custom_breadcrumbs_adjust_module_weights']) {
+  if (!empty($form['adv_settings']['module_weights']['table'])) {
     // Set the initial weight of the lightest module to zero.
     $current_mod_weight = 0;
     $table = array(

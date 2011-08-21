@@ -105,7 +105,7 @@ function _custom_breadcrumbs_views_parse_args($arguments, $viewargs) {
       $arg = array_shift($viewargs);
       $arg_id_3 = drupal_substr($arg_id, 0, 3);
       if (($arg_id_3 == 'tid') || (drupal_substr($arg_id, 0, 19) == 'term_node_tid_depth')) {
-        $terms = taxonomy_terms_parse_string($arg);
+        $terms = custom_breadcrumbs_taxonomy_terms_parse_string($arg);
         $arg_values['types'][] = 'tid';
         $arg_values['values'][] = empty($terms['tids']) ? NULL : $terms['tids'][0];
       }
@@ -178,4 +178,32 @@ function _custom_breadcrumbs_views_display_arguments($display) {
     $arguments = $display->handler->view->display['default']->display_options['arguments'];
   }
   return $arguments;
+}
+
+/**
+ * Parses a comma or plus separated string of term IDs.
+ *
+ * @param $str_tids
+ *   A string of term IDs, separated by plus or comma.
+ *   comma (,) means AND
+ *   plus (+) means OR
+ *
+ * @return an associative array with an operator key (either 'and'
+ *   or 'or') and a tid key containing an array of the term ids.
+ */
+function custom_breadcrumbs_taxonomy_terms_parse_string($str_tids) {
+  $terms = array(
+    'operator' => '',
+    'tids' => array(),
+  );
+  if (preg_match('/^([0-9]+[+ ])+[0-9]+$/', $str_tids)) {
+    $terms['operator'] = 'or';
+    // The '+' character in a query string may be parsed as ' '.
+    $terms['tids'] = preg_split('/[+ ]/', $str_tids);
+  }
+  else if (preg_match('/^([0-9]+,)*[0-9]+$/', $str_tids)) {
+    $terms['operator'] = 'and';
+    $terms['tids'] = explode(',', $str_tids);
+  }
+  return $terms;
 }
