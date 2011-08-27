@@ -15,3 +15,4 @@ Issue #1229076 by MGN: Fixes undefined function error caused by taxonomy_terms_p
 Issue #1240974 by MGN: Fixes undefined index: q in custom_breadcrumbs_exclude_path notice.
 Issue #1240974 by MGN: Removes checkbox for Adjust module weights to improve UI.
 Issue #1219214 by MGN: Fixed (another) incorrect call to taxonomy_node_get_terms().
+Issue #1256742 by MGN: Fixed empty id in breadcrumb links.

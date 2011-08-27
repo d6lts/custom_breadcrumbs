@@ -1213,7 +1213,7 @@ function custom_breadcrumbs_exclude_path() {
  *   An associative array containing the HTML attributes to apply to the anchor tag.
  */
 function _custom_breadcrumbs_identifiers_option($part = 0, $bid = NULL) {
-  $options = array('attributes' => array('id' => NULL, 'class' => array()));
+  $options = array('attributes' => array());
   $base = 'custom-breadcrumbs';
   if (variable_get('custom_breadcrumbs_home_id', FALSE) && ($part == 0)) {
     $options['attributes']['id'] = $base . '-home';
