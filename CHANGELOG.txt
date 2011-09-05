@@ -16,3 +16,4 @@ Issue #1240974 by MGN: Fixes undefined index: q in custom_breadcrumbs_exclude_pa
 Issue #1240974 by MGN: Removes checkbox for Adjust module weights to improve UI.
 Issue #1219214 by MGN: Fixed (another) incorrect call to taxonomy_node_get_terms().
 Issue #1256742 by MGN: Fixed empty id in breadcrumb links.
+Issue #1269716 by MGN: Fixes undefined property notice when creating new content.

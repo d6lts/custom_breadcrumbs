@@ -11,19 +11,22 @@
  */
 function custom_breadcrumbs_taxonomy_node_get_terms($node, $key = 'tid') {
   static $terms;
-  if (!isset($terms[$node->vid][$key])) {
-    $query = db_select('taxonomy_index', 'r');
-    $t_alias = $query->join('taxonomy_term_data', 't', 'r.tid = t.tid');
-    $v_alias = $query->join('taxonomy_vocabulary', 'v', 't.vid = v.vid');
-    $query->fields( $t_alias );
-    $query->condition("r.nid", $node->nid);
-    $result = $query->execute();
-    $terms[$node->vid][$key] = array();
-    foreach ($result as $term) {
-      $terms[$node->vid][$key][$term->$key] = $term;
+  if (isset($node->nid) && isset($node->vid)) {
+    if (!isset($terms[$node->vid][$key])) {
+      $query = db_select('taxonomy_index', 'r');
+      $t_alias = $query->join('taxonomy_term_data', 't', 'r.tid = t.tid');
+      $v_alias = $query->join('taxonomy_vocabulary', 'v', 't.vid = v.vid');
+      $query->fields( $t_alias );
+      $query->condition("r.nid", $node->nid);
+      $result = $query->execute();
+      $terms[$node->vid][$key] = array();
+      foreach ($result as $term) {
+        $terms[$node->vid][$key][$term->$key] = $term;
+      }
     }
+    return $terms[$node->vid][$key];
   }
-  return $terms[$node->vid][$key];
+  return array();
 }
 
 /**
