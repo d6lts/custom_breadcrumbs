@@ -60,8 +60,14 @@ function custom_breadcrumbs_nodeapi($node, $op, $teaser, $page) {
       $titles = preg_split("/[\n]+/", $breadcrumb->titles);
       $paths = preg_split("/[\n]+/", $breadcrumb->paths);
 
-      $titles = module_exists('token') ? token_replace($titles, 'node', $node) : $titles;
-      $paths = module_exists('token') ? token_replace($paths, 'node', $node) : $paths;
+      if (module_exists('token')) {
+        foreach ($titles as $key => $value) {
+          $titles[$key] = token_replace($value, 'node', $node);
+        }
+        foreach ($paths as $key => $value) {
+          $paths[$key] = token_replace($value, 'node', $node);
+        }
+      }
 
       $trail = array(l(t('Home'), '<front>'));
       for ($i = 0; $i < count($titles); $i++) {
