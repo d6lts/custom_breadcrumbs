@@ -18,6 +18,9 @@ function custom_breadcrumbs_taxonomy_node_get_terms($node, $key = 'tid') {
       $v_alias = $query->join('taxonomy_vocabulary', 'v', 't.vid = v.vid');
       $query->fields( $t_alias );
       $query->condition("r.nid", $node->nid);
+      $query->orderBy('v.weight');
+      $query->orderBy('t.weight');
+      $query->orderBy('t.name');
       $result = $query->execute();
       $terms[$node->vid][$key] = array();
       foreach ($result as $term) {
