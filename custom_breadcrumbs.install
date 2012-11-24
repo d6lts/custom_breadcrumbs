@@ -28,7 +28,6 @@ function custom_breadcrumbs_schema() {
         'type' => 'text',
         'size' => 'medium',
         'not null' => TRUE,
-        'default' => '',
         'description' => 'A return-delimited list of titles for the breadcrumb links.',
       ),
       'paths' => array(
