@@ -126,13 +126,13 @@ function _custom_breadcrumbs_sort_cmp($bc1, $bc2) {
     $sortdir[$key] = ($sort == 'asc') ? 1 : -1;
   }
   if ($bc1->$first == $bc2->$first) {
-    if ($bc1->$options[0] == $bc2->$options[0]) {
-      if ($bc1->$options[1] == $bc2->$options[1]) {
+    if ($bc1->{$options[0]} == $bc2->{$options[0]}) {
+      if ($bc1->{$options[1]} == $bc2->{$options[1]}) {
         return 0;
       }  
-      return ($bc1->$options[1] > $bc2->$options[1]) ? $sortdir[$options[1]] : -1*$sortdir[$options[1]];
+      return ($bc1->{$options[1]} > $bc2->{$options[1]}) ? $sortdir[$options[1]] : -1*$sortdir[$options[1]];
     }
-    return ($bc1->$options[0] > $bc2->$options[0]) ? $sortdir[$options[0]] : -1*$sortdir[$options[0]];
+    return ($bc1->{$options[0]} > $bc2->{$options[0]}) ? $sortdir[$options[0]] : -1*$sortdir[$options[0]];
   }
   return ($bc1->$first > $bc2->$first) ? $sortdir[$first] : -1*$sortdir[$first];
 }
